@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI智能开发工具驱动的应用软件设计工程 — 以"易会办"APP为例</title>
+<style>
+:root {
+  --primary: #3366FF;
+  --primary-light: #EBF0FF;
+  --ai: #6C5CE7;
+  --ai-light: #F3F0FF;
+  --bg: #F7F8FA;
+  --card: #FFFFFF;
+  --text: #1A1D26;
+  --text-secondary: #5F6570;
+  --border: #E4E6EC;
+  --success: #00B578;
+  --warning: #FF8F1F;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+.container { max-width:960px; margin:0 auto; padding:40px 24px; }
+
+/* Hero */
+.hero { background:linear-gradient(135deg, #1A1D26 0%, #2D3142 30%, #3366FF 100%); color:#fff; padding:80px 24px 60px; text-align:center; }
+.hero h1 { font-size:36px; font-weight:700; margin-bottom:12px; letter-spacing:-0.5px; }
+.hero .subtitle { font-size:17px; opacity:0.85; max-width:700px; margin:0 auto 24px; }
+.hero .meta { display:flex; gap:32px; justify-content:center; flex-wrap:wrap; font-size:14px; opacity:0.7; }
+.hero .meta span { display:flex; align-items:center; gap:6px; }
+
+/* Nav */
+.sticky-nav { position:sticky; top:0; z-index:100; background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0 24px; overflow-x:auto; white-space:nowrap; }
+.sticky-nav a { display:inline-block; padding:14px 16px; color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:500; border-bottom:2px solid transparent; transition:all 0.2s; }
+.sticky-nav a:hover, .sticky-nav a.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+/* Section */
+.section { margin:48px 0; }
+.section-title { font-size:28px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+.section-desc { color:var(--text-secondary); font-size:15px; margin-bottom:32px; }
+
+/* Cards */
+.card { background:var(--card); border-radius:var(--radius); padding:28px; margin-bottom:20px; box-shadow:var(--shadow); border:1px solid var(--border); }
+.card-header { display:flex; align-items:flex-start; gap:14px; margin-bottom:16px; }
+.card-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.card-icon.blue { background:var(--primary-light); color:var(--primary); }
+.card-icon.purple { background:var(--ai-light); color:var(--ai); }
+.card-icon.green { background:#E8FAF1; color:var(--success); }
+.card-icon.orange { background:#FFF3E6; color:var(--warning); }
+.card-title { font-size:18px; font-weight:700; }
+.card-subtitle { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+
+/* Step timeline */
+.timeline { position:relative; padding-left:32px; }
+.timeline::before { content:''; position:absolute; left:15px; top:8px; bottom:8px; width:2px; background:var(--border); }
+.timeline-item { position:relative; margin-bottom:32px; }
+.timeline-dot { position:absolute; left:-32px; top:6px; width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; z-index:1; }
+.timeline-dot.done { background:var(--success); }
+
+/* Tags */
+.tag { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; margin-right:6px; }
+.tag.blue { background:var(--primary-light); color:var(--primary); }
+.tag.purple { background:var(--ai-light); color:var(--ai); }
+.tag.green { background:#E8FAF1; color:var(--success); }
+.tag.orange { background:#FFF3E6; color:var(--warning); }
+
+/* Details (collapsible) */
+details.discussion { margin:12px 0; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+details.discussion summary { padding:14px 18px; background:var(--bg); cursor:pointer; font-weight:600; font-size:14px; color:var(--primary); user-select:none; display:flex; align-items:center; gap:8px; }
+details.discussion summary::before { content:'💬'; font-size:16px; }
+details.discussion[open] summary { background:var(--primary-light); }
+details.discussion .detail-content { padding:16px 18px; font-size:14px; color:var(--text-secondary); line-height:1.9; }
+details.discussion .detail-content .highlight { background:#FFF9E6; padding:2px 6px; border-radius:4px; font-weight:500; color:#8B6914; }
+details.discussion .detail-content .qa { margin:8px 0; padding:10px 14px; border-radius:8px; }
+details.discussion .detail-content .qa.q { background:var(--primary-light); }
+details.discussion .detail-content .qa.a { background:#F0FAF4; }
+
+/* Output list */
+.output-list { list-style:none; padding:0; }
+.output-list li { padding:8px 0; padding-left:24px; position:relative; font-size:14px; }
+.output-list li::before { content:'📄'; position:absolute; left:0; top:8px; font-size:12px; }
+
+/* Methodology box */
+.method-box { background:linear-gradient(135deg, #F8F9FF, #F0F2FF); border-left:4px solid var(--ai); border-radius:0 var(--radius) var(--radius) 0; padding:16px 20px; margin:16px 0; }
+.method-box .m-title { font-weight:700; color:var(--ai); font-size:14px; margin-bottom:4px; }
+.method-box .m-desc { font-size:13px; color:var(--text-secondary); }
+
+/* Tables */
+.data-table { width:100%; border-collapse:collapse; font-size:14px; margin:12px 0; }
+.data-table th { background:var(--bg); padding:12px 16px; text-align:left; font-weight:600; color:var(--text-secondary); font-size:13px; border-bottom:2px solid var(--border); }
+.data-table td { padding:10px 16px; border-bottom:1px solid var(--border); }
+.data-table tr:hover td { background:#FAFBFC; }
+
+/* Stat grid */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px; margin:16px 0; }
+.stat-card { background:var(--card); border-radius:var(--radius); padding:20px; text-align:center; border:1px solid var(--border); }
+.stat-card .num { font-size:28px; font-weight:800; color:var(--primary); }
+.stat-card .label { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+
+/* Phase flow */
+.phase-flow { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; justify-content:center; }
+.phase-box { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; text-align:center; min-width:90px; font-size:13px; font-weight:600; }
+.phase-box .arrow { color:var(--primary); font-size:18px; }
+.phase-box.current { border-color:var(--primary); background:var(--primary-light); }
+
+/* Collapsible section */
+.collapsible-section { margin:24px 0; }
+.collapsible-section summary { font-size:16px; font-weight:700; color:var(--primary); cursor:pointer; padding:12px 0; border-bottom:1px solid var(--border); }
+.collapsible-section .inner { padding:16px 0; }
+
+/* Footer */
+.footer { text-align:center; padding:48px 24px; color:var(--text-secondary); font-size:13px; border-top:1px solid var(--border); margin-top:60px; }
+
+/* Responsive */
+@media (max-width:640px) {
+  .hero h1 { font-size:24px; }
+  .hero { padding:48px 20px 36px; }
+  .container { padding:24px 16px; }
+  .section-title { font-size:22px; }
+  .stat-grid { grid-template-columns:repeat(2, 1fr); }
+}
+
+/* Back to top */
+.back-top { position:fixed; bottom:32px; right:32px; width:44px; height:44px; border-radius:50%; background:var(--primary); color:#fff; border:none; cursor:pointer; font-size:20px; box-shadow:var(--shadow-lg); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; z-index:200; }
+.back-top.visible { opacity:1; }
+
+/* Print */
+@media print {
+  .sticky-nav,.back-top { display:none; }
+  .hero { padding:40px 24px; }
+  details.discussion { break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== HERO ========== -->
+<div class="hero">
+  <h1>🤖 AI 智能开发工具驱动的<br>应用软件设计工程</h1>
+  <p class="subtitle">以"易会办"——银行客户经理智能展业助手 APP 为例，完整记录从零到一的设计全过程</p>
+  <div class="meta">
+    <span>📱 项目：易会办（原"徽小助"）</span>
+    <span>🛠 工具：Qoder AI 智能编码助手</span>
+    <span>📅 2026年7月</span>
+  </div>
+</div>
+
+<!-- ========== STICKY NAV ========== -->
+<nav class="sticky-nav" id="nav">
+  <a href="#overview">全景图</a>
+  <a href="#s1">Step 1</a>
+  <a href="#s2">Step 2</a>
+  <a href="#s3">Step 3</a>
+  <a href="#s4">Step 4</a>
+  <a href="#s5">Step 5</a>
+  <a href="#s6">Step 6</a>
+  <a href="#s7">Step 7</a>
+  <a href="#s8">Step 8</a>
+  <a href="#method">方法论</a>
+  <a href="#data">数据总览</a>
+</nav>
+
+<div class="container">
+
+<!-- ========== 前言 ========== -->
+<div class="section" id="preface">
+  <h2 class="section-title">📖 前言</h2>
+  <p class="section-desc">本课件旨在完整呈现：如何利用 AI 智能开发工具（Qoder），以 <strong>Step by Step</strong> 的方式，从零开始完成一个企业级 APP 的原型设计与交互工程。</p>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">🎯</div>
+      <div>
+        <div class="card-title">适用对象</div>
+        <div class="card-subtitle">产品经理、交互设计师、前端工程师、技术管理者</div>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--text-secondary);">
+      无论你是想了解 AI 辅助开发的最佳实践，还是希望学习移动端 APP 从需求到原型的设计方法，本课件都提供了可复用的模式与经验。
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">🧠</div>
+      <div>
+        <div class="card-title">核心方法论</div>
+        <div class="card-subtitle">贯穿始终的 AI 协作哲学</div>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--text-secondary);">
+      <strong>讨论-澄清 → 方案对比 → 确认后执行 → 迭代-反馈 → Bug驱动修复</strong><br>
+      这不是"AI 替你写代码"，而是"人与 AI 共同设计"——人的领域知识与 AI 的执行力相结合，产生 1+1 > 2 的效果。
+    </p>
+  </div>
+</div>
+
+<!-- ========== 全景图 ========== -->
+<div class="section" id="overview">
+  <h2 class="section-title">🗺️ Quest 全景图</h2>
+  <p class="section-desc">整个设计工程历时 8 个阶段，从需求大纲到可交互原型，形成一条完整的渐进式设计链路。</p>
+
+  <div class="phase-flow">
+    <div class="phase-box">📋<br>Step 1<br><small>项目启动</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">🔍<br>Step 2<br><small>需求分析</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">🎬<br>Step 3<br><small>场景分析</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">🔗<br>Step 4<br><small>业务建模</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">🎨<br>Step 5<br><small>设计系统</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">📝<br>Step 6<br><small>交互规格</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">🔄<br>Step 7<br><small>原型实现</small></div>
+    <div class="phase-box arrow">→</div>
+    <div class="phase-box">⚖️<br>Step 8<br><small>AI架构</small></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">8</div><div class="label">关键阶段</div></div>
+    <div class="stat-card"><div class="num">12</div><div class="label">核心业务对象</div></div>
+    <div class="stat-card"><div class="num">~3100</div><div class="label">交互规格行数</div></div>
+    <div class="stat-card"><div class="num">~6800</div><div class="label">原型代码行数</div></div>
+    <div class="stat-card"><div class="num">18</div><div class="label">页面跳转映射</div></div>
+    <div class="stat-card"><div class="num">5</div><div class="label">AI协作模式</div></div>
+  </div>
+</div>
+
+<!-- ========== STEP 1 ========== -->
+<div class="section" id="s1">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">1</div>
+      <h2 class="section-title">Step 1：项目启动与需求大纲</h2>
+      <p class="section-desc"><span class="tag blue">规划先行</span> <span class="tag green">阶段产出：需求功能大纲 + 页面组织大纲</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">建立项目全局认知，定义功能边界和页面结构。用户明确要求<strong>"先整理需求大纲和页面组织大纲，不要忙着实现"</strong>——这奠定了整个 Quest "规划先行"的基调。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>关键讨论：先规划后执行的策略选择</summary>
+        <div class="detail-content">
+          <p><strong>用户原话：</strong>"先整理需求大纲和页面组织大纲，不要忙着实现"</p>
+          <p>这是一个关键的决策点。面对一个全新的项目，AI 的第一反应是"先了解工作空间、评估技术方案"，但用户明确要求先做规划。</p>
+          <div class="qa q"><strong>👤 用户意图：</strong>功能范围很广（客户洞察、营销线索、话术生成、产品检索、智能推荐、流程自动化...），如果没有清晰的大纲就直接编码，很容易陷入细节而丢失全局视角。</div>
+          <div class="qa a"><strong>🤖 AI 响应：</strong>AI 按照 "需求功能大纲 → 页面组织大纲 → 核心路径流程图" 三层结构输出，覆盖 10 大功能模块、5-Tab 页面架构、以及关键页面的 Mermaid 流程图。</div>
+          <p style="margin-top:8px;"><span class="highlight">💡 启示：</span>在 AI 辅助开发中，<strong>人定方向、AI 做展开</strong>是最佳分工。用户一句"不要忙着实现"避免了 AI 过早进入编码阶段。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li>需求功能大纲：10 大模块（工作台/客户管理/客户洞察/营销线索/话术生成/产品检索/智能推荐/上下文分析/流程自动化/个人中心）</li>
+          <li>页面组织大纲：5-Tab 底部导航（工作台/客户/营销/产品/我的）</li>
+          <li>核心路径 Mermaid 流程图：工作台→客户列表→客户详情→产品推荐的端到端路径</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"规划先行"原则：</strong>面对复杂项目，第一步不是写代码而是建框架。先画出功能全景和页面地图，确保所有参与方（人和 AI）在同一张蓝图上工作。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 2 ========== -->
+<div class="section" id="s2">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">2</div>
+      <h2 class="section-title">Step 2：需求文档分析与数据模型提炼</h2>
+      <p class="section-desc"><span class="tag blue">数据驱动</span> <span class="tag green">阶段产出：业务数据模型分析.md + 图片分析报告.md</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">从业务需求文档中提取<strong>结构化数据对象</strong>，将自然语言描述转化为可编码的数据模型。这是连接"业务语言"和"技术语言"的关键桥梁。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>关键讨论：如何从 .docx 文档中提取结构化数据</summary>
+        <div class="detail-content">
+          <p><strong>用户原话：</strong>"分析一下项目录下的需求分析目录下的 AI营销展业助手需求规格说明书文件内容，提炼一下里面的功能点和业务对象，以及一些关键的数据结构……只有在这些明确的数据对象基础上才能更好的确认业务设计方案"</p>
+          <p>文档是 .docx 格式，包含了大量表格（客户等级、产品要素、话术模板）和图片（UI 原型截图）。AI 的策略是：</p>
+          <ol style="padding-left:20px;margin:8px 0;">
+            <li><strong>先搜索文件：</strong>使用 Glob 定位 .docx 文件位置</li>
+            <li><strong>分步提取：</strong>先用 python-docx 提取文本，发现被截断后再单独提取表格数据</li>
+            <li><strong>图片分析：</strong>87 张嵌入图片逐一分析，映射到 12 个业务场景</li>
+            <li><strong>结构化输出：</strong>将零散的文档内容整理为完整的字段定义和层级关系</li>
+          </ol>
+          <div class="qa q"><strong>👤 用户意图：</strong>"只有在这些明确的数据对象基础上才能更好的确认业务设计方案"——用户深刻理解数据结构是设计的基础骨架。</div>
+          <div class="qa a"><strong>🤖 AI 策略：</strong>AI 从文档中识别出 12 个核心业务对象（Customer、CustomerProfile、WealthProduct、FundProduct、InsuranceProduct、ProductCompare、Task、Opportunity、Recommendation、Script、Session），每个对象包含完整的字段定义和层级关系。</div>
+          <p style="margin-top:8px;"><span class="highlight">💡 启示：</span>从非结构化文档中提取结构化数据，是 AI 辅助需求分析的<strong>核心价值</strong>。人工做这件事可能需要数天，AI 可以在数分钟内完成。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键讨论：客户画像数据结构的深度建模</summary>
+        <div class="detail-content">
+          <p>需求文档中客户画像的描述分散在多个章节。AI 将其整合为 6 大模块的层级结构：</p>
+          <table class="data-table">
+            <tr><th>模块</th><th>核心字段</th></tr>
+            <tr><td>基础信息</td><td>姓名、年龄、性别、职业、行业、城市、学历</td></tr>
+            <tr><td>家庭结构</td><td>婚姻状况、子女数量、家庭资产、配偶信息</td></tr>
+            <tr><td>经营信息</td><td>企业名称、行业、经营规模、营收情况</td></tr>
+            <tr><td>财富解读</td><td>AUM趋势、资产结构分布、资金流向、定存到期日</td></tr>
+            <tr><td>信贷解读</td><td>贷款类型、额度、利率、还款状态</td></tr>
+            <tr><td>行为洞察</td><td>交易频次、渠道偏好、产品浏览偏好、活跃度评分</td></tr>
+          </table>
+          <p>这个结构后来<strong>直接映射</strong>到了原型中客户画像的 9 个可展开面板。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li><strong>AI营销展业助手-业务数据模型分析.md：</strong>12 个业务对象的完整字段定义、数据层级、关联关系</li>
+          <li><strong>AI营销展业助手-图片分析与页面布局参考.md：</strong>87/91 张图片的场景分类与 UI 布局参考</li>
+          <li>客户等级体系：8 级（千元以下 → 私行 600万+）</li>
+          <li>产品类型体系：理财/基金/保险的分类要素对比</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"数据对象为锚点"：</strong>在进入交互设计之前，先穷举所有业务对象及其字段。数据结构是 UI 设计的底层约束——有什么数据、展示什么内容、支持什么操作，都由数据模型决定。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 3 ========== -->
+<div class="section" id="s3">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">3</div>
+      <h2 class="section-title">Step 3：用户场景与交互分析</h2>
+      <p class="section-desc"><span class="tag purple">场景驱动</span> <span class="tag green">阶段产出：三场景分析 + 面谈端到端交互流程</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">以<strong>场景驱动</strong>设计，覆盖客户经理一天工作中的三大核心场景：见客户前（访前准备）、面谈中（实时辅助）、整理工作时（批量处理）。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>🔥 深度讨论：访前作战包的设计演进</summary>
+        <div class="detail-content">
+          <p><strong>用户提问：</strong>"先讨论见客户前的准备场景，客户经理要见客户之前，需要准备哪些内容？最好打包成一个'作战包'的形式"</p>
+          <p>这个讨论经历了多轮细化：</p>
+          <div class="qa q"><strong>第 1 轮 — 内容定义：</strong>作战包应包含什么？AI 提出：客户画像摘要 + 持有产品清单 + 推荐产品 + 营销话术 + 风险提示。</div>
+          <div class="qa a"><strong>第 2 轮 — 场景扩展：</strong>用户指出"作战包不只是面谈用，电话沟通也需要"。AI 将作战包分为"电话模式"和"面谈模式"两种形态。</div>
+          <div class="qa q"><strong>第 3 轮 — 来源澄清：</strong>作战包从哪里生成？是从待办、商机、还是手动创建？这个问题直接导致了 Step 4 的核心业务模型讨论。</div>
+          <p style="margin-top:8px;"><span class="highlight">💡 启示：</span>一个看似简单的"作战包"概念，通过 3 轮讨论逐步演化为具有两种模式、明确来源、完整内容结构的<strong>核心业务对象</strong>。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>🔥 深度讨论：面谈偏离场景的预制分支设计</summary>
+        <div class="detail-content">
+          <p><strong>用户观点：</strong>"我觉得客户不按剧本走的场景，应该还是在剧本里要增加一个'偏离场景预制'的分支"</p>
+          <p>这是一个典型的<strong>设计 trade-off</strong> 讨论：</p>
+          <div class="qa a"><strong>方案 A（AI 初步建议）：</strong>面谈中如果客户偏离预设话术，AI 实时生成应对方案。——优点是灵活，缺点是响应延迟可能影响面谈节奏。</div>
+          <div class="qa q"><strong>方案 B（用户提出）：</strong>在准备作战包时就预置 2-3 个常见偏离场景的分支话术。——优点是实时可用，缺点是覆盖面有限。</div>
+          <p><strong>最终决策：</strong>采用方案 B 作为主路径，AI 实时生成作为兜底。这体现了<strong>"85% 预制 + 15% 实时"</strong>的务实设计哲学。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键讨论：双视图模式（私密/展示）的设计</summary>
+        <div class="detail-content">
+          <p>面谈中客户经理看手机时，客户可能也会看到屏幕。这带来了<strong>隐私与共享</strong>的矛盾：</p>
+          <ul style="padding-left:20px;margin:8px 0;">
+            <li><strong>私密视图：</strong>客户经理自己的数据（客户风险评级、AI 推荐理由、内部备注）——仅客户经理可见</li>
+            <li><strong>展示视图：</strong>适合给客户看的内容（产品信息、收益对比、合规说明）——大字体、简洁排版</li>
+          </ul>
+          <p>这个设计是对<strong>使用场景物理约束</strong>的深刻理解：手机屏幕是共享空间，但数据有私密性要求。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li>三大场景分析文档（访前/面谈中/整理工作）</li>
+          <li>作战包内容模型（客户概览 + 3条营销线索 + 话术脚本 + 产品推荐）</li>
+          <li>面谈偏离预制分支设计</li>
+          <li>双视图模式（私密/展示）交互方案</li>
+          <li>面谈后"客户确认要点记录"流程</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"场景穷举 → 交互推演 → 边界确认"：</strong>先用场景穷举覆盖所有用户行为，再对每个场景做交互推演找到最优方案，最后确认边界条件（如偏离场景、双视图切换）确保没有遗漏。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 4 ========== -->
+<div class="section" id="s4">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">4</div>
+      <h2 class="section-title">Step 4：核心业务逻辑设计</h2>
+      <p class="section-desc"><span class="tag orange">深度建模</span> <span class="tag green">阶段产出：核心业务设计模型-待办商机作战包.md</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">建立<strong>待办 → 商机 → 作战包</strong>三者之间的业务对象关系模型。这是整个 APP 最核心的业务逻辑，直接影响首页数据、商机管理、作战包生成等多个模块。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>🔥🔥 核心讨论（3轮澄清）：待办、商机、作战包三者关系</summary>
+        <div class="detail-content">
+          <p>这是整个 Quest 中最关键的业务模型讨论，经历了 3 轮逐步澄清：</p>
+          
+          <div class="qa q" style="margin-bottom:12px;"><strong>第 1 轮 — 初步关系建立：</strong><br>
+          AI 提出：首页待办列表包含"商机待办"和"事务性待办"两类。商机待办关联一个商机对象，商机对象可以生成作战包。<br>
+          用户反馈："待办清单的事务性待办与普通触达待办合并，商机待办独立展示"</div>
+
+          <div class="qa a" style="margin-bottom:12px;"><strong>第 2 轮 — 来源追溯：</strong><br>
+          用户追问："生成访前作战包的场景是什么？商机都从哪些方面产生而来？"<br>
+          AI 分析出商机的<strong>三大来源</strong>：① 系统自动推送（基于规则引擎，如大额到账、定存到期）② 客户经理自建（主动挖掘）③ AI 智能挖掘（基于行为分析和需求预测）</div>
+
+          <div class="qa q"><strong>第 3 轮 — 关键修正（用户纠偏）：</strong><br>
+          用户明确指出两个概念错误：<br>
+          1. "面谈准备不是独立待办类型，它是商机待办的附属动作"<br>
+          2. "商机是作战包的唯一来源，待办不能直接产生作战包"<br>
+          <strong>这是整个业务模型的转折点。</strong></div>
+
+          <p style="margin-top:12px;"><strong>最终模型：</strong></p>
+          <table class="data-table">
+            <tr><th>关系</th><th>规则</th></tr>
+            <tr><td>商机 → 待办</td><td>每个商机产生一个<strong>商机待办</strong>（系统自动创建）</td></tr>
+            <tr><td>待办 → 作战包</td><td>❌ 待办不能直接创建作战包</td></tr>
+            <tr><td>商机 → 作战包</td><td>✅ 商机是作战包的<strong>唯一来源</strong>，生成作战包时必须创建一个商机待办</td></tr>
+            <tr><td>商机来源</td><td>系统推送（规则引擎）/ 客户经理自建 / AI 智能挖掘</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li><strong>核心业务设计模型-待办商机作战包.md：</strong>完整的三层对象关系模型</li>
+          <li>商机三大来源的区分标准与生成规则</li>
+          <li>事务性待办与商机待办的分类逻辑</li>
+          <li>同步更新的业务数据模型分析.md</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"对象关系建模 + 反复追问"：</strong>不要满足于第一版模型。持续追问"A 是否产生 B？B 是否依赖 A？谁是谁的前置条件？"直到所有关系无歧义。用户的领域知识在这里起到了<strong>不可替代的纠偏作用</strong>。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 5 ========== -->
+<div class="section" id="s5">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">5</div>
+      <h2 class="section-title">Step 5：设计系统建立与首页原型</h2>
+      <p class="section-desc"><span class="tag blue">视觉奠基</span> <span class="tag green">阶段产出：workbench.html (v1.0) + design-system-spec.md</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">建立统一的<strong>视觉语言（Design Tokens）</strong>，做出第一个可交互的首页原型。这个阶段决定了整个 APP 的视觉基调。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>关键讨论：从参考图提取设计风格</summary>
+        <div class="detail-content">
+          <p><strong>用户要求：</strong>"分析'参考UI.jpg'文件，以这个图片里的设计风格、配色、UI组件风格为参考"</p>
+          <p>AI 分析了参考 UI 图片后，提取了以下 Design Tokens：</p>
+          <table class="data-table">
+            <tr><th>Token</th><th>值</th><th>用途</th></tr>
+            <tr><td>--color-bg</td><td>#E2E5EB</td><td>页面背景</td></tr>
+            <tr><td>--color-card</td><td>#FFFFFF</td><td>卡片背景</td></tr>
+            <tr><td>--color-primary</td><td>#3366FF</td><td>主色调</td></tr>
+            <tr><td>--color-ai</td><td>#6C5CE7</td><td>AI 功能标识色</td></tr>
+            <tr><td>--color-text-primary</td><td>#0F1117</td><td>主文字</td></tr>
+            <tr><td>--radius-card</td><td>16px</td><td>卡片圆角</td></tr>
+            <tr><td>--shadow-card</td><td>0 2px 12px rgba(0,0,0,0.06)</td><td>卡片阴影</td></tr>
+          </table>
+          <p>使用 <strong>CSS 自定义属性（CSS Variables）</strong> 作为 Design Tokens 的载体，使得后续的主题切换（深色/浅色）和全局样式调整变得极其高效。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键讨论：4 轮视觉迭代的记录</summary>
+        <div class="detail-content">
+          <p>首页原型经历了 4 轮视觉迭代，每轮都有明确的用户反馈：</p>
+          <div class="qa q"><strong>第 1 轮反馈：</strong>"页面 title 栏太丑、对比度不够鲜明、AI 应用的体验很弱"</div>
+          <div class="qa a"><strong>第 2 轮反馈：</strong>"商机版块的逻辑结构衔接过于松散，需要统一的商机看板"</div>
+          <div class="qa q"><strong>第 3 轮反馈：</strong>"深色风格不符合银行场景，改为浅色"</div>
+          <div class="qa a"><strong>第 4 轮反馈：</strong>"统计区块需要优化，底色需要微调"</div>
+          <p style="margin-top:8px;"><span class="highlight">💡 启示：</span>视觉设计不可能一次到位。AI 快速出图 + 用户精准反馈 = 最高效的迭代方式。4 轮迭代在传统流程中可能需要数天，在 AI 辅助下仅需数小时。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键讨论：首页要解决的核心问题</summary>
+        <div class="detail-content">
+          <p><strong>用户引导：</strong>"首先思考下，首页要解决的核心问题，是客户经理打开APP后，最应该看到的是什么？"</p>
+          <p>经过讨论，首页定位为<strong>5 大核心任务</strong>的聚合入口：</p>
+          <ol style="padding-left:20px;margin:8px 0;">
+            <li><strong>今日概览：</strong>AI 摘要——今天最需要关注的 3 件事</li>
+            <li><strong>智能日程：</strong>上午/下午的待办客户列表（可滚动）</li>
+            <li><strong>商机看板：</strong>统一展示 4 类商机（代发到账/流失预警/AI挖掘/我的）</li>
+            <li><strong>新客拓展：</strong>潜在客户和待跟进线索</li>
+            <li><strong>快捷操作：</strong>全局搜索、AI 问答、消息通知</li>
+          </ol>
+          <p>这 5 个模块构成了首页的 <strong>"4 大 Block"</strong> 布局，后续一直沿用。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li><strong>workbench.html v1.0：</strong>4 大 Block 首页原型（手机框架 + 真实数据）</li>
+          <li><strong>design-system-spec.md：</strong>Design Tokens 定义、组件规范、5 套配色方案</li>
+          <li>CSS 变量体系：颜色/圆角/阴影/字号/间距全部 Token 化</li>
+          <li>品牌名称确认："徽小助" → "易会办"</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"参考图 + Token 化 + 快速迭代"：</strong>用参考图锚定视觉方向，用 Design Tokens 保证一致性，用快速迭代缩短反馈周期。不要让"完美主义"拖慢速度——先做出来，再调优。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 6 ========== -->
+<div class="section" id="s6">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">6</div>
+      <h2 class="section-title">Step 6：六步交互规格体系</h2>
+      <p class="section-desc"><span class="tag blue">规格先行</span> <span class="tag green">阶段产出：6 个交互规格 md 文件（~3100 行）</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">在编码实现前，用 <strong>Markdown 文档</strong> 系统化定义所有页面的交互行为，包括页面元素、触发条件、跳转目标、状态变化。确保<strong>所有页面跳转形成闭环</strong>。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>关键讨论：为什么要先写规格再写代码？</summary>
+        <div class="detail-content">
+          <p><strong>用户决策：</strong>"接下来从首页开始做展开的交互设计，一共 6 个步骤"</p>
+          <p>这个决策体现了成熟的工程思维：</p>
+          <ul style="padding-left:20px;margin:8px 0;">
+            <li><strong>分工清晰：</strong>规格定义"做什么"（What），原型实现"怎么做"（How）</li>
+            <li><strong>评审前置：</strong>在编码前就发现逻辑漏洞，避免返工</li>
+            <li><strong>文档沉淀：</strong>规格文档本身就是交付物，可供团队评审和后续维护</li>
+            <li><strong>AI 友好：</strong>清晰的规格让 AI 能更准确地生成代码</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键讨论：18 个页面跳转映射的闭环验证</summary>
+        <div class="detail-content">
+          <p>六步规格覆盖了 <strong>18 个页面跳转映射</strong>，且全部验证为闭环：</p>
+          <table class="data-table">
+            <tr><th>规格文件</th><th>覆盖范围</th><th>跳转数</th></tr>
+            <tr><td>W1-工作台首页</td><td>首页4 Block → 各子页面</td><td>5</td></tr>
+            <tr><td>W2-日程处理与调整</td><td>日程卡片 → 处理面板 → 调整 → 全部任务</td><td>4</td></tr>
+            <tr><td>W3-商机管理</td><td>商机4 Tab → 商机详情 → 作战包生成</td><td>3</td></tr>
+            <tr><td>P-作战包与面谈</td><td>作战包详情 → 电话/面谈模式 → 面谈中交互</td><td>2</td></tr>
+            <tr><td>W-辅助页面</td><td>消息/产品搜索/个人中心/全局搜索/客户画像/业绩看板</td><td>4</td></tr>
+            <tr><td>AI-全局助手</td><td>AI 对话框 → 各频道（客户/产品/商机）</td><td>0（浮层）</td></tr>
+          </table>
+          <p><strong>闭环验证：</strong>每个页面的"进入"和"返回"路径都经过确认，不存在"死胡同"页面。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li>交互规格-W1-工作台首页.md（395 行）</li>
+          <li>交互规格-W2-日程处理与调整.md（387 行）</li>
+          <li>交互规格-W3-商机管理.md（351 行）</li>
+          <li>交互规格-P-作战包与面谈.md（556 行）</li>
+          <li>交互规格-W-辅助页面.md（982 行）</li>
+          <li>交互规格-AI-全局助手.md（461 行）</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"规格先行，实现后置"：</strong>用文档锁定交互契约。Markdown 格式既适合人类阅读也适合 AI 解析。闭环验证是质量保障的关键——确保每个页面都有来处和去处。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 7 ========== -->
+<div class="section" id="s7">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">7</div>
+      <h2 class="section-title">Step 7：交互原型渐进实现</h2>
+      <p class="section-desc"><span class="tag purple">原型迭代</span> <span class="tag green">阶段产出：workbench.html（~6800 行单文件原型）</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">按照 <strong>W1→W2→W3→P→W 辅助页面→AI 对话框</strong> 的优先级顺序，逐步将交互规格转化为可交互的 HTML 原型。每一步都可验证、可演示。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>🔥 关键设计决策：客户画像从 5 块 → 9 个可展开面板</summary>
+        <div class="detail-content">
+          <p><strong>用户反馈：</strong>"客户画像的结构太简单了，应该按照业务数据模型展开"</p>
+          <p>原来的客户画像只有 5 个扁平信息块（基本信息/资产总览/持有产品/行为标签/风险偏好）。用户指出这与 Step 2 中精心建模的 CustomerProfile 数据结构不匹配。</p>
+          <p><strong>改进后：</strong>9 个可展开的 accordion 面板，完全对应数据模型的 6 大模块：</p>
+          <ol style="padding-left:20px;margin:8px 0;">
+            <li>基础信息（姓名/年龄/职业/学历）</li>
+            <li>家庭结构（婚姻/子女/配偶）</li>
+            <li>经营信息（企业/行业/营收）</li>
+            <li>财富解读（AUM趋势/资产结构/资金流向/定存到期）</li>
+            <li>信贷解读（贷款类型/额度/利率）</li>
+            <li>行为洞察（交易频次/渠道偏好/活跃度）</li>
+            <li>持有产品（理财/基金/保险列表）</li>
+            <li>商机记录（关联商机历史）</li>
+            <li>沟通记录（面谈/电话/微信时间线）</li>
+          </ol>
+          <p><span class="highlight">💡 启示：</span>数据模型是 UI 的底层约束。当 UI 与数据模型不一致时，一定是 UI 需要调整——因为数据模型来自业务需求，是最稳定的部分。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>🔥 关键设计决策：7 个入口的"原路返回"追踪</summary>
+        <div class="detail-content">
+          <p><strong>用户要求：</strong>"其他版块有链接需要查看客户画像时，应做好链接展现客户画像信息，并做好原路返回的处理"</p>
+          <p>客户画像可以从 <strong>7 个不同入口</strong> 进入：</p>
+          <ol style="padding-left:20px;margin:8px 0;">
+            <li>首页 AI 摘要 → 点击客户名</li>
+            <li>日程卡片 → 点击客户</li>
+            <li>商机看板 → 点击商机关联客户</li>
+            <li>消息中心 → 点击消息关联客户</li>
+            <li>产品详情 → 点击适用客群</li>
+            <li>全局搜索 → 搜索结果</li>
+            <li>我的客户列表 → 客户卡片</li>
+          </ol>
+          <p><strong>实现方案：</strong>在打开客户画像时传入 <code>source</code> 参数，返回时根据 source 回到正确的页面。这确保了用户在任何入口进入都能"从哪来、回哪去"。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>Bug 驱动修复实例：日程跳过的多客户粒度问题</summary>
+        <div class="detail-content">
+          <p>这是一个典型的 <strong>"Bug 驱动设计优化"</strong> 案例：</p>
+          <div class="qa q"><strong>问题发现：</strong>用户测试日程调整功能时，发现"跳过"操作只能整日跳过（全天日程一起推迟），无法单独跳过某个客户。</div>
+          <div class="qa a"><strong>根因分析：</strong>初始设计将日程按"上午/下午"两个时段分组，跳过操作绑定在时段级别，粒度太粗。</div>
+          <div class="qa q"><strong>修复方案：</strong>将跳过粒度下沉到<strong>单个客户级别</strong>——每个客户卡片都有独立的跳过按钮（推迟到明天/推迟到晚上），且修复了事件冒泡导致误触处理面板的问题。</div>
+          <p><span class="highlight">💡 启示：</span>原型测试能暴露规格文档中无法发现的问题。不要期望一次设计到位——让原型可运行、可测试，在真实操作中发现边界问题。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>原型的模块化实现顺序</summary>
+        <div class="detail-content">
+          <p>原型按照以下顺序逐步实现，每一步都有独立的计划和验证：</p>
+          <table class="data-table">
+            <tr><th>模块</th><th>内容</th><th>关键验证点</th></tr>
+            <tr><td><strong>W1 工作台</strong></td><td>首页 4 Block + AI 摘要 + 智能日程</td><td>数据渲染、卡片交互、AI 浮层</td></tr>
+            <tr><td><strong>W2 日程处理</strong></td><td>处理面板 + 完成动画 + 日程调整 + 全部任务</td><td>跳过粒度、状态切换、动画流畅</td></tr>
+            <tr><td><strong>W3 商机管理</strong></td><td>4 Tab + 商机详情 + 作战包生成入口</td><td>Tab 切换、详情展开、入口跳转</td></tr>
+            <tr><td><strong>P 作战包</strong></td><td>电话/面谈模式 + 客户概览 + 3 条营销线索</td><td>模式切换、线索展示、预制分支</td></tr>
+            <tr><td><strong>W 辅助页面</strong></td><td>消息/产品搜索/个人中心/全局搜索/客户画像</td><td>原路返回、数据联动</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li><strong>workbench.html（~6800 行）：</strong>单文件包含全部页面，所有模块在手机框架内以 overlay 形式切换</li>
+          <li>客户画像：9 个可展开面板，对应业务数据模型</li>
+          <li>7 个入口 × "原路返回"追踪机制</li>
+          <li>日程调整：单客户粒度跳过 + 防事件冒泡</li>
+          <li>调试面板：方便查看数据状态和页面切换</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"原型迭代 + Bug 驱动修复"：</strong>按优先级逐步实现，每步都可验证。把 Bug 视为设计反馈——每个 Bug 背后都可能暴露一个设计缺陷。及时修复、深入根因、举一反三。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 8 ========== -->
+<div class="section" id="s8">
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot done">8</div>
+      <h2 class="section-title">Step 8：AI 架构设计与产品功能构建</h2>
+      <p class="section-desc"><span class="tag purple">架构决策</span> <span class="tag green">阶段产出：Plan C AI 架构 + 产品大全功能</span></p>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon blue">🎯</div><div><div class="card-title">阶段目标</div></div></div>
+        <p style="font-size:14px;color:var(--text-secondary);">设计 AI 智能服务的架构方案，消除各频道 AI 能力的碎片化；构建产品大全功能，实现多维度产品查询、详情展示和同类型对比。</p>
+      </div>
+
+      <details class="discussion">
+        <summary>🔥🔥 核心架构讨论：Plan A vs B vs C — AI 对话框架构选型</summary>
+        <div class="detail-content">
+          <p><strong>问题：</strong>每个业务频道（客户/产品/商机）都需要 AI 对话能力。是每个频道独立一个对话框，还是共用一个？</p>
+          
+          <table class="data-table" style="margin-bottom:16px;">
+            <tr><th>方案</th><th>描述</th><th>优点</th><th>缺点</th></tr>
+            <tr>
+              <td><strong>Plan A</strong></td>
+              <td>每个频道独立 AI 对话框</td>
+              <td>上下文隔离、定制化强</td>
+              <td>代码冗余、体验割裂、维护成本高</td>
+            </tr>
+            <tr>
+              <td><strong>Plan B</strong></td>
+              <td>全局统一对话框</td>
+              <td>代码统一、维护简单</td>
+              <td>上下文混淆、无法区分频道意图</td>
+            </tr>
+            <tr style="background:var(--primary-light);">
+              <td><strong>✅ Plan C</strong></td>
+              <td><strong>统一引擎 + 频道化面孔</strong></td>
+              <td>复用引擎、上下文感知、体验一致</td>
+              <td>需要频道注册和上下文管理机制</td>
+            </tr>
+          </table>
+
+          <p><strong>用户确认：</strong>"我也同意方案 C"</p>
+          <p><strong>Plan C 的核心设计：</strong></p>
+          <ul style="padding-left:20px;margin:8px 0;">
+            <li><strong>统一引擎（AiChat.engine）：</strong>处理所有 AI 请求的调度、意图识别、响应生成</li>
+            <li><strong>频道注册（channels）：</strong>每个页面注册自己的频道配置（上下文数据、快捷标签、话术模板）</li>
+            <li><strong>面孔切换（activeChannel）：</strong>根据当前页面自动切换频道——用户感知到的是"不同的 AI"，但底层是同一个引擎</li>
+            <li><strong>意图解析（_parseQuery）：</strong>智能识别用户问题是跨频道（如"哪些客户同时有商机和到期产品"）还是单频道</li>
+          </ul>
+          
+          <div class="qa q"><strong>👤 用户追问：</strong>"如果选择了方案C，是不是可以去掉客户首页的 AI 查询框？"</div>
+          <div class="qa a"><strong>🤖 确认：</strong>"是的，全局 AI 对话框取代了各页面的独立查询框。首页 AI 定位为全局问答入口，支持跨频道查询。"</div>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键设计决策：AI 对话框的拖拽手势</summary>
+        <div class="detail-content">
+          <p><strong>用户要求：</strong>"AI对话框应该也在APP边框里啊，对话框是悬浮在当前页面上，占屏比可以是85%，往上滑可以全屏，往下滑可以退出"</p>
+          <p>AI 实现了<strong>三档拖拽手势</strong>：</p>
+          <ul style="padding-left:20px;margin:8px 0;">
+            <li><strong>默认档（85%）：</strong>从底部滑入，覆盖当前页面 85% 区域——保留页面标题可见，用户知道自己在哪</li>
+            <li><strong>全屏档（100%）：</strong>向上拖拽 → 全屏展开——适合深度对话场景</li>
+            <li><strong>关闭：</strong>向下拖拽超出阈值 → 退出对话框，回到当前页面</li>
+          </ul>
+          <p>对话框使用 <code>position: absolute</code> 而非 <code>fixed</code>，确保在手机框架内而非整个视口中显示。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键设计决策：产品对比的三栏布局演进</summary>
+        <div class="detail-content">
+          <p>产品对比功能经历了两次重要的交互升级：</p>
+          <div class="qa q"><strong>第 1 版（弹窗模式）：</strong>对比结果以 modal 弹窗展示。问题：弹窗越出 APP 手机框架边界。</div>
+          <div class="qa a"><strong>第 2 版（页面跳转模式）：</strong>改为整页导航，带有 "← 返回" 按钮。布局为左-中-右三栏：左侧产品信息 | 中间 12 个对比维度标签 | 右侧产品信息。</div>
+          <p><strong>对比维度的 12 个标签：</strong>产品类型、风险等级、期限类型、产品期限、起购金额、业绩基准、历史收益、管理人、产品规模、投资范围、赎回规则、费用说明</p>
+          <p><strong>约束规则：</strong>仅允许<strong>同类型产品</strong>对比（如理财 vs 理财），跨类型禁止（如理财 vs 保险）。</p>
+        </div>
+      </details>
+
+      <details class="discussion">
+        <summary>关键产出：产品大全的多维度查询能力</summary>
+        <div class="detail-content">
+          <p>产品大全页面支持以下多维查询：</p>
+          <table class="data-table">
+            <tr><th>维度</th><th>选项</th></tr>
+            <tr><td>产品类型</td><td>全部 / 理财 / 基金 / 保险 / 存款 / 贷款</td></tr>
+            <tr><td>风险等级</td><td>全部 / R1低风险 / R2中低 / R3中 / R4中高 / R5高</td></tr>
+            <tr><td>关键词搜索</td><td>产品名称模糊搜索</td></tr>
+            <tr><td>排序方式</td><td>默认 / 收益率高→低 / 风险低→高 / 起购低→高</td></tr>
+          </ul>
+          <p>共展示 <strong>11 款产品</strong>，覆盖 5 个品类，每款产品带有 AI 适配度评分和推荐理由。</p>
+        </div>
+      </details>
+
+      <div class="card">
+        <div class="card-header"><div class="card-icon green">📦</div><div><div class="card-title">关键产出</div></div></div>
+        <ul class="output-list">
+          <li><strong>Plan C AI 架构：</strong>统一引擎（AiChat.engine）+ 频道注册（channels）+ 面孔切换（activeChannel）</li>
+          <li><strong>AI 对话框交互：</strong>三档拖拽手势（85% → 100% → 关闭）、APP 框架内悬浮</li>
+          <li><strong>产品大全：</strong>11 款产品 / 5 品类 / 4 维查询 / AI 适配评分</li>
+          <li><strong>产品对比：</strong>三栏布局 / 12 维度 / 同类型约束</li>
+        </ul>
+      </div>
+
+      <div class="method-box">
+        <div class="m-title">🧠 方法论提炼</div>
+        <div class="m-desc"><strong>"方案对比矩阵 → 选出最优解 → 逐步实现"：</strong>面对架构级决策时，不要急于选第一个可行方案。列出所有选项及其优缺点，与用户讨论后选择。好的架构决策能避免后续的大量返工。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== AI 协作方法论总结 ========== -->
+<div class="section" id="method">
+  <h2 class="section-title">🔬 AI 协作方法论总结</h2>
+  <p class="section-desc">整个 Quest 过程中形成的 5 种核心协作模式，可复用于任何 AI 辅助开发项目。</p>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon purple">🗣️</div><div><div class="card-title">模式一：讨论-澄清模式</div></div></div>
+    <p style="font-size:14px;color:var(--text-secondary);"><strong>场景：</strong>面对模糊或复杂的业务概念时。<br><strong>流程：</strong>用户提出问题 → AI 分析并给出初步理解 → 用户纠正/补充 → AI 重新理解 → 达成共识。<br><strong>典型案例：</strong>待办/商机/作战包三者关系经历了 3 轮讨论才最终澄清。<br><strong>关键原则：</strong>AI 不假装理解，用户不放过任何一个模糊点。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon blue">📊</div><div><div class="card-title">模式二：方案对比模式</div></div></div>
+    <p style="font-size:14px;color:var(--text-secondary);"><strong>场景：</strong>存在多个可行方案，各有优劣。<br><strong>流程：</strong>AI 列出 Plan A/B/C → 对比优缺点 → 用户选择 → 执行。<br><strong>典型案例：</strong>AI 对话框架构选型（Plan C 胜出）、偏离场景处理（预制分支 vs 实时生成）。<br><strong>关键原则：</strong>给出结构化的对比而非主观推荐——让用户基于领域知识做决策。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon green">🎯</div><div><div class="card-title">模式三：确认后执行模式</div></div></div>
+    <p style="font-size:14px;color:var(--text-secondary);"><strong>场景：</strong>复杂任务开始前。<br><strong>流程：</strong>AI 生成计划/大纲 → 用户确认 → AI 执行 → 验证结果。<br><strong>典型案例：</strong>六步交互规格计划、每个原型模块的独立计划。<br><strong>关键原则：</strong>"慢计划、快执行"——花时间在计划上，执行就会少走弯路。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon orange">🔁</div><div><div class="card-title">模式四：迭代-反馈模式</div></div></div>
+    <p style="font-size:14px;color:var(--text-secondary);"><strong>场景：</strong>视觉设计、交互细节等需要"看到才能评估"的任务。<br><strong>流程：</strong>AI 快速出原型 → 用户反馈 → AI 立即修正 → 再次验证。<br><strong>典型案例：</strong>首页 4 轮视觉迭代、客户画像从 5 块到 9 面板。<br><strong>关键原则：</strong>快速出可感知的成果，让反馈具体化——"不好看"不如"title 栏太丑、对比度不够"。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon purple">🐛</div><div><div class="card-title">模式五：Bug 驱动修复模式</div></div></div>
+    <p style="font-size:14px;color:var(--text-secondary);"><strong>场景：</strong>原型测试中发现功能问题。<br><strong>流程：</strong>发现问题 → 定位根因 → 修复 → 验证修复 → 举一反三。<br><strong>典型案例：</strong>日程跳过事件冒泡、端口冲突、W4 返回路径错误。<br><strong>关键原则：</strong>Bug 是设计反馈——深入根因而非表面修补，每个 Bug 修正后检查是否有同类问题。</p>
+  </div>
+</div>
+
+<!-- ========== 关键数据总览 ========== -->
+<div class="section" id="data">
+  <h2 class="section-title">📊 关键数据总览</h2>
+  <p class="section-desc">整个 Quest 过程的量化统计。</p>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">8</div><div class="label">关键阶段</div></div>
+    <div class="stat-card"><div class="num">12</div><div class="label">核心业务对象</div></div>
+    <div class="stat-card"><div class="num">~3100</div><div class="label">交互规格行数</div></div>
+    <div class="stat-card"><div class="num">~6800</div><div class="label">原型代码行数</div></div>
+    <div class="stat-card"><div class="num">18</div><div class="label">页面跳转映射</div></div>
+    <div class="stat-card"><div class="num">5</div><div class="label">AI协作模式</div></div>
+    <div class="stat-card"><div class="num">10+</div><div class="label">产出文档数</div></div>
+    <div class="stat-card"><div class="num">11</div><div class="label">产品数据数</div></div>
+    <div class="stat-card"><div class="num">4+</div><div class="label">视觉迭代轮次</div></div>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-header"><div class="card-icon green">📂</div><div><div class="card-title">完整交付物清单</div></div></div>
+    <table class="data-table">
+      <tr><th>类别</th><th>文件</th><th>说明</th></tr>
+      <tr><td>需求分析</td><td>AI营销展业助手-业务数据模型分析.md</td><td>12 个业务对象完整字段定义</td></tr>
+      <tr><td>需求分析</td><td>AI营销展业助手-图片分析与页面布局参考.md</td><td>87 张图片的场景映射</td></tr>
+      <tr><td>需求分析</td><td>核心业务设计模型-待办商机作战包.md</td><td>三层对象关系模型</td></tr>
+      <tr><td>设计系统</td><td>design-system-spec.md</td><td>Design Tokens + 组件规范</td></tr>
+      <tr><td>交互规格</td><td>交互规格-W1-工作台首页.md</td><td>395 行</td></tr>
+      <tr><td>交互规格</td><td>交互规格-W2-日程处理与调整.md</td><td>387 行</td></tr>
+      <tr><td>交互规格</td><td>交互规格-W3-商机管理.md</td><td>351 行</td></tr>
+      <tr><td>交互规格</td><td>交互规格-P-作战包与面谈.md</td><td>556 行</td></tr>
+      <tr><td>交互规格</td><td>交互规格-W-辅助页面.md</td><td>982 行</td></tr>
+      <tr><td>交互规格</td><td>交互规格-AI-全局助手.md</td><td>461 行</td></tr>
+      <tr><td>原型代码</td><td>workbench.html</td><td>~6800 行单文件原型</td></tr>
+      <tr><td>原型代码</td><td>日程调整设计逻辑.md</td><td>225 行</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ========== 总结与展望 ========== -->
+<div class="section">
+  <h2 class="section-title">💡 总结与展望</h2>
+  <p class="section-desc">从这次 Quest 中提炼出可复用的 AI 辅助开发实践经验。</p>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon purple">🔑</div><div><div class="card-title">成功关键因素</div></div></div>
+    <ol style="padding-left:20px;font-size:14px;color:var(--text-secondary);line-height:2.2;">
+      <li><strong>用户主导方向，AI 负责执行。</strong>用户始终掌握"做什么"的决策权，AI 负责"怎么做"的实现细节。这种分工充分发挥了双方优势。</li>
+      <li><strong>规划先行，不急于编码。</strong>在写第一行代码之前，已经完成了需求大纲、数据模型、场景分析、业务建模——基础越扎实，后面越顺利。</li>
+      <li><strong>渐进式构建，每步可验证。</strong>从首页原型开始，逐步叠加功能。每一步都有明确的产出和验证标准，降低了复杂度。</li>
+      <li><strong>数据模型驱动 UI 设计。</strong>UI 的结构来源于数据模型，而非凭空设计。当两者不一致时，以数据模型为准。</li>
+      <li><strong>迭代优于完美。</strong>4 轮视觉迭代、多次 Bug 修复——快速出成果、快速反馈、快速修正，比追求一次完美更高效。</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon blue">🚀</div><div><div class="card-title">后续可延展方向</div></div></div>
+    <ul style="padding-left:20px;font-size:14px;color:var(--text-secondary);line-height:2.2;">
+      <li>将原型从纯前端 HTML 迁移至真实框架（React Native / Flutter）</li>
+      <li>接入真实 AI 大模型 API，实现智能对话和推荐功能</li>
+      <li>根据真实用户测试反馈，迭代交互细节</li>
+      <li>扩展更多业务场景（客户转介绍、活动营销、合规检查等）</li>
+      <li>建立组件库，将 Design Tokens 和组件规范转化为可复用代码</li>
+    </ul>
+  </div>
+</div>
+
+</div><!-- .container -->
+
+<!-- ========== FOOTER ========== -->
+<div class="footer">
+  <p>📱 项目：易会办 — 银行客户经理智能展业助手 APP</p>
+  <p>🛠 开发工具：Qoder AI 智能编码助手</p>
+  <p style="margin-top:8px;opacity:0.6;">© 2026 · 本课件记录了一个完整的 AI 辅助应用软件设计工程过程</p>
+</div>
+
+<!-- Back to top button -->
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// Back to top visibility
+window.addEventListener('scroll', function() {
+  var btn = document.getElementById('backTop');
+  if (window.scrollY > 400) { btn.classList.add('visible'); }
+  else { btn.classList.remove('visible'); }
+});
+
+// Nav active state
+var navLinks = document.querySelectorAll('.sticky-nav a');
+var sections = [];
+navLinks.forEach(function(a) {
+  var id = a.getAttribute('href').replace('#','');
+  var el = document.getElementById(id);
+  if (el) sections.push({ link:a, el:el });
+});
+
+function updateNav() {
+  var scrollY = window.scrollY + 60;
+  var active = null;
+  sections.forEach(function(s) {
+    if (s.el.offsetTop <= scrollY) active = s.link;
+  });
+  navLinks.forEach(function(a) { a.classList.remove('active'); });
+  if (active) active.classList.add('active');
+}
+window.addEventListener('scroll', updateNav);
+updateNav();
+</script>
+
+</body>
+</html>

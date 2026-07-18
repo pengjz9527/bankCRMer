@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>易会办 · AI 智能版业务设计方案（详细版）</title>
+<style>
+:root {
+  --bg:#F5F6FA;--card:#FFFFFF;--card2:#E9ECF2;--primary:#3366FF;--ai:#6C5CE7;--green:#00B578;--orange:#FF8F1F;--red:#E53935;--t1:#1A1D28;--t2:#5A5E6E;--t3:#9A9EAD;--border:#D8DCE5;--r:14px;--rs:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--t1)}
+.slide{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:50px 70px;scroll-snap-align:start;position:relative;overflow:hidden}
+.slide-inner{max-width:1100px;width:100%}
+.pn{position:absolute;bottom:24px;right:40px;font-size:13px;color:var(--t3);letter-spacing:1px}
+h1{font-size:46px;font-weight:800;line-height:1.2;letter-spacing:-1px;margin-bottom:16px}
+h1 span{color:var(--ai)}
+h2{font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:-0.5px}
+h3{font-size:18px;font-weight:600;color:var(--t2);margin-bottom:6px}
+.st{font-size:17px;color:var(--t2);margin-bottom:12px;line-height:1.6}
+.tag{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;margin:0 6px 6px 0}
+.tag.ai{background:rgba(108,92,231,0.2);color:var(--ai)}
+.tag.bl{background:rgba(51,102,255,0.2);color:var(--primary)}
+.tag.gn{background:rgba(0,181,120,0.2);color:var(--green)}
+.tag.or{background:rgba(255,143,31,0.2);color:var(--orange)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.cols37{display:grid;grid-template-columns:3fr 7fr;gap:32px;align-items:center}
+.cols73{display:grid;grid-template-columns:7fr 3fr;gap:32px;align-items:center}
+.card{background:var(--card);border-radius:var(--r);padding:22px;border:1px solid var(--border)}
+.card .ct{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card .cd{font-size:13px;color:var(--t2);line-height:1.7}
+.card.dark{background:var(--card2)}
+/* cover */
+.sc{background:linear-gradient(135deg,#EDEFF5 0%,#E2DFF5 40%,#E8E0FF 70%,#EDEFF5 100%);text-align:center}
+.sc .cl{width:50px;height:3px;background:var(--ai);margin:20px auto;border-radius:2px}
+/* section divider */
+.sd{background:var(--card2);text-align:center}
+.sd .sdn{font-size:13px;color:var(--ai);letter-spacing:2px;margin-bottom:8px}
+.sd h2{font-size:32px}
+/* compare */
+.cb{background:var(--card);border-radius:var(--r);padding:28px 24px;border:1px solid var(--border);text-align:center}
+.cb.old{border-color:#C8CDD8;background:linear-gradient(180deg,#EDEFF5,#E9ECF2)}
+.cb.new{border-color:rgba(108,92,231,0.3);background:linear-gradient(180deg,rgba(108,92,231,0.06),rgba(51,102,255,0.04))}
+.cb .cbi{font-size:36px;margin-bottom:10px}
+.cb .cbt{font-size:17px;font-weight:700;margin-bottom:6px}
+.cb .cbs{font-size:12px;color:var(--t2);margin-bottom:12px}
+.cb .cbitems{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.cb .cbi2{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500}
+.cb.old .cbi2{background:rgba(0,0,0,0.04);color:var(--t2)}
+.cb.new .cbi2{background:rgba(108,92,231,0.12);color:var(--ai)}
+/* architecture */
+.af{display:flex;align-items:center;gap:0;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.ab{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;text-align:center;min-width:130px}
+.ab .ai{font-size:26px;margin-bottom:6px}
+.ab .at{font-size:14px;font-weight:700}
+.ab .ad{font-size:11px;color:var(--t2);margin-top:4px}
+.aa{font-size:22px;color:var(--ai);padding:0 6px;font-weight:700}
+/* phone */
+.pf{width:190px;height:360px;background:var(--card);border-radius:22px;border:3px solid var(--border);overflow:hidden;margin:0 auto}
+.ph{height:32px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--t2)}
+.pb{padding:10px}
+.pt{background:var(--card2);border-radius:6px;padding:7px;margin-bottom:5px;font-size:10px;display:flex;align-items:center;gap:5px}
+.pt .pi{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px}
+.pi.w{background:var(--primary)}.pi.c{background:var(--green)}.pi.p{background:var(--orange)}.pi.m{background:var(--ai)}
+.pbtm{position:absolute;bottom:0;left:0;right:0;height:36px;background:var(--card2);display:flex;align-items:center;justify-content:space-around;padding:0 4px}
+.pbtm span{font-size:9px;color:var(--t2);text-align:center;width:45px}
+.pbtm span.ac{color:var(--primary);font-weight:600}
+/* blocks */
+.bg{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.bc{background:var(--card);border-radius:var(--r);padding:18px;border:1px solid var(--border);position:relative;overflow:hidden}
+.bc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
+.bc.b1::before{background:var(--ai)}.bc.b2::before{background:var(--primary)}.bc.b3::before{background:var(--orange)}.bc.b4::before{background:var(--green)}
+.bc .bi{font-size:20px;margin-bottom:6px}
+.bc .bt{font-size:14px;font-weight:700;margin-bottom:3px}
+.bc .bd{font-size:12px;color:var(--t2);line-height:1.6}
+/* flow */
+.fr{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center}
+.fn{padding:12px 16px;border-radius:var(--rs);font-size:12px;font-weight:600;text-align:center;white-space:nowrap}
+.fn.src{background:rgba(255,143,31,0.1);color:#B8700A;border:1px solid rgba(255,143,31,0.25)}
+.fn.opp{background:rgba(108,92,231,0.1);color:#5B4CC4;border:1px solid rgba(108,92,231,0.3)}
+.fn.pkg{background:rgba(51,102,255,0.1);color:#2B56D4;border:1px solid rgba(51,102,255,0.3)}
+.fn.todo{background:rgba(0,181,120,0.1);color:#008A5C;border:1px solid rgba(0,181,120,0.25)}
+.fn.act{background:rgba(229,57,53,0.08);color:var(--red);border:1px solid rgba(229,57,53,0.2)}
+.fa{font-size:18px;color:var(--t3);padding:0 3px}
+.fa.hl{color:var(--ai)}
+.fp{width:2px;height:20px;background:var(--ai);margin:0 auto;border-radius:1px}
+.fl{font-size:10px;color:var(--t3);writing-mode:vertical-rl;letter-spacing:2px;padding:6px 4px;border-left:2px solid var(--border);flex-shrink:0}
+/* objects */
+.ol{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);margin-bottom:8px}
+.ol .on{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.ol.l1 .on{background:rgba(108,92,231,0.2);color:var(--ai)}
+.ol.l2 .on{background:rgba(51,102,255,0.2);color:var(--primary)}
+.ol.l3 .on{background:rgba(0,181,120,0.2);color:var(--green)}
+.ol .ot{font-size:15px;font-weight:700}.ol .od{font-size:12px;color:var(--t2);margin-top:2px}
+.oc{border-left:2px dashed var(--border);padding-left:16px;margin-left:16px;margin-bottom:8px}
+.oc .oi{font-size:12px;color:var(--t2);padding:3px 0}
+/* AI grid */
+.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ac{background:var(--card);border-radius:var(--r);padding:18px;border:1px solid var(--border);border-top:3px solid var(--ai)}
+.ac .an{font-size:14px;font-weight:700;margin-bottom:5px}
+.ac .aw{font-size:11px;color:var(--primary);margin-bottom:6px}
+.ac .ad2{font-size:12px;color:var(--t2);line-height:1.6}
+/* stats */
+.sr{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.si{background:var(--card);border-radius:var(--r);padding:18px 24px;text-align:center;border:1px solid var(--border);min-width:110px}
+.si .sn{font-size:28px;font-weight:800}.si .sn.ai{color:var(--ai)}.si .sn.bl{color:var(--primary)}.si .sn.gn{color:var(--green)}
+.si .sl{font-size:11px;color:var(--t2);margin-top:3px}
+/* detail list */
+.dl{list-style:none;padding:0}
+.dl li{padding:5px 0;font-size:13px;color:var(--t2);padding-left:18px;position:relative;line-height:1.7}
+.dl li::before{content:'·';position:absolute;left:4px;color:var(--ai);font-weight:700}
+/* summary */
+.sm{background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(51,102,255,0.08));border-radius:var(--r);padding:28px 32px;text-align:center;border:1px solid rgba(108,92,231,0.25)}
+.sm .smi{font-size:36px;margin-bottom:12px}
+.sm .smt{font-size:19px;font-weight:700;margin-bottom:8px}
+.sm .smd{font-size:14px;color:var(--t2);line-height:1.8;max-width:650px;margin:0 auto}
+/* nav dots */
+.nd{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:8px}
+.nd a{width:8px;height:8px;border-radius:50%;background:var(--t3);transition:all 0.3s}
+.nd a.ac2,.nd a:hover{background:var(--ai);transform:scale(1.3)}
+/* section page */
+.sec{text-align:center;background:var(--card2)}
+.sec .sec-num{font-size:80px;font-weight:900;color:rgba(108,92,231,0.12);line-height:1}
+.sec h2{margin-top:-20px}
+/* comparison table */
+.ctbl{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+.ctbl th{background:var(--card2);padding:10px 14px;text-align:left;font-weight:600;color:var(--t2);font-size:12px;border-bottom:2px solid var(--border)}
+.ctbl td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--t2);line-height:1.6}
+.ctbl tr td:first-child{color:var(--t1);font-weight:600}
+.ctbl .hi td{background:rgba(108,92,231,0.08)}
+/* ===== Phone Mockup UI System ===== */
+.mu{width:260px;flex-shrink:0;background:#FFFFFF;border-radius:24px;border:3px solid #D0D5DE;overflow:hidden;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.mu-top{background:#F0F2F6;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;font-size:9px;color:var(--t3)}
+.mu-nav{background:#F0F2F6;padding:6px 14px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;border-bottom:1px solid #E2E5EC;color:var(--t1)}
+.mu-nav .mub{color:var(--primary);font-size:11px}
+.mu-body{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
+.mu-body.sm{max-height:340px}
+.mu-card{background:#F8F9FC;border-radius:10px;padding:12px;border:1px solid #E4E7ED}
+.mu-card .muc-t{font-size:12px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px;color:var(--t1)}
+.mu-card .muc-d{font-size:10px;color:var(--t2);line-height:1.5}
+.mu-card.ai{border-left:3px solid var(--ai);background:rgba(108,92,231,.04)}
+.mu-card.bl{border-left:3px solid var(--primary);background:#F8F9FC}
+.mu-card.gn{border-left:3px solid var(--green);background:#F8F9FC}
+.mu-card.or{border-left:3px solid var(--orange);background:#F8F9FC}
+.mu-row{display:flex;gap:7px}
+.mu-row .mu-card{flex:1}
+.mu-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:600}
+.mu-badge.ai{background:rgba(108,92,231,.12);color:var(--ai)}
+.mu-badge.bl{background:rgba(51,102,255,.12);color:var(--primary)}
+.mu-badge.gn{background:rgba(0,181,120,.12);color:var(--green)}
+.mu-badge.or{background:rgba(255,143,31,.12);color:#B8700A}
+.mu-badge.rd{background:rgba(229,57,53,.1);color:var(--red)}
+.mu-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.mu-tab{padding:4px 10px;border-radius:12px;font-size:10px;color:var(--t2);background:#F0F2F6;border:1px solid #E4E7ED;cursor:default}
+.mu-tab.on{color:var(--primary);border-color:var(--primary);background:rgba(51,102,255,.08)}
+.mu-tab.on.ai{color:var(--ai);border-color:var(--ai);background:rgba(108,92,231,.08)}
+.mu-tab.on.gn{color:var(--green);border-color:var(--green);background:rgba(0,181,120,.08)}
+.mu-tab.on.or{color:#B8700A;border-color:var(--orange);background:rgba(255,143,31,.08)}
+.mu-list{display:flex;flex-direction:column;gap:6px}
+.mu-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#F8F9FC;border-radius:8px;font-size:10px;border:1px solid #E4E7ED}
+.mu-item .mui-ico{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:rgba(108,92,231,.1)}
+.mu-item .mui-info{flex:1;min-width:0}
+.mu-item .mui-name{font-size:11px;font-weight:600;color:var(--t1)}
+.mu-item .mui-sub{font-size:9px;color:var(--t2)}
+.mu-item .mui-tag{font-size:9px;padding:2px 7px;border-radius:8px;flex-shrink:0}
+.mu-prog{height:3px;background:#E4E7ED;border-radius:2px;margin-top:4px;overflow:hidden}
+.mu-prog .mu-fill{height:100%;border-radius:2px}
+.mu-fill.ai{background:var(--ai)}.mu-fill.bl{background:var(--primary)}.mu-fill.gn{background:var(--green)}.mu-fill.or{background:var(--orange)}
+.mu-dots{display:flex;gap:4px;justify-content:center}
+.mu-dots span{width:5px;height:5px;border-radius:50%;background:#D0D4DC}
+.mu-dots span.on{background:var(--ai)}
+.mu-float{position:absolute;bottom:50px;right:10px;width:36px;height:36px;border-radius:50%;background:var(--ai);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(108,92,231,.3)}
+.mu-bbar{display:flex;justify-content:space-around;padding:6px 10px;background:#F0F2F6;border-top:1px solid #E2E5EC;font-size:9px}
+.mu-bbar span{color:var(--t3);text-align:center}
+.mu-bbar span.on{color:var(--primary);font-weight:600}
+/* msg bubbles */
+.mu-msg{display:flex;flex-direction:column;gap:6px}
+.mu-msg .mu-bub{max-width:85%;padding:7px 10px;border-radius:10px;font-size:10px;line-height:1.5}
+.mu-msg .mu-bub.ai{background:rgba(108,92,231,.08);color:var(--t1);align-self:flex-start;border-bottom-left-radius:3px}
+.mu-msg .mu-bub.usr{background:rgba(51,102,255,.12);color:var(--t1);align-self:flex-end;border-bottom-right-radius:3px}
+.mu-msg .mu-chip{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.mu-msg .mu-chip span{padding:3px 8px;border-radius:8px;font-size:9px;background:rgba(108,92,231,.08);color:var(--ai)}
+/* dual view */
+.mu-dual{display:flex;gap:4px}
+.mu-dual .mu-half{flex:1;background:#F8F9FC;border-radius:8px;padding:8px;font-size:9px;position:relative;border:1px solid #E4E7ED}
+.mu-dual .mu-half .muh-lb{font-size:8px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.mu-dual .mu-half.priv{border:1px solid rgba(108,92,231,.25);background:rgba(108,92,231,.03)}
+.mu-dual .mu-half.show{border:1px solid rgba(0,181,120,.25);background:rgba(0,181,120,.03)}
+/* label */
+.mu-label{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--t3);white-space:nowrap}
+@media(max-width:768px){
+  .slide{padding:36px 20px}
+  .cols2,.cols37,.cols73{grid-template-columns:1fr;gap:20px}
+  h1{font-size:30px}h2{font-size:22px}
+  .ag{grid-template-columns:1fr}.bg{grid-template-columns:1fr}
+  .pf{width:150px;height:280px}.nd{display:none}
+  .mu{width:200px}
+}
+</style>
+</head>
+<body>
+<div class="nd" id="nd"></div>
+
+<!-- ===== P1: 封面 ===== -->
+<div class="slide sc" id="s1"><div class="slide-inner" style="text-align:center">
+  <div class="tag ai" style="margin-bottom:12px">业务设计方案 · AI 智能版 · 详细版</div>
+  <h1 style="font-size:50px">易会办<br><span>银行客户经理智能展业助手</span></h1>
+  <div class="cl"></div>
+  <p class="st" style="max-width:580px;margin:0 auto">以<span style="color:var(--ai);font-weight:700">数据分析决策</span>和<span style="color:var(--primary);font-weight:700">AI 赋能提效</span>为核心<br>从"工具"到"助手"的新一代展业平台设计方案</p>
+  <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:28px">
+    <span style="color:var(--t2);font-size:12px">📱 4-Tab 导航架构</span>
+    <span style="color:var(--t2);font-size:12px">🧠 Plan C AI 引擎</span>
+    <span style="color:var(--t2);font-size:12px">🔄 待办→商机→作战包闭环</span>
+    <span style="color:var(--t2);font-size:12px">📊 6 大 AI 服务场景</span>
+  </div>
+</div><span class="pn">01</span></div>
+
+<!-- ===== P2: 目录 ===== -->
+<div class="slide sd" id="s2"><div class="slide-inner">
+  <div class="sdn">CONTENTS</div>
+  <h2>方案目录</h2>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:24px;text-align:left;max-width:700px;margin-left:auto;margin-right:auto">
+    <div class="card dark"><div class="ct"><span class="tag ai">01</span> 价值主张对比</div><div class="cd">传统工具 vs AI智能版 · 范式转移 · 差异化优势</div></div>
+    <div class="card dark"><div class="ct"><span class="tag ai">02</span> 设计理念</div><div class="cd">三层架构 · 数据驱动 · AI赋能 · 闭环行动</div></div>
+    <div class="card dark"><div class="ct"><span class="tag bl">03</span> 整体布局设计</div><div class="cd">4-Tab导航 · 页面流转 · 一屏一任务原则</div></div>
+    <div class="card dark"><div class="ct"><span class="tag bl">04</span> 工作台核心任务</div><div class="cd">4大Block · AI摘要 · 智能日程 · 商机看板 · 新客拓展</div></div>
+    <div class="card dark"><div class="ct"><span class="tag gn">05</span> 业务对象建模</div><div class="cd">三层对象关系 · 商机来源 · 作战包 · 待办分类</div></div>
+    <div class="card dark"><div class="ct"><span class="tag gn">06</span> 闭环工作流</div><div class="cd">端到端链路 · 面谈双视图 · 偏离分支 · 状态回写</div></div>
+    <div class="card dark"><div class="ct"><span class="tag or">07</span> AI赋能设计</div><div class="cd">Plan C架构 · 6大AI服务 · 统一交互形式</div></div>
+    <div class="card dark"><div class="ct"><span class="tag or">08</span> 设计成果全景</div><div class="cd">量化指标 · 交付物清单 · 后续展望</div></div>
+  </div>
+</div><span class="pn">02</span></div>
+
+<!-- ===== SECTION 1: 价值主张 ===== -->
+<div class="slide sec" id="s3"><div class="slide-inner">
+  <div class="sec-num">01</div><h2>价值主张对比</h2>
+  <p class="st">传统展业工具 vs AI 智能版 — 两种设计哲学的碰撞</p>
+</div><span class="pn">03</span></div>
+
+<!-- P4: 传统工具的局限 -->
+<div class="slide" id="s4"><div class="slide-inner">
+  <h2>传统展业工具：<span style="color:var(--t2)">以"操作"为中心</span></h2>
+  <p class="st">核心问题：工具等着人来操作，人成为信息处理的瓶颈</p>
+  <div class="cols2">
+    <div class="cb old">
+      <div class="cbi">🖥️</div><div class="cbt">传统展业工具</div>
+      <div class="cbs">设计主张：把功能做全，让客户经理自己查找和使用</div>
+      <div class="cbitems">
+        <span class="cbi2">功能堆砌</span><span class="cbi2">被动响应</span><span class="cbi2">经验驱动</span><span class="cbi2">人找信息</span><span class="cbi2">工具思维</span>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px"><div class="ct">❌ 痛点 1：信息过载</div><div class="cd">海量客户数据分散在多个系统，客户经理需要手动筛选、比对、判断</div></div>
+      <div class="card" style="margin-bottom:10px"><div class="ct">❌ 痛点 2：响应滞后</div><div class="cd">产品到期、大额异动等商机信号需人工巡检，往往错过最佳触达时机</div></div>
+      <div class="card"><div class="ct">❌ 痛点 3：决策依赖经验</div><div class="cd">推荐什么产品、用什么话术、优先联系谁——全靠个人经验，新人上手慢</div></div>
+    </div>
+  </div>
+</div><span class="pn">04</span></div>
+
+<!-- P5: AI智能版的设计主张 -->
+<div class="slide" id="s5"><div class="slide-inner">
+  <h2>AI 智能版：以<span class="hl" style="color:var(--ai)">"决策+赋能"</span>为核心</h2>
+  <p class="st">核心转变：AI 主动分析、推荐、排程，客户经理聚焦于决策和关系经营</p>
+  <div class="cols2">
+    <div class="cb new">
+      <div class="cbi">🤖</div><div class="cbt" style="color:#C4B5FF">易会办 AI 智能版</div>
+      <div class="cbs">设计主张：<strong style="color:var(--ai)">AI 先算一步，人再做决策</strong></div>
+      <div class="cbitems">
+        <span class="cbi2">数据驱动</span><span class="cbi2">主动经营</span><span class="cbi2">AI 辅助决策</span><span class="cbi2">信息找人</span><span class="cbi2">助手思维</span>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--ai)"><div class="ct">✅ 主动发现</div><div class="cd">AI 自动巡检商机信号——产品到期、大额异动、行为变化，主动推送到首页</div></div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--ai)"><div class="ct">✅ 智能决策</div><div class="cd">AI 基于客户画像自动推荐产品、生成话术、评估优先级，客户经理做最终判断</div></div>
+      <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">✅ 自动排程</div><div class="cd">AI 综合优先级、距离、时段偏好自动生成最优拜访顺序，减少规划时间</div></div>
+    </div>
+  </div>
+</div><span class="pn">05</span></div>
+
+<!-- P6: 对比矩阵 -->
+<div class="slide" id="s6"><div class="slide-inner">
+  <h2>范式对比：<span style="color:var(--ai)">从"记录系统"到"决策系统"</span></h2>
+  <p class="st">不是功能多与少的区别，而是设计哲学的底层转变</p>
+  <table class="ctbl">
+    <tr><th width="20%">对比维度</th><th width="40%">传统展业工具</th><th width="40%">易会办 AI 智能版</th></tr>
+    <tr><td>核心理念</td><td>功能齐全的"工具箱"</td><td style="color:#C4B5FF">会思考的"智能助手"</td></tr>
+    <tr class="hi"><td>信息流向</td><td>人 → 查找 → 信息（人找信息）</td><td style="color:#C4B5FF">AI → 分析 → 推送 → 人（信息找人）</td></tr>
+    <tr><td>商机发现</td><td>客户经理主动巡检、经验判断</td><td style="color:#C4B5FF">系统规则引擎 + AI 模型自动挖掘</td></tr>
+    <tr class="hi"><td>日程安排</td><td>手动添加、自行排程</td><td style="color:#C4B5FF">AI 自动排程：优先级×距离×偏好</td></tr>
+    <tr><td>产品推荐</td><td>按分类浏览、手动比较</td><td style="color:#C4B5FF">基于客户画像的智能匹配 + AI 自然语言查询</td></tr>
+    <tr class="hi"><td>面谈辅助</td><td>翻看笔记、凭记忆应对</td><td style="color:#C4B5FF">作战包（客户概览+线索+话术）+ 偏离预制分支</td></tr>
+    <tr><td>工作闭环</td><td>做完即止，无系统反馈</td><td style="color:#C4B5FF">执行→回写→下一轮，形成持续优化循环</td></tr>
+    <tr class="hi"><td>新人上手</td><td>依赖师傅带教，数月适应</td><td style="color:#C4B5FF">AI 引导每一步操作，快速独立展业</td></tr>
+  </table>
+</div><span class="pn">06</span></div>
+
+<!-- ===== SECTION 2: 设计理念 ===== -->
+<div class="slide sec" id="s7"><div class="slide-inner">
+  <div class="sec-num">02</div><h2>设计理念</h2>
+  <p class="st">三层架构：数据驱动 × AI 赋能 × 行动闭环</p>
+</div><span class="pn">07</span></div>
+
+<!-- P8: 三层架构总览 -->
+<div class="slide" id="s8"><div class="slide-inner">
+  <h2>设计理念：<span style="color:var(--ai)">三层架构</span></h2>
+  <p class="st">每一层承上启下，形成"数据 → 智能 → 行动"的递进关系</p>
+  <div class="af">
+    <div class="ab" style="border-top:3px solid var(--green)"><div class="ai">📊</div><div class="at">数据层</div><div class="ad">客户画像 · 产品数据<br>行为轨迹 · 商机信号</div></div>
+    <div class="aa">→</div>
+    <div class="ab" style="border-top:3px solid var(--ai)"><div class="ai">🧠</div><div class="at">智能层</div><div class="ad">AI 引擎 · 规则引擎<br>意图解析 · 决策推荐</div></div>
+    <div class="aa">→</div>
+    <div class="ab" style="border-top:3px solid var(--primary)"><div class="ai">⚡</div><div class="at">行动层</div><div class="ad">待办 · 商机 · 作战包<br>日程 · 面谈 · 跟进</div></div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;justify-content:center">
+    <span class="tag gn">聚焦核心任务</span><span class="tag ai">数据驱动决策</span><span class="tag bl">AI 无缝嵌入</span><span class="tag gn">闭环工作流</span>
+  </div>
+</div><span class="pn">08</span></div>
+
+<!-- P9: 数据层 + 智能层详解 -->
+<div class="slide" id="s9"><div class="slide-inner">
+  <h2>数据层 → 智能层：<span style="color:var(--ai)">从"有什么"到"意味着什么"</span></h2>
+  <div class="cols2">
+    <div>
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--green)"><div class="ct">📊 数据层</div><div class="cd">整合三大数据源，形成统一客户视图：</div>
+        <ul class="dl"><li>客户基础信息（姓名/年龄/职业/家庭/等级）</li><li>资产与产品（AUM/持有产品/定存到期日）</li><li>行为轨迹（交易频次/渠道偏好/联系记录）</li></ul>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--ai)"><div class="ct">🧠 智能层</div><div class="cd">Plan C 统一引擎，双路处理：</div>
+        <ul class="dl"><li><strong>规则引擎</strong>：产品到期提醒、大额异动预警、生日提醒——确定性规则，实时响应</li><li><strong>AI 引擎</strong>：商机挖掘、自然语言查询、产品推荐——大模型推理，智能分析</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:8px"><div class="ct">🔗 连接逻辑</div><div class="cd">数据层为智能层提供"原材料"——没有完整准确的客户画像，AI 就无法给出有价值的推荐。数据层和智能层之间是<strong style="color:var(--ai)">单向依赖</strong>关系：数据是基础，智能是增值。</div></div>
+</div><span class="pn">09</span></div>
+
+<!-- P10: 行动层详解 -->
+<div class="slide" id="s10"><div class="slide-inner">
+  <h2>智能层 → 行动层：<span style="color:var(--primary)">从"知道该做什么"到"去做了"</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--primary)"><div class="ct">⚡ 行动层三大载体</div>
+      <ul class="dl"><li><strong>待办</strong>：智能层输出的可执行任务（商机待办/事务性待办），排入日程</li><li><strong>商机</strong>：智能层发现的营销机会，关联作战包，驱动主动触达</li><li><strong>作战包</strong>：智能层生成的面谈/电话准备包，包含概览、线索、话术</li></ul>
+    </div>
+    <div class="card"><div class="ct">🔄 闭环反馈</div><div class="cd">执行结果回写到数据层——面谈记录、客户反馈、成交状态更新客户画像，为下一轮 AI 分析提供更丰富的数据基础，形成<strong style="color:var(--ai)">持续优化循环</strong>。</div></div>
+  </div>
+  <div class="card" style="margin-top:12px;text-align:center"><p style="font-size:13px;color:var(--t2)"><strong style="color:var(--ai)">设计原则：</strong>聚焦核心任务 · 数据驱动决策 · AI 无缝嵌入 · 闭环工作流</p></div>
+</div><span class="pn">10</span></div>
+
+<!-- ===== SECTION 3: 整体布局 ===== -->
+<div class="slide sec" id="s11"><div class="slide-inner">
+  <div class="sec-num">03</div><h2>整体布局设计</h2>
+  <p class="st">4-Tab 导航架构 · 一屏一任务 · 减少跳转层级</p>
+</div><span class="pn">11</span></div>
+
+<!-- P12: 4-Tab总览 -->
+<div class="slide" id="s12"><div class="slide-inner">
+  <h2>4-Tab 底部导航<span style="color:var(--ai)">架构总览</span></h2>
+  <div class="cols37">
+    <div style="text-align:center"><div class="pf">
+      <div class="ph">易会办</div>
+      <div class="pb">
+        <div class="pt"><div class="pi w">📋</div>工作台 · 首页</div>
+        <div class="pt"><div class="pi c">👥</div>客户 · 画像+查询</div>
+        <div class="pt"><div class="pi p">📦</div>产品 · 大全+对比</div>
+        <div class="pt"><div class="pi m">👤</div>我的 · 业绩+设置</div>
+      </div>
+      <div class="pbtm"><span class="ac">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div></div>
+    <div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--primary)"><div class="ct">🏠 Tab 1 · 工作台</div><div class="cd">首页仪表盘：AI摘要 + 智能日程 + 商机看板 + 新客拓展。客户经理打开 APP 即见最需关注的核心任务，无需跳转。</div></div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--green)"><div class="ct">👥 Tab 2 · 客户</div><div class="cd">客户列表 + 360画像（9可展开面板）+ AI自然语言查询 + 多模态搜索。全方位客户洞察入口。</div></div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--orange)"><div class="ct">📦 Tab 3 · 产品</div><div class="cd">产品大全（11款/5品类）+ 多维筛选 + AI查询 + 详情 + 同类型对比（三栏布局）。智能产品检索。</div></div>
+      <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">👤 Tab 4 · 我的</div><div class="cd">业绩看板 + 管户清单 + 日程管理 + 知识库 + 设置。个人工作全景与偏好管理。</div></div>
+    </div>
+  </div>
+</div><span class="pn">12</span></div>
+
+<!-- P13: 工作台Tab详解 -->
+<div class="slide" id="s13"><div class="slide-inner">
+  <h2>Tab 1 · 工作台：<span style="color:var(--ai)">首页即决策中心</span></h2>
+  <p class="st">客户经理打开 APP 的第一眼，决定了一天的工作起点</p>
+  <div class="cols73">
+    <div>
+      <div class="card" style="margin-bottom:10px"><div class="ct">🎯 设计定位</div><div class="cd">工作台不是功能入口的堆砌，而是<strong style="color:var(--ai)">AI 决策输出的第一展示面</strong>——AI 算好今天该关注什么，经理直接查看和执行。</div></div>
+      <div class="card"><div class="ct">📊 4 大 Block 布局逻辑</div><div class="cd">从上到下按<strong>紧急度→重要度→机会度→增长度</strong>排列：AI摘要（最紧急的事）→ 智能日程（今天的安排）→ 商机看板（本周的机会）→ 新客拓展（长期的增长）。</div></div>
+    </div>
+    <div class="mu">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 工作台</div>
+      <div class="mu-body sm">
+        <div class="mu-card ai"><div class="muc-t"><span>🧠</span> AI 智能摘要</div><div class="muc-d">① 王建国定存25万 7.18到期<br>② 孙丽丽昨日转出30万<br>③ 本周3个新商机待处理</div></div>
+        <div class="mu-tabs"><span class="mu-tab on">📅 今日日程</span><span class="mu-tab">📋 全部</span></div>
+        <div class="mu-card bl"><div class="muc-t"><span>🕐 上午</span><span class="mu-badge bl">2项</span></div><div class="mu-dots" style="margin-bottom:4px"><span class="on"></span><span></span></div><div class="muc-d">王建国 · 定存到期提醒<br>📍 2.3km · ☎️ 电话触达</div></div>
+        <div class="mu-card or"><div class="muc-t"><span>💡 商机看板</span><span class="mu-badge or">5</span></div><div class="mu-tabs"><span class="mu-tab on">代发</span><span class="mu-tab">流失</span><span class="mu-tab">AI挖掘</span></div></div>
+        <div class="mu-card gn"><div class="muc-t"><span>🎯 新客拓展</span><span class="mu-badge gn">3位</span></div><div class="muc-d">李芳华 · 潜力评分 82%<br>与管户王建国相似，建议触达</div></div>
+      </div>
+      <div class="mu-float">🤖</div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">13</span></div>
+
+<!-- P14: 客户+产品Tab详解 -->
+<div class="slide" id="s14"><div class="slide-inner">
+  <h2>Tab 2-3：<span style="color:var(--ai)">客户洞察</span> + <span style="color:var(--orange)">产品检索</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--green)"><div class="ct">👥 Tab 2 · 客户频道</div><div class="cd">
+      <strong>核心能力：</strong><ul class="dl">
+        <li>客户列表：支持等级/风险/产品/活跃度筛选</li>
+        <li>360画像：9 个可展开面板（基础信息→家庭→经营→财富→信贷→行为→产品→商机→沟通）</li>
+        <li>AI 查询：自然语言输入"AUM超50万的稳健型客户" → 智能筛选</li>
+        <li>多模态搜索：文字 + 语音 + 扫码</li>
+        <li>7 个入口 × 原路返回追踪</li>
+      </ul></div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--orange)"><div class="ct">📦 Tab 3 · 产品频道</div><div class="cd">
+      <strong>核心能力：</strong><ul class="dl">
+        <li>产品大全：11 款产品 / 5 品类（理财/基金/存款/保险）</li>
+        <li>多维查询：类型 × 风险 × 关键词 × 排序（AI推荐/收益/风险/起购）</li>
+        <li>AI 查询：自然语言"R2中低风险的短期理财" → 智能匹配</li>
+        <li>产品详情：5 大模块（基本信息/业绩/投资赎回/亮点/AI推荐理由）</li>
+        <li>产品对比：同类型约束 × 12 维度 × 三栏布局</li>
+      </ul></div>
+    </div>
+  </div>
+</div><span class="pn">14</span></div>
+
+<!-- P15: 我的Tab + 页面流转 -->
+<div class="slide" id="s15"><div class="slide-inner">
+  <h2>Tab 4 · 我的 + <span style="color:var(--ai)">页面流转关系</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">👤 Tab 4 · 个人中心</div><div class="cd">
+      <strong>功能模块：</strong><ul class="dl">
+        <li>业绩看板：销售业绩/排名/趋势（支持原路返回）</li>
+        <li>我的客户：管户清单与变动记录</li>
+        <li>日程管理：日历视图 + 全部待办列表</li>
+        <li>知识库：产品知识/合规手册/营销技巧</li>
+        <li>设置：消息通知/偏好/关于</li>
+      </ul></div>
+    </div>
+    <div class="card"><div class="ct">🔄 核心页面流转</div><div class="cd">
+      <strong>18 个页面跳转映射，全部闭环验证：</strong><br>
+      工作台 → 客户列表 → 客户画像 → 产品推荐 → 产品详情 → 产品对比 → 回到客户画像 → 回到工作台<br><br>
+      <strong>关键原则：</strong>每个页面都有"从哪来、回哪去"的明确路径，不存在"死胡同"页面。跨页面的客户画像查看均支持<strong style="color:var(--ai)">原路返回</strong>（source 参数追踪）。
+    </div></div>
+  </div>
+</div><span class="pn">15</span></div>
+
+<!-- ===== SECTION 4: 工作台核心任务 ===== -->
+<div class="slide sec" id="s16"><div class="slide-inner">
+  <div class="sec-num">04</div><h2>工作台核心任务</h2>
+  <p class="st">4 大 Block · AI 驱动的决策仪表盘</p>
+</div><span class="pn">16</span></div>
+
+<!-- P17: 4大Block总览 -->
+<div class="slide" id="s17"><div class="slide-inner">
+  <h2>工作台：<span style="color:var(--ai)">4 大 Block 布局</span></h2>
+  <div class="cols73">
+    <div class="bg">
+      <div class="bc b1"><div class="bi">🧠</div><div class="bt">Block 1 · AI 智能摘要</div><div class="bd">今日最需关注的 3 件事<br>跨频道数据聚合：商机+到期+预警<br>紫色左边框 + AI 头像 + 简洁文字</div><span class="tag ai" style="margin-top:4px">🤖 AI 驱动</span></div>
+      <div class="bc b2"><div class="bi">📅</div><div class="bt">Block 2 · 智能日程</div><div class="bd">上午/下午待办客户轮播<br>AI 自动排程（优先级·距离·偏好）<br>点击处理 → 电话/微信/面谈</div><span class="tag bl" style="margin-top:4px">🤖 AI 排程</span></div>
+      <div class="bc b3"><div class="bi">💡</div><div class="bt">Block 3 · 商机看板</div><div class="bd">4 类商机统一视图<br>代发到账 · 流失预警 · AI挖掘 · 我的<br>点击进入商机管理页</div><span class="tag or" style="margin-top:4px">🤖 AI 挖掘</span></div>
+      <div class="bc b4"><div class="bi">🎯</div><div class="bt">Block 4 · 新客拓展</div><div class="bd">AI 基于管户画像推荐潜客<br>潜在价值评分 + 匹配理由<br>点击查看详情并添加</div><span class="tag gn" style="margin-top:4px">🤖 AI 推荐</span></div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 工作台</div>
+      <div class="mu-body sm">
+        <div class="mu-card ai"><div class="muc-t"><span>🧠</span>AI摘要</div><div class="muc-d">今日需关注：2个到期·1个异动</div></div>
+        <div class="mu-card bl"><div class="muc-t"><span>📅</span>智能日程 <span class="mu-badge bl">4项</span></div><div class="mu-dots" style="margin-bottom:3px"><span class="on"></span><span></span><span></span></div><div class="muc-d">🕐 上午：王建国·定存到期<br>🕑 下午：孙丽丽·异动跟进</div></div>
+        <div class="mu-card or"><div class="muc-t"><span>💡</span>商机看板 <span class="mu-badge or">5</span></div><div class="mu-tabs"><span class="mu-tab on or">代发2</span><span class="mu-tab">流失1</span><span class="mu-tab">AI挖掘2</span></div></div>
+        <div class="mu-card gn"><div class="muc-t"><span>🎯</span>新客拓展 <span class="mu-badge gn">3</span></div><div class="muc-d">李芳华 82% · 张明辉 76%<br>陈志远 68%</div></div>
+      </div>
+      <div class="mu-float">🤖</div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">17</span></div>
+
+<!-- P18: Block1 AI摘要 -->
+<div class="slide" id="s18"><div class="slide-inner">
+  <h2>Block 1 · AI 智能摘要：<span style="color:var(--ai)">一眼看全局</span></h2>
+  <div class="cols73">
+    <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">🧠 设计逻辑</div><div class="cd">
+      <strong>不是简单的通知列表，而是 AI 聚合分析后的优先级排序：</strong><br>
+      AI 遍历今日所有待办、商机、到期产品、异动信号，综合<strong>紧急度 × 金额 × 客户等级</strong>，输出最需要关注的 Top 3。<br><br>
+      <strong>示例输出：</strong><br>
+      ① 王建国定存 25 万 7月18日到期（3天后）<br>
+      ② 孙丽丽昨日转出 30 万，活期仅剩 5 万<br>
+      ③ 本周 3 个新商机待处理，预计转化 45 万
+    </div></div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 工作台</div>
+      <div class="mu-body sm">
+        <div class="mu-card ai" style="border-left-width:4px"><div class="muc-t"><span>🧠</span>AI 智能摘要 <span class="mu-badge ai">今日</span></div><div class="muc-d">
+          <div style="display:flex;gap:6px;flex-direction:column">
+            <div style="display:flex;gap:6px;align-items:flex-start"><span style="color:var(--red);flex-shrink:0">🔴</span><span>王建国 · 定存25万 7月18日到期</span></div>
+            <div style="display:flex;gap:6px;align-items:flex-start"><span style="color:var(--orange);flex-shrink:0">🟠</span><span>孙丽丽 · 昨日转出30万，活期仅5万</span></div>
+            <div style="display:flex;gap:6px;align-items:flex-start"><span style="color:var(--primary);flex-shrink:0">🔵</span><span>本周3个新商机，预计转化45万</span></div>
+          </div>
+        </div></div>
+        <div style="font-size:9px;color:var(--t3);text-align:center">—— 下拉刷新获取最新摘要 ——</div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">18</span></div>
+
+<!-- P19: Block2 智能日程 -->
+<div class="slide" id="s19"><div class="slide-inner">
+  <h2>Block 2 · 智能日程：<span style="color:var(--primary)">AI 自动排程</span></h2>
+  <p class="st">不是简单的待办列表，而是 AI 优化过的"今日最优行动路线"</p>
+  <div class="cols73">
+    <div class="card" style="border-left:3px solid var(--primary)"><div class="ct">📅 排程规则</div><div class="cd">
+      <strong>AI 综合三个维度自动排程：</strong><ul class="dl">
+        <li><strong>优先级权重</strong>：产品到期 > 大额异动 > 商机待办 > 普通触达</li>
+        <li><strong>地理距离</strong>：同区域客户聚合，减少路途时间</li>
+        <li><strong>时段偏好</strong>：上午优先安排需要面谈的客户，下午灵活触达</li>
+        <li><strong>触客方式</strong>：每类待办定义首选/次选触达方式（电话/微信/面谈）</li>
+      </ul></div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 今日日程</div>
+      <div class="mu-body sm">
+        <div class="mu-tabs"><span class="mu-tab on">📅 今日</span><span class="mu-tab">📋 全部</span></div>
+        <div style="font-size:10px;color:var(--t2);font-weight:600">🕐 上午 · 2 项</div>
+        <div class="mu-card bl"><div class="mu-dots" style="margin-bottom:3px"><span class="on"></span><span></span></div><div class="muc-t">王建国 <span class="mu-badge rd" style="font-size:8px">定存到期</span></div><div class="muc-d">📍 2.3km · ⏱ 15min · ☎️ 电话<br>产品到期提醒 → 推荐续存方案</div></div>
+        <div style="font-size:10px;color:var(--t2);font-weight:600">🕑 下午 · 2 项</div>
+        <div class="mu-card"><div class="mu-dots" style="margin-bottom:3px"><span></span><span class="on"></span></div><div class="muc-t">孙丽丽 <span class="mu-badge or" style="font-size:8px">异动跟进</span></div><div class="muc-d">📍 1.8km · ⏱ 10min · 📱 微信<br>大额转出跟进 → 挽回/升级建议</div></div>
+        <div class="mu-card"><div class="muc-t" style="font-size:10px">+ 查看全部 4 项待办 →</div></div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">19</span></div>
+
+<!-- P20: Block3 商机看板 -->
+<div class="slide" id="s20"><div class="slide-inner">
+  <h2>Block 3 · 商机看板：<span style="color:var(--orange)">4 类商机统一视图</span></h2>
+  <div class="cols73">
+    <div class="card" style="border-left:3px solid var(--orange)"><div class="ct">💡 商机分类与来源</div><div class="cd">
+      <strong>商机看板聚合展示 4 类商机：</strong><ul class="dl">
+        <li><strong>代发到账</strong>：系统推送 · 客户代发工资/奖金到账 → 理财承接机会</li>
+        <li><strong>流失预警</strong>：系统推送 · 资产转出/活跃度下降 → 挽回机会</li>
+        <li><strong>AI 挖掘</strong>：AI 模型分析 · 行为变化/生命周期事件 → 潜在机会</li>
+        <li><strong>我的</strong>：客户经理自建 · 主动发现或客户沟通中确认的机会</li>
+      </ul></div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 商机看板</div>
+      <div class="mu-body sm">
+        <div class="mu-tabs"><span class="mu-tab on or">代发到账</span><span class="mu-tab">流失预警</span><span class="mu-tab">AI挖掘</span><span class="mu-tab">我的</span></div>
+        <div class="mu-card or"><div class="muc-t">王建国 <span class="mu-badge or">代发到账</span></div><div class="muc-d">代发工资 ¥28,500 到账<br>建议动作：推荐理财产品承接</div><div class="mu-prog"><div class="mu-fill or" style="width:85%"></div></div><div style="font-size:8px;color:var(--t3);text-align:right">预估 ¥20万</div></div>
+        <div class="mu-card" style="border-left:3px solid var(--red)"><div class="muc-t">孙丽丽 <span class="mu-badge rd">流失预警</span></div><div class="muc-d">昨日转出30万，活期仅剩5万<br>建议动作：电话跟进挽回</div><div class="mu-prog"><div class="mu-fill" style="background:var(--red);width:70%"></div></div><div style="font-size:8px;color:var(--t3);text-align:right">预警级别：高</div></div>
+        <div class="mu-card" style="border-left:3px solid var(--ai)"><div class="muc-t">张明辉 <span class="mu-badge ai">AI 挖掘</span></div><div class="muc-d">近期浏览理财产品页面12次<br>建议动作：主动推荐 + 面谈</div></div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">20</span></div>
+
+<!-- P21: Block4 新客拓展 -->
+<div class="slide" id="s21"><div class="slide-inner">
+  <h2>Block 4 · 新客拓展：<span style="color:var(--green)">AI 推荐潜客</span></h2>
+  <div class="cols73">
+    <div class="card" style="border-left:3px solid var(--green)"><div class="ct">🎯 AI 推荐机制</div><div class="cd">
+      <strong>基于客户经理现有管户画像，AI 进行相似度匹配：</strong><ul class="dl">
+        <li>分析管户中高价值客户的共同特征（年龄/职业/AUM/产品偏好）</li>
+        <li>在全量客户池中匹配具有相似特征但尚未成为管户的潜在客户</li>
+        <li>输出推荐列表：客户名 + 潜在价值评分 + 匹配理由 + 建议触达方式</li>
+        <li>客户经理一键"加入我的管户"或"生成触达任务"</li>
+      </ul></div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 新客拓展</div>
+      <div class="mu-body sm">
+        <div class="mu-card gn"><div class="muc-t">🎯 AI 推荐潜客 <span class="mu-badge gn">3位</span></div></div>
+        <div class="mu-list">
+          <div class="mu-item"><div class="mui-ico">👤</div><div class="mui-info"><div class="mui-name">李芳华</div><div class="mui-sub">与王建国相似度 82%</div></div><span class="mui-tag mu-badge gn">82%</span></div>
+          <div class="mu-item"><div class="mui-ico">👤</div><div class="mui-info"><div class="mui-name">张明辉</div><div class="mui-sub">与陈志远相似度 76%</div></div><span class="mui-tag mu-badge bl">76%</span></div>
+          <div class="mu-item"><div class="mui-ico">👤</div><div class="mui-info"><div class="mui-name">陈志远</div><div class="mui-sub">高净值人群画像匹配</div></div><span class="mui-tag mu-badge or">68%</span></div>
+        </div>
+        <div class="mu-card"><div class="muc-d">💡 李芳华：同龄、同行业、相近资产，未持有理财 — 建议优先触达</div></div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">21</span></div>
+
+<!-- ===== SECTION 5: 业务对象建模 ===== -->
+<div class="slide sec" id="s22"><div class="slide-inner">
+  <div class="sec-num">05</div><h2>业务对象建模</h2>
+  <p class="st">三层核心对象关系 · 待办 · 商机 · 作战包</p>
+</div><span class="pn">22</span></div>
+
+<!-- P23: 三层对象关系总览 -->
+<div class="slide" id="s23"><div class="slide-inner">
+  <h2>业务对象：<span style="color:var(--ai)">三层核心关系</span></h2>
+  <p class="st">待办 · 商机 · 作战包 — 整个 APP 最核心的业务逻辑</p>
+  <div class="cols73">
+    <div>
+      <div class="ol l1"><div class="on">1</div><div><div class="ot">商机 Opportunity</div><div class="od">三大来源：系统推送（规则引擎）· 客户经理自建 · AI 智能挖掘</div></div></div>
+      <div class="oc"><div class="oi">⬆ 商机是作战包的<strong style="color:var(--ai)">唯一来源</strong></div></div>
+      <div class="ol l2"><div class="on">2</div><div><div class="ot">作战包 Battle Package</div><div class="od">电话版 / 面谈版 · 客户概览 + 营销线索 + 话术脚本 + 产品推荐</div></div></div>
+      <div class="oc"><div class="oi">⬆ 生成作战包时<strong style="color:var(--red)">强制创建</strong>商机待办</div></div>
+      <div class="ol l3"><div class="on">3</div><div><div class="ot">商机待办 Task</div><div class="od">携带作战包配置 · 排入智能日程 · 执行后回写商机状态</div></div></div>
+    </div>
+    <div class="card"><div class="ct">🔑 关键设计决策</div><div class="cd">
+      <p style="margin-bottom:6px">❌ 待办<strong>不能</strong>直接创建作战包</p>
+      <p style="margin-bottom:6px">✅ 商机是作战包的<strong style="color:var(--ai)">唯一来源</strong></p>
+      <p style="margin-bottom:6px">✅ 生成作战包时<strong style="color:var(--red)">必须</strong>创建商机待办</p>
+      <p style="margin-bottom:6px">✅ 面谈准备不是独立待办，是商机待办的附属动作</p>
+      <p>🔄 全链路：<strong style="color:var(--primary)">来源 → 商机 → 作战包 → 商机待办 → 执行 → 回写</strong></p>
+    </div></div>
+  </div>
+</div><span class="pn">23</span></div>
+
+<!-- P24: 商机三大来源 -->
+<div class="slide" id="s24"><div class="slide-inner">
+  <h2>商机：<span style="color:var(--ai)">三大来源详解</span></h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <div class="card" style="border-top:3px solid var(--orange)"><div class="ct">⚙️ 系统推送</div><div class="cd">
+      <strong>驱动方式：</strong>规则引擎<br>
+      <strong>典型场景：</strong><ul class="dl">
+        <li>代发工资/奖金到账 → 理财承接</li>
+        <li>定存到期（3天前预警）→ 续存/升级</li>
+        <li>大额资金异动 → 挽回/升级</li>
+        <li>客户生日 → 关怀+营销</li>
+      </ul>
+      <strong>特点：</strong>确定性规则，实时触发，覆盖面广
+    </div></div>
+    <div class="card" style="border-top:3px solid var(--primary)"><div class="ct">✏️ 客户经理自建</div><div class="cd">
+      <strong>驱动方式：</strong>手动创建<br>
+      <strong>典型场景：</strong><ul class="dl">
+        <li>面谈中客户表达新需求</li>
+        <li>客户转介绍线索</li>
+        <li>日常沟通中发现的机会</li>
+        <li>社区/活动获客</li>
+      </ul>
+      <strong>特点：</strong>人的洞察力，AI 无法替代，质量最高
+    </div></div>
+    <div class="card" style="border-top:3px solid var(--ai)"><div class="ct">🤖 AI 智能挖掘</div><div class="cd">
+      <strong>驱动方式：</strong>大模型推理<br>
+      <strong>典型场景：</strong><ul class="dl">
+        <li>行为分析：活跃度下降 → 流失预警</li>
+        <li>生命阶段：结婚/生子/退休 → 需求预测</li>
+        <li>相似客户：持有产品的交叉推荐</li>
+        <li>资产结构：过于集中 → 配置优化</li>
+      </ul>
+      <strong>特点：</strong>发现人容易忽略的模式，覆盖长尾
+    </div></div>
+  </div>
+</div><span class="pn">24</span></div>
+
+<!-- P25: 作战包详解 -->
+<div class="slide" id="s25"><div class="slide-inner">
+  <h2>作战包：<span style="color:var(--primary)">访前准备的全套装备</span></h2>
+  <div class="cols73">
+    <div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--primary)"><div class="ct">📞 电话版作战包</div><div class="cd">
+        <strong>适用场景：</strong>首次触达、快速跟进、日常关怀<br>
+        <strong>内容结构：</strong><ul class="dl">
+          <li>客户速览：姓名/等级/AUM/持有产品</li>
+          <li>通话目的：一句话说明为什么打这个电话</li>
+          <li>核心话术：开场白 + 产品介绍 + 异议处理</li>
+          <li>推荐产品：1-2 款最匹配的产品</li>
+          <li>注意事项：合规要点 + 风险提示</li>
+        </ul></div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">🗣️ 面谈版作战包</div><div class="cd">
+        <strong>适用场景：</strong>预约面谈、厅堂接待、上门拜访<br>
+        <strong>内容结构：</strong><ul class="dl">
+          <li>客户概览：完整画像摘要 + 资产结构图</li>
+          <li>3 条营销线索：按优先级排序</li>
+          <li>完整话术脚本：含偏离场景预制分支</li>
+          <li>推荐产品组合：2-3 款配置方案</li>
+        </ul></div>
+      </div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 作战包 · 面谈版</div>
+      <div class="mu-body sm">
+        <div class="mu-card bl"><div class="muc-t">👤 客户概览</div><div class="muc-d">王建国 · 财富客户 · AUM 156万<br>持有：定存25万(7.18到期) + 理财30万</div></div>
+        <div class="mu-tabs"><span class="mu-tab on">🎯 营销线索</span><span class="mu-tab">📝 话术</span><span class="mu-tab">📦 产品</span></div>
+        <div class="mu-card or"><div class="muc-t">线索 1/3 · 定存到期承接</div><div class="muc-d">定存25万 7.18到期 → 推荐"稳健增长"理财(AUM达标可享VIP利率)</div><div class="mu-prog"><div class="mu-fill or" style="width:90%"></div></div></div>
+        <div class="mu-card"><div class="muc-t">线索 2/3 · 资产配置优化</div><div class="muc-d">当前存款占比过高 → 建议股债平衡</div></div>
+        <div style="display:flex;gap:4px"><span class="mu-badge ai" style="font-size:8px">🤖 AI话术</span><span class="mu-badge gn" style="font-size:8px">✅ 一键拨号</span></div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">25</span></div>
+
+<!-- P26: 待办分类 -->
+<div class="slide" id="s26"><div class="slide-inner">
+  <h2>待办：<span style="color:var(--green)">两大类型 + 智能排程</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--green)"><div class="ct">📋 商机待办</div><div class="cd">
+      <strong>来源：</strong>商机生成作战包时强制创建<br>
+      <strong>特点：</strong>携带作战包配置，排入智能日程<br>
+      <strong>7 类待办任务：</strong><ul class="dl">
+        <li>产品到期 · 大额异动 · 贷款逾期</li>
+        <li>生日提醒 · 联络超期 · 信用卡待办</li>
+        <li>面谈后跟进任务</li>
+      </ul>
+      每类明确定义：紧迫程度、触客方式（电话/微信/面谈）、平均时长、推荐时段
+    </div></div>
+    <div class="card" style="border-left:3px solid var(--primary)"><div class="ct">📝 事务性待办</div><div class="cd">
+      <strong>来源：</strong>系统推送 + 客户经理手动创建<br>
+      <strong>特点：</strong>不关联商机，不携带作战包<br>
+      <strong>典型场景：</strong><ul class="dl">
+        <li>普通触达：日常联络、节日问候</li>
+        <li>行政事务：报表提交、培训签到</li>
+        <li>客户经理自建的提醒事项</li>
+      </ul>
+      <strong>关键区分：</strong>事务性待办与普通触达已合并，避免概念碎片化
+    </div></div>
+  </div>
+</div><span class="pn">26</span></div>
+
+<!-- ===== SECTION 6: 闭环工作流 ===== -->
+<div class="slide sec" id="s27"><div class="slide-inner">
+  <div class="sec-num">06</div><h2>闭环工作流</h2>
+  <p class="st">从商机发现到执行回写的端到端全链路</p>
+</div><span class="pn">27</span></div>
+
+<!-- P28: 全链路总览 -->
+<div class="slide" id="s28" style="align-items:flex-start;padding-top:40px"><div class="slide-inner">
+  <h2 style="text-align:center">闭环工作流：<span style="color:var(--ai)">全链路总览</span></h2>
+  <p class="st" style="text-align:center">一条链路串联商机 → 作战包 → 待办 → 日程 → 面谈 → 回写</p>
+  <div class="fr" style="margin-top:16px"><div class="fl">来源</div><div class="fn src">⚙️ 系统推送</div><div class="fn src">✏️ 自建</div><div class="fn src">🤖 AI挖掘</div></div>
+  <div class="fp"></div>
+  <div class="fr"><div class="fl">生成</div><div class="fn opp" style="font-size:15px;padding:14px 24px">💡 商机</div><div class="fa hl">→</div><div class="fn pkg" style="font-size:15px;padding:14px 24px">🎯 作战包</div><div class="fa hl">→</div><div class="fn todo" style="font-size:15px;padding:14px 24px">📋 商机待办</div></div>
+  <div class="fp"></div>
+  <div class="fr"><div class="fl">执行</div><div class="fn" style="background:rgba(51,102,255,0.12);color:var(--primary);border:1px solid rgba(51,102,255,0.3);padding:12px 18px">📅 智能日程</div><div class="fa">→</div><div class="fn act" style="padding:12px 18px">🗣️ 面谈执行</div><div class="fa">→</div><div class="fn" style="background:rgba(0,181,120,0.12);color:var(--green);border:1px solid rgba(0,181,120,0.3);padding:12px 18px">📝 要点确认</div></div>
+  <div class="fp"></div>
+  <div class="fr"><div class="fl">闭环</div><div class="fn" style="background:rgba(108,92,231,0.15);color:#C4B5FF;border:1px solid rgba(108,92,231,0.3);padding:12px 18px">🔄 状态回写</div><div class="fa hl">→</div><div class="fn todo" style="padding:12px 18px">📋 跟进待办</div><div class="fa hl">→</div><div style="font-size:18px;color:var(--ai);font-weight:700">🔁 下一轮</div></div>
+</div><span class="pn">28</span></div>
+
+<!-- P29: 阶段1 商机发现 -->
+<div class="slide" id="s29"><div class="slide-inner">
+  <h2>阶段 1：<span style="color:var(--orange)">商机发现</span></h2>
+  <p class="st">三种来源互补，覆盖"规则驱动 + 人为洞察 + AI 挖掘"全场景</p>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--orange)"><div class="ct">⚙️ 系统推送 — 确定性规则</div><div class="cd">
+      <ul class="dl"><li>产品到期（T-3天自动预警）</li><li>大额资金异动（实时监控）</li><li>贷款逾期（按天更新）</li><li>客户生日（当天推送）</li><li>联络超期（7/14/30天阈值）</li></ul>
+      <strong>优势：</strong>不遗漏、零延迟，覆盖面 100%
+    </div></div>
+    <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">🤖 AI 挖掘 — 智能发现</div><div class="cd">
+      <ul class="dl"><li>行为分析：活跃度下降 → 流失预警</li><li>生命阶段：结婚/生子/退休 → 需求预测</li><li>相似客户：持有产品的交叉推荐</li><li>资产结构：过于集中 → 配置优化</li></ul>
+      <strong>优势：</strong>发现人容易忽略的模式，覆盖长尾
+    </div></div>
+  </div>
+  <div class="card" style="margin-top:10px;text-align:center;border-left:3px solid var(--primary)"><div class="ct">✏️ 客户经理自建 — 人的洞察</div><div class="cd">面谈中客户表达的需求、转介绍线索、日常观察——<strong style="color:var(--primary)">AI 无法替代，但 AI 可以辅助：自动提取关键信息生成商机草稿</strong></div></div>
+</div><span class="pn">29</span></div>
+
+<!-- P30: 阶段2 作战包生成 -->
+<div class="slide" id="s30"><div class="slide-inner">
+  <h2>阶段 2：<span style="color:var(--primary)">作战包生成</span></h2>
+  <p class="st">从商机到可执行准备包，包含客户概览 + 3条营销线索 + 话术脚本</p>
+  <div class="cols73">
+    <div class="card" style="border-left:3px solid var(--primary)"><div class="ct">🎯 生成流程</div><div class="cd">
+      <strong>Step 1 — 选择模式：</strong>电话版（轻量快速）或面谈版（完整详尽）<br>
+      <strong>Step 2 — AI 组装内容：</strong>客户画像摘要 + 持有产品分析 + 推荐产品匹配 + 营销话术生成<br>
+      <strong>Step 3 — 预制偏离分支：</strong>AI 预判面谈中客户可能的 2-3 个偏离方向，预制应对话术<br>
+      <strong>Step 4 — 生成商机待办：</strong>作战包生成时<strong style="color:var(--red)">强制创建</strong>商机待办，排入智能日程
+    </div></div>
+    <div class="card dark"><div class="ct">📦 作战包内容</div><ul class="dl">
+      <li>客户概览卡片</li><li>3 条营销线索（按优先级）</li><li>开场白/产品介绍/异议处理话术</li><li>推荐产品（附 AI 匹配理由）</li><li>风险提示与合规要点</li><li>偏离场景预制分支</li>
+    </ul></div>
+  </div>
+</div><span class="pn">30</span></div>
+
+<!-- P31: 阶段3 日程排入 -->
+<div class="slide" id="s31"><div class="slide-inner">
+  <h2>阶段 3：<span style="color:var(--primary)">日程排入与执行准备</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--primary)"><div class="ct">📅 AI 自动排程</div><div class="cd">
+      商机待办生成后，AI 自动排入智能日程：<ul class="dl">
+        <li>综合优先级权重自动排序</li>
+        <li>同区域客户聚合，减少路途</li>
+        <li>上午面谈客户、下午灵活触达</li>
+        <li>支持手动调整：逐客户跳过/推迟</li>
+        <li>调整后 Toast 精确提示变更内容</li>
+      </ul></div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--green)"><div class="ct">✅ 执行前确认</div><div class="cd">
+      <ul class="dl">
+        <li>确认作战包内容完整性</li>
+        <li>确认客户联系方式</li>
+        <li>确认推荐产品库存/额度</li>
+        <li>一键拨号/发微信/导航到地址</li>
+        <li>设置面谈提醒（提前15分钟）</li>
+      </ul></div>
+    </div>
+  </div>
+</div><span class="pn">31</span></div>
+
+<!-- P32: 阶段4 面谈执行 -->
+<div class="slide" id="s32"><div class="slide-inner">
+  <h2>阶段 4：<span style="color:var(--red)">面谈执行 — 双视图 + 偏离分支</span></h2>
+  <div class="cols73">
+    <div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--ai)"><div class="ct">🔒 私密视图（客户经理侧）</div><div class="cd">
+        <strong>仅自己可见：</strong><ul class="dl">
+          <li>AI 推荐理由与匹配度评分</li>
+          <li>客户风险评级与内部备注</li>
+          <li>产品佣金与业绩归属</li>
+          <li>下一步建议动作</li>
+        </ul></div>
+      </div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--green)"><div class="ct">📱 展示视图（给客户看）</div><div class="cd">
+        <strong>适合展示给客户：</strong><ul class="dl">
+          <li>产品信息（大字体、简洁排版）</li>
+          <li>收益对比图表</li>
+          <li>合规说明与风险提示</li>
+          <li>认购流程指引</li>
+        </ul></div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange)"><div class="ct">🔀 偏离场景预制分支</div><div class="cd">面谈中客户可能不按预设剧本走——作战包中已预置 2-3 个常见偏离场景的分支话术（如客户说"风险太高"/"再看看"/"收益不如XX"），客户经理一键切换，无需临场组织语言。85% 预制 + 15% AI 实时兜底。</div></div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 面谈 · 王建国</div>
+      <div class="mu-body sm">
+        <div class="mu-dual">
+          <div class="mu-half priv"><div class="muh-lb">🔒 私密</div>
+            <div style="font-size:8px;color:var(--t2);margin-bottom:4px">AI 推荐理由</div>
+            <div style="font-size:9px;color:var(--ai);margin-bottom:4px">"客户AUM 156万，定存到期25万，匹配度 92%"</div>
+            <div style="font-size:8px;color:var(--t2);margin-bottom:2px">风险评级：稳健型 ✓</div>
+            <div style="font-size:8px;color:var(--t2);">佣金预估：¥1,250</div>
+          </div>
+          <div class="mu-half show"><div class="muh-lb">📱 展示</div>
+            <div style="font-size:9px;font-weight:600;margin-bottom:3px">稳健增长理财</div>
+            <div style="font-size:8px;color:var(--t2);margin-bottom:3px">R2 · 中低风险</div>
+            <div style="font-size:10px;color:var(--green);font-weight:700">近一年收益 3.8%</div>
+            <div style="font-size:7px;color:var(--t3);margin-top:4px">*投资需谨慎，过往业绩不预示未来</div>
+          </div>
+        </div>
+        <div class="mu-card" style="border-left:3px solid var(--orange)">
+          <div class="muc-t">🔀 偏离分支 <span style="font-size:9px;color:var(--t3)">预制 3 条</span></div>
+          <div class="mu-tabs" style="flex-wrap:wrap">
+            <span class="mu-tab on or">风险太高 →</span>
+            <span class="mu-tab">再看看 →</span>
+            <span class="mu-tab">收益不如XX →</span>
+          </div>
+          <div class="muc-d" style="margin-top:4px">💬 "我理解您的顾虑。这款产品主要投向..."</div>
+        </div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">32</span></div>
+
+<!-- P33: 阶段5 面谈后回写 -->
+<div class="slide" id="s33"><div class="slide-inner">
+  <h2>阶段 5：<span style="color:var(--green)">面谈后 — 要点确认与状态回写</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-left:3px solid var(--green)"><div class="ct">📝 客户确认要点记录</div><div class="cd">
+      面谈结束时生成结构化确认清单：<ul class="dl">
+        <li>本次沟通的核心议题与结论</li>
+        <li>客户明确表达的需求/顾虑</li>
+        <li>已推荐的产品及客户反馈</li>
+        <li>双方约定的下一步动作</li>
+        <li>预计下次联系时间</li>
+      </ul>
+      支持<strong>客户电子签名确认</strong>，形成正式记录
+    </div></div>
+    <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">🔄 状态回写闭环</div><div class="cd">
+      <strong>回写链路：</strong><ul class="dl">
+        <li>商机状态：待处理 → 已触达 → 意向确认 → 成交/关闭</li>
+        <li>客户画像更新：沟通记录追加、产品偏好修正</li>
+        <li>自动生成跟进待办（如客户说"下个月再联系"）</li>
+        <li>AI 学习本次结果，优化下次推荐</li>
+      </ul>
+      <strong>本质：</strong>每次面谈都是 AI 的训练数据，越用越准
+    </div></div>
+  </div>
+</div><span class="pn">33</span></div>
+
+<!-- ===== SECTION 7: AI赋能 ===== -->
+<div class="slide sec" id="s34"><div class="slide-inner">
+  <div class="sec-num">07</div><h2>AI 赋能设计</h2>
+  <p class="st">Plan C 统一引擎 · 六大 AI 服务 · 一种交互体验</p>
+</div><span class="pn">34</span></div>
+
+<!-- P35: Plan C + 6大服务总览 -->
+<div class="slide" id="s35"><div class="slide-inner">
+  <h2>AI 架构：<span style="color:var(--ai)">Plan C — 统一引擎 + 多频道面孔</span></h2>
+  <div class="cols73">
+    <div>
+      <div class="card" style="margin-bottom:10px;border-left:3px solid var(--ai)"><div class="ct">🧠 统一 AI 引擎</div><div class="cd">单一引擎处理所有 AI 请求：意图解析 → 数据聚合 → 响应生成。各频道通过<strong>注册机制</strong>接入，提供频道专属的上下文、快捷标签和执行逻辑。</div></div>
+      <div class="card" style="border-left:3px solid var(--primary)"><div class="ct">🎭 六张频道面孔</div><div class="cd">同一引擎，不同面孔——用户感知到的是"不同的 AI"（客户助手/产品助手/全局助手），但底层复用同一套解析和响应能力。频道独立对话历史、独立快捷操作。</div></div>
+    </div>
+    <div class="mu" style="height:fit-content">
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav"><span class="mub">←</span> 产品频道 <span style="font-size:9px;color:var(--ai);margin-left:auto">🤖 AI</span></div>
+      <div class="mu-body sm">
+        <div class="mu-msg">
+          <div class="mu-bub ai">你好！我是产品助手 👋<br>可以帮你查找、对比产品</div>
+          <div class="mu-chip"><span>R2低风险理财</span><span>收益最高的存款</span><span>适合新手的基金</span></div>
+        </div>
+        <div class="mu-msg">
+          <div class="mu-bub usr">R2中低风险的短期理财产品</div>
+          <div class="mu-bub ai">为你找到 <b>2</b> 款产品：<br><br><b>稳健增长理财</b><br>R2 · 3个月 · 近一年 3.8%<br>起购 1万<br><br><b>日积月累计划</b><br>R2 · 灵活申赎 · 七日年化 2.9%<br>起购 1000元</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:2px"><span class="mu-badge gn" style="font-size:8px">✅ 应用到列表</span><span class="mu-badge bl" style="font-size:8px">💬 继续追问</span></div>
+      </div>
+      <div class="mu-bbar"><span>🏠 工作台</span><span>👥 客户</span><span class="on">📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+  <div class="ag" style="margin-top:16px">
+    <div class="ac"><div class="an">📅 智能日程排程</div><div class="aw">工作台 Block 2</div><div class="ad2">优先级×距离×偏好→最优顺序</div></div>
+    <div class="ac"><div class="an">💡 AI 商机挖掘</div><div class="aw">工作台 Block 3</div><div class="ad2">行为分析→生命阶段→需求预测</div></div>
+    <div class="ac"><div class="an">🎯 AI 新客推荐</div><div class="aw">工作台 Block 4</div><div class="ad2">管户画像相似度→潜客匹配</div></div>
+    <div class="ac"><div class="an">👥 客户智能查询</div><div class="aw">客户频道 🤖</div><div class="ad2">自然语言→筛选条件→应用到列表</div></div>
+    <div class="ac"><div class="an">📦 产品智能查询</div><div class="aw">产品频道 🤖</div><div class="ad2">自然语言→类型/风险/期限匹配</div></div>
+    <div class="ac"><div class="an">🌐 全局智能问答</div><div class="aw">首页 🤖 全局入口</div><div class="ad2">跨频道数据整合→"今天关注什么"</div></div>
+  </div>
+</div><span class="pn">35</span></div>
+
+<!-- P36: 智能日程排程+商机挖掘 AI 详解 -->
+<div class="slide" id="s36"><div class="slide-inner">
+  <h2>AI 服务详解：<span style="color:var(--primary)">智能日程</span> + <span style="color:var(--ai)">商机挖掘</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-top:3px solid var(--primary)"><div class="ct">📅 智能日程排程 AI</div><div class="cd">
+      <strong>输入：</strong>待办列表（类型/客户/优先级/地址/时段偏好）<br>
+      <strong>AI 处理：</strong><ul class="dl">
+        <li>优先级排序：产品到期 > 异动 > 商机 > 普通</li>
+        <li>地理聚合：同区域客户连续拜访</li>
+        <li>时段匹配：面谈→上午，电话→下午</li>
+        <li>时长预估：每类任务标注平均处理时长</li>
+      </ul>
+      <strong>输出：</strong>上午/下午两组最优拜访序列
+    </div></div>
+    <div class="card" style="border-top:3px solid var(--ai)"><div class="ct">💡 AI 商机挖掘</div><div class="cd">
+      <strong>输入：</strong>全量客户行为数据（交易/浏览/联系/资产变动）<br>
+      <strong>AI 处理：</strong><ul class="dl">
+        <li>流失预警：活跃度连续下降 → 标记</li>
+        <li>生命周期：结婚/生子/退休事件 → 需求预测</li>
+        <li>交叉推荐：持有 A 产品的客户也买了 B</li>
+        <li>配置优化：资产过于集中的客户</li>
+      </ul>
+      <strong>输出：</strong>带评分的商机列表，推送到商机看板
+    </div></div>
+  </div>
+</div><span class="pn">36</span></div>
+
+<!-- P37: 新客推荐+客户查询 AI 详解 -->
+<div class="slide" id="s37"><div class="slide-inner">
+  <h2>AI 服务详解：<span style="color:var(--green)">新客推荐</span> + <span style="color:var(--ai)">客户/产品查询</span></h2>
+  <div class="cols2">
+    <div class="card" style="border-top:3px solid var(--green)"><div class="ct">🎯 AI 新客推荐</div><div class="cd">
+      <strong>工作原理：</strong><ul class="dl">
+        <li>提取管户中高价值客户的共同特征向量</li>
+        <li>在全量客户池中做相似度匹配</li>
+        <li>过滤已是管户的客户</li>
+        <li>输出推荐：客户名+相似度+匹配理由</li>
+      </ul>
+      <strong>持续优化：</strong>每新增一个管户，模型更新，推荐更精准
+    </div></div>
+    <div class="card" style="border-top:3px solid var(--ai)"><div class="ct">👥📦 自然语言查询 AI</div><div class="cd">
+      <strong>客户查询示例：</strong><br>"AUM超过50万的稳健型财富客户"<br>→ [AUM≥50万][稳健型][财富客户] → 3位<br><br>
+      <strong>产品查询示例：</strong><br>"R2中低风险的短期理财产品"<br>→ [R2][短期][理财类] → 2款<br><br>
+      <strong>解析能力：</strong>等级/风险/AUM/年龄/产品类型/期限/起购/特征
+    </div></div>
+  </div>
+</div><span class="pn">37</span></div>
+
+<!-- P38: 统一交互形式 -->
+<div class="slide" id="s38"><div class="slide-inner">
+  <h2>AI 交互：<span style="color:var(--ai)">六频道 · 一种体验</span></h2>
+  <div class="cols73">
+    <div class="card" style="border-left:3px solid var(--ai)"><div class="ct">🎨 统一浮层交互</div><div class="cd">
+      <strong>所有 AI 频道使用统一交互模式：</strong><ul class="dl">
+        <li><strong>入口：</strong>各页面标题栏右侧 🤖 按钮 + 首页浮动按钮</li>
+        <li><strong>形态：</strong>底部滑入浮层，默认占屏 85%</li>
+        <li><strong>手势：</strong>上滑拖拽 → 全屏（100%）· 下滑拖拽超过 50% → 关闭</li>
+        <li><strong>欢迎区：</strong>频道专属欢迎语 + 6 条快捷提问标签</li>
+        <li><strong>对话区：</strong>双气泡（用户右 🤖 左）+ 思考动画</li>
+        <li><strong>结果卡片：</strong>筛选条件标签 + 匹配数量 + 示例 + 操作按钮</li>
+        <li><strong>三按钮：</strong>✅ 应用到列表 · 💬 继续追问 · ↺ 清空重来</li>
+      </ul></div>
+    </div>
+    <div class="mu" style="height:fit-content;position:relative">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.12);z-index:2;border-radius:21px"></div>
+      <div style="position:absolute;top:30%;left:5%;right:5%;bottom:0;background:#FFFFFF;z-index:3;border-radius:16px 16px 0 0;overflow:hidden;border:2px solid #D8DCE5;border-bottom:none">
+        <div style="width:32px;height:4px;background:#D0D4DC;border-radius:2px;margin:8px auto 6px"></div>
+        <div style="padding:0 14px;font-size:11px;font-weight:600">🤖 全局智能助手</div>
+        <div style="padding:6px 14px;display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto">
+          <div style="font-size:10px;color:var(--t2);text-align:center;margin:4px 0">今天有什么可以帮你？</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px"><span style="padding:2px 7px;border-radius:8px;font-size:8px;background:rgba(108,92,231,.15);color:var(--ai)">今天关注什么</span><span style="padding:2px 7px;border-radius:8px;font-size:8px;background:rgba(108,92,231,.15);color:var(--ai)">哪些客户有商机</span><span style="padding:2px 7px;border-radius:8px;font-size:8px;background:rgba(108,92,231,.15);color:var(--ai)">到期产品汇总</span></div>
+          <div style="background:rgba(51,102,255,.15);border-radius:8px;padding:6px 8px;font-size:9px;color:var(--t1);align-self:flex-end;max-width:70%">今天最需关注什么</div>
+          <div style="background:rgba(108,92,231,.12);border-radius:8px;padding:6px 8px;font-size:9px;color:var(--t2);max-width:80%">📊 今日关注 Top 3：<br>① 王建国定存到期 25万<br>② 孙丽丽大额转出 30万<br>③ 3个新商机待处理</div>
+        </div>
+        <div style="display:flex;gap:4px;padding:6px 14px;border-top:1px solid #E4E7ED"><span class="mu-badge gn" style="font-size:8px">✅ 应用</span><span class="mu-badge bl" style="font-size:8px">💬 追问</span><span class="mu-badge" style="font-size:8px;background:rgba(0,0,0,.04);color:var(--t2)">↺ 清空</span></div>
+      </div>
+      <div class="mu-top"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="mu-nav">工作台 <span style="font-size:10px;color:var(--ai);margin-left:auto">🤖</span></div>
+      <div class="mu-body sm" style="opacity:.5">
+        <div class="mu-card ai"><div class="muc-t">🧠 AI摘要</div><div class="muc-d">今日需关注：2个到期·1个异动</div></div>
+        <div class="mu-card bl"><div class="muc-t">📅 智能日程</div><div class="muc-d">上午：王建国 · 下午：孙丽丽</div></div>
+      </div>
+      <div class="mu-bbar"><span class="on">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span></div>
+    </div>
+  </div>
+</div><span class="pn">38</span></div>
+
+<!-- ===== SECTION 8: 设计成果 ===== -->
+<div class="slide sec" id="s39"><div class="slide-inner">
+  <div class="sec-num">08</div><h2>设计成果全景</h2>
+  <p class="st">量化指标 · 交付物清单 · 后续展望</p>
+</div><span class="pn">39</span></div>
+
+<!-- P40: 量化指标 -->
+<div class="slide" id="s40"><div class="slide-inner">
+  <h2 style="text-align:center">设计成果：<span style="color:var(--ai)">量化指标</span></h2>
+  <div class="sr" style="margin-bottom:24px">
+    <div class="si"><div class="sn ai">4</div><div class="sl">Tab 导航</div></div>
+    <div class="si"><div class="sn bl">12</div><div class="sl">核心业务对象</div></div>
+    <div class="si"><div class="sn gn">18</div><div class="sl">页面跳转映射</div></div>
+    <div class="si"><div class="sn ai">6</div><div class="sl">AI 服务场景</div></div>
+    <div class="si"><div class="sn bl">~6800</div><div class="sl">原型代码行数</div></div>
+    <div class="si"><div class="sn gn">11</div><div class="sl">产品数据</div></div>
+    <div class="si"><div class="sn ai">5</div><div class="sl">产品品类</div></div>
+    <div class="si"><div class="sn bl">~3100</div><div class="sl">交互规格行数</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+    <div class="card"><div class="ct">📋 需求分析</div><div class="cd">业务数据模型分析 · 图片与布局参考 · 核心业务设计模型</div></div>
+    <div class="card"><div class="ct">📝 交互规格</div><div class="cd">6 个规格文件 · ~3100 行 · W1/W2/W3/P/W/AI · 全闭环验证</div></div>
+    <div class="card"><div class="ct">🔄 交互原型</div><div class="cd">单文件 ~6800 行 HTML · 全部页面 + AI 对话 · Design Tokens 体系</div></div>
+  </div>
+</div><span class="pn">40</span></div>
+
+<!-- P41: 总结 -->
+<div class="slide sc" id="s41"><div class="slide-inner" style="text-align:center">
+  <div class="sm">
+    <div class="smi">🚀</div>
+    <div class="smt">从"工具"到"助手"的跨越</div>
+    <div class="smd">
+      <p style="margin-bottom:10px"><strong style="color:var(--ai)">一个闭环链路</strong>串联所有设计：数据 → 智能 → 行动 → 反馈</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--primary)">一条设计主线</strong>贯穿始终：AI 不是独立功能，而是渗透在每个业务环节中的增效引擎</p>
+      <p><strong style="color:var(--green)">一个核心转变：</strong>从"客户经理操作工具记录信息"到"AI 助手主动分析、推荐、排程，客户经理专注于决策和关系经营"</p>
+    </div>
+  </div>
+  <div class="cl" style="margin-top:24px"></div>
+  <p style="color:var(--t3);font-size:13px;margin-top:12px">易会办 · 银行客户经理智能展业助手 · AI 智能版业务设计方案（详细版）</p>
+</div><span class="pn">41</span></div>
+
+<script>
+var slides = document.querySelectorAll('.slide');
+var nd = document.getElementById('nd');
+slides.forEach(function(s, i) {
+  var a = document.createElement('a');
+  a.href = '#' + s.id;
+  if (i === 0) a.classList.add('ac2');
+  nd.appendChild(a);
+});
+var dots = nd.querySelectorAll('a');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      dots.forEach(function(d) {
+        d.classList.toggle('ac2', d.getAttribute('href') === '#' + entry.target.id);
+      });
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(function(s) { observer.observe(s); });
+</script>
+</body>
+</html>

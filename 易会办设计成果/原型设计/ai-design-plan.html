@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>易会办 · AI 智能版业务设计方案</title>
+<style>
+:root {
+  --bg: #0B0E14; --card: #151822; --card2: #1C1F2B;
+  --primary: #3366FF; --ai: #6C5CE7; --green: #00B578; --orange: #FF8F1F; --red: #E53935;
+  --t1: #F0F1F5; --t2: #8B8FA3; --t3: #5A5E6E;
+  --border: #252836; --radius: 14px; --radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+body { font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--t1); }
+.slide { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:60px 80px; scroll-snap-align:start; position:relative; overflow:hidden; }
+.slide-inner { max-width:1100px; width:100%; }
+
+/* Page indicator */
+.page-num { position:absolute; bottom:24px; right:40px; font-size:13px; color:var(--t3); letter-spacing:1px; }
+
+/* Headings */
+h1 { font-size:48px; font-weight:800; line-height:1.2; letter-spacing:-1px; margin-bottom:16px; }
+h1 span { color:var(--ai); }
+h2 { font-size:32px; font-weight:700; margin-bottom:8px; letter-spacing:-0.5px; }
+h2 .hl { color:var(--ai); }
+h3 { font-size:18px; font-weight:600; color:var(--t2); margin-bottom:6px; }
+.subtitle { font-size:18px; color:var(--t2); margin-bottom:12px; line-height:1.6; }
+.tag { display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:600; margin-right:8px; margin-bottom:8px; }
+.tag.ai { background:rgba(108,92,231,0.2); color:var(--ai); }
+.tag.blue { background:rgba(51,102,255,0.2); color:var(--primary); }
+.tag.green { background:rgba(0,181,120,0.2); color:var(--green); }
+
+/* P1 Cover */
+.slide-cover { background:linear-gradient(135deg, #0B0E14 0%, #151330 40%, #1A1540 70%, #0B0E14 100%); text-align:center; }
+.slide-cover .cover-line { width:60px; height:3px; background:var(--ai); margin:24px auto; border-radius:2px; }
+.slide-cover .cover-meta { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-top:32px; }
+
+/* Two columns */
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; }
+.cols-37 { display:grid; grid-template-columns:3fr 7fr; gap:40px; align-items:center; }
+.cols-73 { display:grid; grid-template-columns:7fr 3fr; gap:40px; align-items:center; }
+
+/* Cards */
+.card { background:var(--card); border-radius:var(--radius); padding:24px; border:1px solid var(--border); }
+.card-title { font-size:16px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.card-desc { font-size:14px; color:var(--t2); line-height:1.8; }
+
+/* Compare box */
+.compare-box { background:var(--card); border-radius:var(--radius); padding:32px 28px; border:1px solid var(--border); text-align:center; }
+.compare-box.old { border-color:#2A2D3A; background:linear-gradient(180deg, #1C1F2B, #151822); }
+.compare-box.new { border-color:rgba(108,92,231,0.4); background:linear-gradient(180deg, rgba(108,92,231,0.12), rgba(51,102,255,0.08)); }
+.compare-box .cb-icon { font-size:40px; margin-bottom:14px; }
+.compare-box .cb-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+.compare-box .cb-sub { font-size:13px; color:var(--t2); margin-bottom:14px; }
+.compare-box .cb-items { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+.compare-box .cb-item { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; }
+.compare-box.old .cb-item { background:rgba(255,255,255,0.04); color:var(--t2); }
+.compare-box.new .cb-item { background:rgba(108,92,231,0.15); color:#C4B5FF; }
+
+/* VS */
+.vs-divider { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.vs-circle { width:44px; height:44px; border-radius:50%; background:var(--card); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:var(--t2); }
+
+/* Architecture flow */
+.arch-flow { display:flex; align-items:center; gap:0; justify-content:center; flex-wrap:wrap; }
+.arch-block { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 24px; text-align:center; min-width:140px; }
+.arch-block .ab-icon { font-size:28px; margin-bottom:8px; }
+.arch-block .ab-title { font-size:15px; font-weight:700; }
+.arch-block .ab-desc { font-size:12px; color:var(--t2); margin-top:4px; }
+.arch-arrow { font-size:24px; color:var(--ai); padding:0 8px; font-weight:700; }
+
+/* 4-Tab mobile frame */
+.phone-frame { width:200px; height:380px; background:var(--card); border-radius:24px; border:3px solid var(--border); overflow:hidden; position:relative; margin:0 auto; }
+.phone-header { height:36px; background:#1C1F2B; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--t2); }
+.phone-body { padding:12px; }
+.phone-tab { background:var(--card2); border-radius:8px; padding:8px; margin-bottom:6px; font-size:11px; display:flex; align-items:center; gap:6px; }
+.phone-tab .pt-icon { width:20px; height:20px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; }
+.phone-tab .pt-icon.w { background:var(--primary); }
+.phone-tab .pt-icon.c { background:var(--green); }
+.phone-tab .pt-icon.p { background:var(--orange); }
+.phone-tab .pt-icon.m { background:var(--ai); }
+.phone-bottom { position:absolute; bottom:0; left:0; right:0; height:40px; background:#1C1F2B; display:flex; align-items:center; justify-content:space-around; padding:0 6px; }
+.phone-bottom span { font-size:10px; color:var(--t2); text-align:center; width:50px; }
+.phone-bottom span.active { color:var(--primary); font-weight:600; }
+
+/* Flow diagram (for P7) */
+.flow-row { display:flex; align-items:center; gap:0; flex-wrap:wrap; justify-content:center; }
+.flow-node { padding:14px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; text-align:center; white-space:nowrap; }
+.flow-node.src { background:rgba(255,143,31,0.15); color:var(--orange); border:1px solid rgba(255,143,31,0.3); }
+.flow-node.opp { background:rgba(108,92,231,0.2); color:#C4B5FF; border:1px solid rgba(108,92,231,0.4); min-width:70px; }
+.flow-node.pkg { background:rgba(51,102,255,0.2); color:#8AAAFF; border:1px solid rgba(51,102,255,0.4); }
+.flow-node.todo { background:rgba(0,181,120,0.15); color:var(--green); border:1px solid rgba(0,181,120,0.3); }
+.flow-node.act { background:rgba(229,57,53,0.12); color:var(--red); border:1px solid rgba(229,57,53,0.25); }
+.flow-arrow { font-size:20px; color:var(--t3); padding:0 4px; }
+.flow-arrow.hl { color:var(--ai); }
+
+/* P7 main flow */
+.main-flow { display:flex; flex-direction:column; gap:20px; align-items:center; }
+.flow-phase { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
+.flow-phase-label { font-size:11px; color:var(--t3); writing-mode:vertical-rl; letter-spacing:2px; padding:8px 4px; border-left:2px solid var(--border); }
+.flow-pipe { width:2px; height:24px; background:var(--ai); margin:0 auto; border-radius:1px; }
+
+/* AI matrix */
+.ai-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.ai-cell { background:var(--card); border-radius:var(--radius); padding:20px; border:1px solid var(--border); border-top:3px solid var(--ai); }
+.ai-cell .ai-name { font-size:15px; font-weight:700; margin-bottom:6px; }
+.ai-cell .ai-where { font-size:12px; color:var(--primary); margin-bottom:8px; }
+.ai-cell .ai-desc { font-size:13px; color:var(--t2); line-height:1.6; }
+
+/* Block layout (P5) */
+.block-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+.block-card { background:var(--card); border-radius:var(--radius); padding:20px; border:1px solid var(--border); position:relative; overflow:hidden; }
+.block-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; border-radius:2px 0 0 2px; }
+.block-card.b1::before { background:var(--ai); }
+.block-card.b2::before { background:var(--primary); }
+.block-card.b3::before { background:var(--orange); }
+.block-card.b4::before { background:var(--green); }
+.block-card .bc-icon { font-size:22px; margin-bottom:8px; }
+.block-card .bc-title { font-size:15px; font-weight:700; margin-bottom:4px; }
+.block-card .bc-desc { font-size:12px; color:var(--t2); line-height:1.6; }
+
+/* Object model 3-layer */
+.obj-layers { display:flex; flex-direction:column; gap:16px; }
+.obj-layer { display:flex; align-items:center; gap:20px; padding:18px 24px; border-radius:var(--radius); background:var(--card); border:1px solid var(--border); }
+.obj-layer .ol-num { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; flex-shrink:0; }
+.obj-layer.l1 .ol-num { background:rgba(108,92,231,0.2); color:var(--ai); }
+.obj-layer.l2 .ol-num { background:rgba(51,102,255,0.2); color:var(--primary); }
+.obj-layer.l3 .ol-num { background:rgba(0,181,120,0.2); color:var(--green); }
+.obj-layer .ol-title { font-size:16px; font-weight:700; }
+.obj-layer .ol-desc { font-size:13px; color:var(--t2); margin-top:2px; }
+.obj-layer .ol-arrow { font-size:20px; color:var(--t3); align-self:center; }
+.obj-connect { display:flex; flex-direction:column; gap:4px; margin-left:18px; border-left:2px dashed var(--border); padding-left:20px; }
+.obj-connect-item { font-size:12px; color:var(--t2); padding:4px 0; }
+
+/* Stats */
+.stat-row { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+.stat-item { background:var(--card); border-radius:var(--radius); padding:20px 28px; text-align:center; border:1px solid var(--border); min-width:120px; }
+.stat-item .sn { font-size:32px; font-weight:800; }
+.stat-item .sn.ai { color:var(--ai); }
+.stat-item .sn.blue { color:var(--primary); }
+.stat-item .sn.green { color:var(--green); }
+.stat-item .sl { font-size:12px; color:var(--t2); margin-top:4px; }
+
+/* Summary message */
+.summary-msg { background:linear-gradient(135deg, rgba(108,92,231,0.1), rgba(51,102,255,0.08)); border-radius:var(--radius); padding:32px 36px; text-align:center; border:1px solid rgba(108,92,231,0.25); }
+.summary-msg .sm-icon { font-size:40px; margin-bottom:14px; }
+.summary-msg .sm-title { font-size:20px; font-weight:700; margin-bottom:10px; }
+.summary-msg .sm-desc { font-size:15px; color:var(--t2); line-height:1.8; max-width:700px; margin:0 auto; }
+
+/* Nav dots */
+.nav-dots { position:fixed; right:24px; top:50%; transform:translateY(-50%); z-index:100; display:flex; flex-direction:column; gap:10px; }
+.nav-dots a { width:10px; height:10px; border-radius:50%; background:var(--t3); transition:all 0.3s; }
+.nav-dots a.active, .nav-dots a:hover { background:var(--ai); transform:scale(1.3); }
+
+/* Responsive */
+@media (max-width:768px) {
+  .slide { padding:40px 24px; }
+  .cols, .cols-37, .cols-73 { grid-template-columns:1fr; gap:24px; }
+  h1 { font-size:32px; } h2 { font-size:24px; }
+  .ai-grid { grid-template-columns:1fr; }
+  .block-grid { grid-template-columns:1fr; }
+  .phone-frame { width:160px; height:300px; }
+  .nav-dots { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav dots -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- ========== P1: 封面 ========== -->
+<div class="slide slide-cover" id="s1">
+  <div class="slide-inner" style="text-align:center">
+    <div class="tag ai" style="margin-bottom:16px">业务设计方案 · AI 智能版</div>
+    <h1 style="font-size:52px">易会办<br><span>银行客户经理智能展业助手</span></h1>
+    <div class="cover-line"></div>
+    <p class="subtitle" style="max-width:600px;margin:0 auto">以<span style="color:var(--ai);font-weight:700">数据分析决策</span>和<span style="color:var(--primary);font-weight:700">AI 赋能提效</span>为核心<br>从"工具"到"助手"的新一代展业平台</p>
+    <div class="cover-meta">
+      <span style="color:var(--t2);font-size:13px">📱 4-Tab 架构</span>
+      <span style="color:var(--t2);font-size:13px">🧠 Plan C AI 引擎</span>
+      <span style="color:var(--t2);font-size:13px">🔄 待办→商机→作战包闭环</span>
+    </div>
+  </div>
+  <span class="page-num">01 / 10</span>
+</div>
+
+<!-- ========== P2: 价值主张对比 ========== -->
+<div class="slide" id="s2">
+  <div class="slide-inner">
+    <h2>价值主张：<span class="hl">传统</span> vs <span class="hl">AI 智能版</span></h2>
+    <p class="subtitle">从"以操作为主"到"以决策+赋能为核心"的范式转移</p>
+    <div class="cols">
+      <div class="compare-box old">
+        <div class="cb-icon">🖥️</div>
+        <div class="cb-title">传统展业工具</div>
+        <div class="cb-sub">以<strong>操作为主</strong>的设计主张</div>
+        <div class="cb-items">
+          <span class="cb-item">功能堆砌</span>
+          <span class="cb-item">被动响应</span>
+          <span class="cb-item">经验驱动</span>
+          <span class="cb-item">人找信息</span>
+          <span class="cb-item">工具思维</span>
+        </div>
+      </div>
+      <div class="compare-box new">
+        <div class="cb-icon">🤖</div>
+        <div class="cb-title" style="color:#C4B5FF">易会办 AI 智能版</div>
+        <div class="cb-sub">以<strong style="color:var(--ai)">决策+赋能</strong>为核心</div>
+        <div class="cb-items">
+          <span class="cb-item">数据驱动</span>
+          <span class="cb-item">主动经营</span>
+          <span class="cb-item">AI 辅助决策</span>
+          <span class="cb-item">信息找人</span>
+          <span class="cb-item">助手思维</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:24px;text-align:center">
+      <p style="font-size:14px;color:var(--t2)"><strong style="color:var(--ai)">核心差异：</strong>传统工具 = 记录系统（客户做了什么） → 易会办 = <strong style="color:var(--primary)">决策系统</strong>（客户经理应该做什么）</p>
+    </div>
+  </div>
+  <span class="page-num">02 / 10</span>
+</div>
+
+<!-- ========== P3: 设计理念 ========== -->
+<div class="slide" id="s3">
+  <div class="slide-inner">
+    <h2>设计理念：<span class="hl">三层架构</span></h2>
+    <p class="subtitle">数据驱动 × AI 赋能 × 行动闭环</p>
+    <div class="arch-flow" style="margin:32px 0">
+      <div class="arch-block" style="border-top:3px solid var(--green)">
+        <div class="ab-icon">📊</div>
+        <div class="ab-title">数据层</div>
+        <div class="ab-desc">客户画像 · 产品数据<br>行为轨迹 · 商机信号</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-block" style="border-top:3px solid var(--ai)">
+        <div class="ab-icon">🧠</div>
+        <div class="ab-title">智能层</div>
+        <div class="ab-desc">AI 引擎 · 规则引擎<br>意图解析 · 决策推荐</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-block" style="border-top:3px solid var(--primary)">
+        <div class="ab-icon">⚡</div>
+        <div class="ab-title">行动层</div>
+        <div class="ab-desc">待办 · 商机 · 作战包<br>日程 · 面谈 · 跟进</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+      <span class="tag green">聚焦核心任务</span>
+      <span class="tag ai">数据驱动决策</span>
+      <span class="tag blue">AI 无缝嵌入</span>
+      <span class="tag green">闭环工作流</span>
+    </div>
+  </div>
+  <span class="page-num">03 / 10</span>
+</div>
+
+<!-- ========== P4: 整体布局 ========== -->
+<div class="slide" id="s4">
+  <div class="slide-inner">
+    <h2>整体布局：<span class="hl">4-Tab 导航架构</span></h2>
+    <p class="subtitle">一屏一任务 · 减少跳转层级 · 高频操作前置</p>
+    <div class="cols-37">
+      <div style="text-align:center">
+        <div class="phone-frame">
+          <div class="phone-header">易会办</div>
+          <div class="phone-body">
+            <div class="phone-tab"><div class="pt-icon w">📋</div> 工作台 · 首页仪表盘</div>
+            <div class="phone-tab"><div class="pt-icon c">👥</div> 客户 · 360画像+查询</div>
+            <div class="phone-tab"><div class="pt-icon p">📦</div> 产品 · 大全+对比</div>
+            <div class="phone-tab"><div class="pt-icon m">👤</div> 我的 · 业绩+设置</div>
+          </div>
+          <div class="phone-bottom">
+            <span class="active">🏠 工作台</span><span>👥 客户</span><span>📦 产品</span><span>👤 我的</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title"><span style="font-size:18px">🏠</span> Tab 1 · 工作台</div>
+          <div class="card-desc">AI 摘要 + 智能日程 + 商机看板 + 新客拓展 — 客户经理打开 APP 即见核心任务</div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title"><span style="font-size:18px">👥</span> Tab 2 · 客户</div>
+          <div class="card-desc">客户列表 + 360画像（9面板）+ AI 自然语言查询 — 全方位客户洞察</div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title"><span style="font-size:18px">📦</span> Tab 3 · 产品</div>
+          <div class="card-desc">产品大全（11款/5品类）+ 多维筛选 + AI 查询 + 同类型对比 — 智能产品检索</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span style="font-size:18px">👤</span> Tab 4 · 我的</div>
+          <div class="card-desc">业绩看板 + 管户清单 + 日程管理 + 知识库 — 个人工作全景</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="page-num">04 / 10</span>
+</div>
+
+<!-- ========== P5: 工作台核心任务 ========== -->
+<div class="slide" id="s5">
+  <div class="slide-inner">
+    <h2>工作台：<span class="hl">4 大 Block 核心任务布局</span></h2>
+    <p class="subtitle">打开 APP → AI 摘要 → 日程处理 → 商机挖掘 → 新客拓展</p>
+    <div class="block-grid">
+      <div class="block-card b1">
+        <div class="bc-icon">🧠</div>
+        <div class="bc-title">Block 1 · AI 智能摘要</div>
+        <div class="bc-desc">今日最需关注的 3 件事<br>跨频道数据聚合：商机+到期+预警</div>
+        <span class="tag ai" style="margin-top:6px">🤖 AI 驱动</span>
+      </div>
+      <div class="block-card b2">
+        <div class="bc-icon">📅</div>
+        <div class="bc-title">Block 2 · 智能日程</div>
+        <div class="bc-desc">上午/下午待办客户轮播<br>AI 自动排程（优先级·距离·偏好）</div>
+        <span class="tag blue" style="margin-top:6px">🤖 AI 排程</span>
+      </div>
+      <div class="block-card b3">
+        <div class="bc-icon">💡</div>
+        <div class="bc-title">Block 3 · 商机看板</div>
+        <div class="bc-desc">4 类商机统一视图<br>代发到账 · 流失预警 · AI 挖掘 · 我的</div>
+        <span class="tag" style="margin-top:6px;background:rgba(255,143,31,0.2);color:var(--orange)">🤖 AI 挖掘</span>
+      </div>
+      <div class="block-card b4">
+        <div class="bc-icon">🎯</div>
+        <div class="bc-title">Block 4 · 新客拓展</div>
+        <div class="bc-desc">AI 基于管户画像推荐潜客<br>潜在价值评分 + 匹配理由</div>
+        <span class="tag green" style="margin-top:6px">🤖 AI 推荐</span>
+      </div>
+    </div>
+  </div>
+  <span class="page-num">05 / 10</span>
+</div>
+
+<!-- ========== P6: 业务对象建模 ========== -->
+<div class="slide" id="s6">
+  <div class="slide-inner">
+    <h2>业务对象建模：<span class="hl">三层核心对象关系</span></h2>
+    <p class="subtitle">待办 · 商机 · 作战包 — 整个 APP 最核心的业务逻辑</p>
+    <div class="cols-73">
+      <div class="obj-layers">
+        <div class="obj-layer l1">
+          <div class="ol-num">1</div>
+          <div><div class="ol-title">商机 Opportunity</div><div class="ol-desc">三大来源：系统推送（规则引擎）· 客户经理自建 · AI 智能挖掘</div></div>
+        </div>
+        <div class="obj-connect">
+          <div class="obj-connect-item">⬆ 商机是作战包的<strong style="color:var(--ai)">唯一来源</strong></div>
+        </div>
+        <div class="obj-layer l2">
+          <div class="ol-num">2</div>
+          <div><div class="ol-title">作战包 Battle Package</div><div class="ol-desc">电话版 / 面谈版 · 客户概览+营销线索+话术脚本+产品推荐</div></div>
+        </div>
+        <div class="obj-connect">
+          <div class="obj-connect-item">⬆ 生成作战包时<strong style="color:var(--red)">强制创建</strong>商机待办</div>
+        </div>
+        <div class="obj-layer l3">
+          <div class="ol-num">3</div>
+          <div><div class="ol-title">商机待办 Task</div><div class="ol-desc">携带作战包配置 · 排入智能日程 · 执行后回写商机状态</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔑 关键设计决策</div>
+        <div class="card-desc">
+          <p style="margin-bottom:8px">❌ 待办<strong>不能</strong>直接创建作战包</p>
+          <p style="margin-bottom:8px">✅ 商机是作战包的<strong style="color:var(--ai)">唯一来源</strong></p>
+          <p style="margin-bottom:8px">✅ 生成作战包时<strong style="color:var(--red)">必须</strong>创建商机待办</p>
+          <p>🔄 全链路：<strong style="color:var(--primary)">来源 → 商机 → 作战包 → 商机待办 → 执行 → 回写</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="page-num">06 / 10</span>
+</div>
+
+<!-- ========== P7: 闭环工作流（核心） ========== -->
+<div class="slide" id="s7" style="align-items:flex-start;padding-top:50px">
+  <div class="slide-inner">
+    <h2 style="text-align:center">闭环工作流：<span class="hl">从商机到执行的全链路</span></h2>
+    <p class="subtitle" style="text-align:center">待办 · 商机 · 作战包 — 一条闭环链路串联所有设计</p>
+    
+    <!-- Phase 1: 商机来源 -->
+    <div class="flow-phase" style="margin-top:24px">
+      <div class="flow-phase-label">来源</div>
+      <div class="flow-node src">⚙️ 系统推送<br><small style="font-weight:400">规则引擎</small></div>
+      <div class="flow-node src">✏️ 客户经理自建<br><small style="font-weight:400">主动挖掘</small></div>
+      <div class="flow-node src">🤖 AI 智能挖掘<br><small style="font-weight:400">行为分析+预测</small></div>
+    </div>
+    <div class="flow-pipe"></div>
+    
+    <!-- Phase 2: 商机 → 作战包 -->
+    <div class="flow-phase">
+      <div class="flow-phase-label">生成</div>
+      <div class="flow-node opp" style="font-size:16px;padding:16px 28px">💡 商机<br><small style="font-weight:400">Opportunity</small></div>
+      <div class="flow-arrow hl">→</div>
+      <div class="flow-node pkg" style="font-size:16px;padding:16px 28px">🎯 作战包<br><small style="font-weight:400">电话版 / 面谈版</small></div>
+      <div class="flow-arrow hl">→</div>
+      <div class="flow-node todo" style="font-size:16px;padding:16px 28px">📋 商机待办<br><small style="font-weight:400">携带作战包</small></div>
+    </div>
+    <div class="flow-pipe"></div>
+    
+    <!-- Phase 3: 执行 -->
+    <div class="flow-phase">
+      <div class="flow-phase-label">执行</div>
+      <div class="flow-node" style="background:rgba(51,102,255,0.12);color:var(--primary);border:1px solid rgba(51,102,255,0.3);padding:14px 20px">📅 智能日程排入<br><small style="font-weight:400">AI 自动排程</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node act" style="padding:14px 20px">🗣️ 面谈执行<br><small style="font-weight:400">双视图 + 偏离分支</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" style="background:rgba(0,181,120,0.12);color:var(--green);border:1px solid rgba(0,181,120,0.3);padding:14px 20px">📝 要点确认<br><small style="font-weight:400">客户确认记录</small></div>
+    </div>
+    <div class="flow-pipe"></div>
+    
+    <!-- Phase 4: 回写 -->
+    <div class="flow-phase">
+      <div class="flow-phase-label">闭环</div>
+      <div class="flow-node" style="background:rgba(108,92,231,0.15);color:#C4B5FF;border:1px solid rgba(108,92,231,0.3);padding:14px 20px">🔄 状态回写<br><small style="font-weight:400">商机状态更新</small></div>
+      <div class="flow-arrow hl">→</div>
+      <div class="flow-node todo" style="padding:14px 20px">📋 跟进待办<br><small style="font-weight:400">自动生成</small></div>
+      <div class="flow-arrow hl">→</div>
+      <div style="font-size:20px;color:var(--ai);font-weight:700">🔁 下一轮</div>
+    </div>
+
+    <!-- Bottom annotations -->
+    <div style="display:flex;gap:12px;margin-top:28px;justify-content:center;flex-wrap:wrap">
+      <span class="tag ai">AI 自动排程</span>
+      <span class="tag blue">双视图模式</span>
+      <span class="tag green">偏离预制分支</span>
+      <span class="tag" style="background:rgba(255,143,31,0.15);color:var(--orange)">要点确认记录</span>
+    </div>
+  </div>
+  <span class="page-num">07 / 10</span>
+</div>
+
+<!-- ========== P8: AI 赋能矩阵 ========== -->
+<div class="slide" id="s8">
+  <div class="slide-inner">
+    <h2>AI 赋能：<span class="hl">无缝植入业务全环节</span></h2>
+    <p class="subtitle">Plan C 统一引擎 + 6 大场景化 AI 服务</p>
+    <div class="ai-grid">
+      <div class="ai-cell">
+        <div class="ai-name">📅 智能日程排程</div>
+        <div class="ai-where">📍 工作台 Block 2</div>
+        <div class="ai-desc">AI 综合优先级、客户距离、时段偏好自动排程，生成上午/下午最优拜访顺序</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-name">💡 AI 商机挖掘</div>
+        <div class="ai-where">📍 工作台 Block 3</div>
+        <div class="ai-desc">基于客户行为分析、生命周期事件、产品到期信号，AI 自动发现潜在商机并推送</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-name">🎯 AI 新客推荐</div>
+        <div class="ai-where">📍 工作台 Block 4</div>
+        <div class="ai-desc">基于管户画像相似度匹配，AI 推荐高潜力新客户，附带推荐理由和触达建议</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-name">👥 客户智能查询</div>
+        <div class="ai-where">📍 客户频道 🤖</div>
+        <div class="ai-desc">自然语言描述客户特征 → AI 解析筛选条件 → 实时过滤 → 应用到列表</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-name">📦 产品智能查询</div>
+        <div class="ai-where">📍 产品频道 🤖</div>
+        <div class="ai-desc">自然语言描述产品需求 → AI 解析类型/风险/期限 → 精准匹配 → 应用到列表</div>
+      </div>
+      <div class="ai-cell">
+        <div class="ai-name">🌐 全局智能问答</div>
+        <div class="ai-where">📍 首页 🤖 全局入口</div>
+        <div class="ai-desc">跨频道数据整合：哪些客户同时有商机和到期产品？今天最需关注的 3 件事？</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;text-align:center">
+      <p style="font-size:13px;color:var(--t2)"><strong style="color:var(--ai)">统一交互：</strong>底部滑入浮层（85%）+ 拖拽手势 + 快捷标签 + 结果卡片 + 应用到列表 — <strong style="color:var(--primary)">六个频道，一种体验</strong></p>
+    </div>
+  </div>
+  <span class="page-num">08 / 10</span>
+</div>
+
+<!-- ========== P9: 成果全景 ========== -->
+<div class="slide" id="s9">
+  <div class="slide-inner">
+    <h2 style="text-align:center">设计成果<span class="hl">全景图</span></h2>
+    <p class="subtitle" style="text-align:center">从需求到原型的完整设计资产</p>
+    <div class="stat-row" style="margin-bottom:32px">
+      <div class="stat-item"><div class="sn ai">4</div><div class="sl">Tab 导航</div></div>
+      <div class="stat-item"><div class="sn blue">12</div><div class="sl">核心业务对象</div></div>
+      <div class="stat-item"><div class="sn green">18</div><div class="sl">页面跳转映射</div></div>
+      <div class="stat-item"><div class="sn ai">6</div><div class="sl">AI 服务场景</div></div>
+      <div class="stat-item"><div class="sn blue">~6800</div><div class="sl">原型代码行数</div></div>
+      <div class="stat-item"><div class="sn green">11</div><div class="sl">产品数据</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div class="card"><div class="card-title">📋 需求分析</div><div class="card-desc">业务数据模型分析<br>图片分析与布局参考<br>核心业务设计模型</div></div>
+      <div class="card"><div class="card-title">📝 交互规格</div><div class="card-desc">6 个规格文件 · ~3100 行<br>W1/W2/W3/P/W/AI<br>全闭环验证</div></div>
+      <div class="card"><div class="card-title">🔄 交互原型</div><div class="card-desc">单文件 ~6800 行 HTML<br>全部页面 + AI 对话<br>设计系统 Token 化</div></div>
+    </div>
+  </div>
+  <span class="page-num">09 / 10</span>
+</div>
+
+<!-- ========== P10: 总结 ========== -->
+<div class="slide slide-cover" id="s10">
+  <div class="slide-inner" style="text-align:center">
+    <div class="summary-msg">
+      <div class="sm-icon">🚀</div>
+      <div class="sm-title">从"工具"到"助手"的跨越</div>
+      <div class="sm-desc">
+        <p style="margin-bottom:12px"><strong style="color:var(--ai)">一个闭环链路</strong>串联所有设计：<br>数据 → 智能 → 行动 → 反馈</p>
+        <p style="margin-bottom:12px"><strong style="color:var(--primary)">一条设计主线</strong>贯穿始终：<br>AI 不是独立功能，而是渗透在每个业务环节中的增效引擎</p>
+        <p><strong style="color:var(--green)">一个核心转变：</strong><br>从"客户经理操作工具记录信息"<br>到"AI 助手主动分析、推荐、排程，客户经理专注于决策和关系经营"</p>
+      </div>
+    </div>
+    <div class="cover-line" style="margin-top:28px"></div>
+    <p style="color:var(--t3);font-size:13px;margin-top:16px">易会办 · 银行客户经理智能展业助手 · AI 智能版业务设计方案</p>
+  </div>
+  <span class="page-num">10 / 10</span>
+</div>
+
+<script>
+// Build nav dots
+var slides = document.querySelectorAll('.slide');
+var dotsContainer = document.getElementById('navDots');
+slides.forEach(function(s, i) {
+  var a = document.createElement('a');
+  a.href = '#' + s.id;
+  if (i === 0) a.classList.add('active');
+  dotsContainer.appendChild(a);
+});
+
+// Update active dot on scroll
+var dots = dotsContainer.querySelectorAll('a');
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      dots.forEach(function(d, i) {
+        d.classList.toggle('active', d.getAttribute('href') === '#' + e.target.id);
+      });
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(function(s) { observer.observe(s); });
+</script>
+</body>
+</html>

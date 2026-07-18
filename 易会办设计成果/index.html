@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>易会办 · 银行客户经理智能展业助手 — 设计成果集</title>
+<style>
+:root {
+  --bg: #F5F6FA; --card: #FFFFFF; --primary: #3366FF; --ai: #6C5CE7;
+  --green: #00B578; --orange: #FF8F1F; --t1: #1A1D28; --t2: #5A5E6E; --t3: #9A9EAD;
+  --border: #D8DCE5; --r: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--t1); min-height: 100vh; }
+/* Header */
+.header { background: linear-gradient(135deg, #EDEFF5 0%, #E2DFF5 40%, #E8E0FF 70%, #EDEFF5 100%); padding: 60px 40px 48px; text-align: center; }
+.header .tag { display: inline-block; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(108,92,231,0.12); color: var(--ai); margin-bottom: 16px; }
+.header h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+.header h1 span { color: var(--ai); }
+.header p { font-size: 16px; color: var(--t2); max-width: 560px; margin: 0 auto; line-height: 1.7; }
+.header .meta { display: flex; gap: 20px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.header .meta span { font-size: 13px; color: var(--t3); }
+/* Main */
+.main { max-width: 960px; margin: 0 auto; padding: 32px 24px 60px; }
+.section { margin-bottom: 40px; }
+.section h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.section .sec-desc { font-size: 14px; color: var(--t2); margin-bottom: 18px; }
+/* Cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.card { background: var(--card); border-radius: var(--r); padding: 24px; border: 1px solid var(--border); text-decoration: none; color: inherit; display: block; transition: all 0.2s; position: relative; overflow: hidden; }
+.card:hover { border-color: var(--ai); box-shadow: 0 4px 20px rgba(108,92,231,0.1); transform: translateY(-2px); }
+.card .c-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-bottom: 12px; }
+.card .c-badge.prototype { background: rgba(51,102,255,0.1); color: var(--primary); }
+.card .c-badge.ppt { background: rgba(108,92,231,0.1); color: var(--ai); }
+.card .c-badge.doc { background: rgba(0,181,120,0.1); color: var(--green); }
+.card .c-icon { font-size: 32px; margin-bottom: 10px; }
+.card .c-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.card .c-desc { font-size: 13px; color: var(--t2); line-height: 1.6; }
+.card .c-meta { display: flex; gap: 12px; margin-top: 12px; font-size: 11px; color: var(--t3); }
+.card .c-arrow { position: absolute; right: 20px; bottom: 20px; font-size: 18px; color: var(--ai); opacity: 0; transition: opacity 0.2s; }
+.card:hover .c-arrow { opacity: 1; }
+/* Feature card */
+.card.feature { border-left: 4px solid var(--ai); }
+.card.feature .c-badge { margin-bottom: 6px; }
+/* Footer */
+.footer { text-align: center; padding: 32px; color: var(--t3); font-size: 13px; border-top: 1px solid var(--border); }
+.footer a { color: var(--ai); text-decoration: none; }
+/* Responsive */
+@media (max-width: 640px) {
+  .header { padding: 40px 20px 32px; }
+  .header h1 { font-size: 28px; }
+  .cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="tag">设计成果集</div>
+  <h1>易会办<br><span>银行客户经理智能展业助手</span></h1>
+  <p>以数据分析决策和 AI 赋能提效为核心的新一代展业工具 · 全部设计成果均可离线本地浏览</p>
+  <div class="meta">
+    <span>📱 4-Tab 导航架构</span>
+    <span>🧠 Plan C AI 引擎</span>
+    <span>🔄 待办→商机→作战包闭环</span>
+    <span>📊 6 大 AI 服务场景</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- 交互原型 -->
+  <div class="section">
+    <h2>📱 交互原型</h2>
+    <p class="sec-desc">可直接交互体验的高保真 App 原型，覆盖全部核心页面和 AI 对话流程</p>
+    <div class="cards">
+      <a class="card feature" href="原型设计/workbench.html" target="_blank">
+        <span class="c-badge prototype">交互原型</span>
+        <div class="c-icon">📱</div>
+        <div class="c-title">易会办 · 完整交互原型</div>
+        <div class="c-desc">4-Tab 完整 App 原型，含工作台、客户频道、产品频道、我的，全部页面可交互。AI 对话浮层、智能日程轮播、商机看板等核心功能均已实现。</div>
+        <div class="c-meta"><span>📄 ~6,900 行</span><span>🎨 含 AI 对话</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+      <a class="card" href="原型设计/ai-design-plan.html" target="_blank">
+        <span class="c-badge ppt">设计方案 PPT</span>
+        <div class="c-icon">📋</div>
+        <div class="c-title">AI 智能版业务设计方案</div>
+        <div class="c-desc">10 页全屏滑动 PPT，聚焦价值主张对比、设计理念、工作台布局、闭环工作流、AI 赋能矩阵等核心设计成果。</div>
+        <div class="c-meta"><span>📄 ~550 行</span><span>深色主题</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+      <a class="card" href="原型设计/courseware.html" target="_blank">
+        <span class="c-badge doc">学习课件</span>
+        <div class="c-icon">📚</div>
+        <div class="c-title">AI 智能开发 · 学习课件</div>
+        <div class="c-desc">Step-by-Step 记录整个 Quest 过程的完整课件，含 8 大阶段、方法论总结和可折叠讨论细节。</div>
+        <div class="c-meta"><span>📄 ~960 行</span><span>折叠式讨论</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 设计方案 PPT -->
+  <div class="section">
+    <h2>📊 业务设计方案</h2>
+    <p class="sec-desc">从价值主张到 AI 赋能矩阵的完整设计方案，含手机界面 Mockup 截图</p>
+    <div class="cards">
+      <a class="card feature" href="课件/AI智能版业务设计方案-详细版.html" target="_blank">
+        <span class="c-badge ppt">详细版 · 41 页</span>
+        <div class="c-icon">📖</div>
+        <div class="c-title">AI 智能版业务设计方案（详细版）</div>
+        <div class="c-desc">41 页全屏滑动 PPT，包含价值主张、设计理念、整体布局、工作台任务、业务对象建模、闭环工作流、AI 赋能矩阵、设计成果全景。含 10+ 手机 App 界面 Mockup 截图。</div>
+        <div class="c-meta"><span>📄 ~1,080 行</span><span>浅色主题</span><span>📱 含 UI 截图</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+      <a class="card" href="课件/AI智能版业务设计方案.html" target="_blank">
+        <span class="c-badge ppt">概要版 · 10 页</span>
+        <div class="c-icon">📝</div>
+        <div class="c-title">AI 智能版业务设计方案（概要版）</div>
+        <div class="c-desc">10 页精简版 PPT，快速了解核心设计理念与关键成果。适合对外宣讲和快速浏览。</div>
+        <div class="c-meta"><span>📄 ~550 行</span><span>深色主题</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 学习资料 -->
+  <div class="section">
+    <h2>🎓 学习资料</h2>
+    <p class="sec-desc">设计工程过程记录与知识沉淀</p>
+    <div class="cards">
+      <a class="card" href="课件/AI智能开发工具应用软件设计工程.html" target="_blank">
+        <span class="c-badge doc">设计工程课件</span>
+        <div class="c-icon">🛠️</div>
+        <div class="c-title">AI 智能开发工具 · 应用软件设计工程</div>
+        <div class="c-desc">记录从项目启动到原型实现的完整设计工程过程，含需求分析、场景交互、业务建模、设计系统、交互规格等关键阶段的成果与方法论。</div>
+        <div class="c-meta"><span>📄 ~960 行</span><span>Step-by-Step</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+      <a class="card" href="课件/index.html" target="_blank">
+        <span class="c-badge doc">课件索引</span>
+        <div class="c-icon">🗂️</div>
+        <div class="c-title">课件目录索引</div>
+        <div class="c-desc">课件文件夹的索引页面，快速导航到各课件文件。</div>
+        <div class="c-meta"><span>📄 ~960 行</span></div>
+        <div class="c-arrow">→</div>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>易会办 · 银行客户经理智能展业助手 · 设计成果集</p>
+  <p style="margin-top:4px">所有文件均为 <strong>离线自包含 HTML</strong>，无需服务器，双击即可在浏览器中打开</p>
+</div>
+
+</body>
+</html>

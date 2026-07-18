@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Qoder cache
+.qoder/
+
+# IDE
+.vscode/
+.idea/
+
+# Thumbnails
+Thumbs.db
+ehthumbs.db
+
+# Temporary files
+*.tmp
+*~

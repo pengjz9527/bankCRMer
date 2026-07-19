@@ -875,28 +875,160 @@ body {
 .ps-footer {
   padding: var(--sp-sm) var(--sp-md) calc(var(--sp-sm) + env(safe-area-inset-bottom, 0));
   border-top: 1px solid var(--color-divider); flex-shrink: 0;
-  display: flex; gap: var(--sp-xs); flex-wrap: wrap;
+  display: flex; align-items: center; gap: var(--sp-sm);
 }
-.ps-footer button {
-  height: 34px; padding: 0 var(--sp-md); border-radius: var(--radius-sm);
+.ps-footer .ps-progress {
+  flex: 1; font-size: var(--fs-caption); color: var(--color-text-secondary);
+}
+.ps-footer .ps-sort {
+  height: 30px; padding: 0 var(--sp-sm); border-radius: var(--radius-sm);
+  font-size: var(--fs-caption); border: 1px solid var(--color-border);
+  background: var(--color-bg); color: var(--color-text-secondary);
+  cursor: pointer; outline: none;
+  -webkit-appearance: none; appearance: none;
+  padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+}
+
+/* 客户行中新增的按钮样式 */
+.ps-customer .ps-act-btn.ps-btn-profile { color: var(--color-text-secondary); font-size: 14px; }
+.ps-customer .ps-act-btn.ps-btn-skip { color: var(--color-warning, #e6a23c); font-size: 13px; }
+.ps-customer.skipped { opacity: 0.4; }
+.ps-customer.skipped .ps-cust-name { color: var(--color-text-tertiary); }
+.ps-customer.skipped .ps-cust-name::after { content: ' (已跳过)'; font-size: var(--fs-caption); color: var(--color-warning, #e6a23c); }
+
+/* ---- 电话/微信对话框 ---- */
+.phone-dialog-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 170; pointer-events: none;
+}
+.phone-dialog-overlay.open { pointer-events: all; }
+.phone-dialog-overlay .pd-backdrop {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0; transition: opacity 0.3s var(--ease-default);
+}
+.phone-dialog-overlay.open .pd-backdrop { opacity: 1; }
+
+.pd-sheet {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--color-card);
+  border-radius: 16px 16px 0 0;
+  transform: translateY(100%);
+  transition: transform 0.3s var(--ease-default);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  max-height: 65%;
+}
+.phone-dialog-overlay.open .pd-sheet { transform: translateY(0); }
+
+.pd-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-md); border-bottom: 1px solid var(--color-divider);
+  flex-shrink: 0;
+}
+.pd-header .pd-title {
+  font-size: var(--fs-subtitle); font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+.pd-header .pd-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-bg); border: none; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--color-text-secondary);
+}
+.pd-header .pd-close:active { background: var(--color-divider); }
+
+.pd-body {
+  flex: 1; overflow-y: auto; padding: var(--sp-md);
+  -webkit-overflow-scrolling: touch;
+}
+.pd-body::-webkit-scrollbar { display: none; }
+
+.pd-cust-section {
+  display: flex; align-items: baseline; gap: var(--sp-sm); margin-bottom: var(--sp-sm);
+}
+.pd-cust-name {
+  font-size: var(--fs-subtitle); font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+.pd-cust-tier {
+  font-size: var(--fs-caption); color: var(--color-text-secondary);
+  padding: 1px 8px; border-radius: 10px; background: var(--color-bg);
+}
+
+.pd-task-section {
+  display: flex; align-items: center; gap: var(--sp-xs);
+  margin-bottom: var(--sp-md);
+}
+.pd-task-tag {
   font-size: var(--fs-caption); font-weight: var(--fw-bold);
+  padding: 2px 8px; border-radius: 10px;
+  color: #fff; background: var(--color-primary);
+}
+.pd-task-detail {
+  font-size: var(--fs-caption); color: var(--color-text-secondary);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.pd-phone-row {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-md);
+  background: var(--color-bg); border-radius: var(--radius-sm);
+}
+.pd-phone-label { font-size: 18px; }
+.pd-phone-num {
+  flex: 1; font-size: var(--fs-subtitle); font-weight: var(--fw-bold);
+  color: var(--color-primary); letter-spacing: 1px;
+}
+.pd-copy-btn {
+  height: 28px; padding: 0 var(--sp-sm); border-radius: var(--radius-sm);
+  background: var(--color-primary); color: #fff; border: none;
+  font-size: var(--fs-caption); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pd-copy-btn:active { background: var(--color-primary-dark); }
+
+.pd-notes-area { margin-bottom: var(--sp-sm); }
+.pd-notes-area textarea {
+  width: 100%; padding: var(--sp-sm); border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: var(--color-bg);
+  font-size: var(--fs-body); color: var(--color-text-primary);
+  resize: none; font-family: inherit; outline: none;
+  box-sizing: border-box;
+}
+.pd-notes-area textarea:focus { border-color: var(--color-primary); }
+
+.pd-footer {
+  padding: var(--sp-sm) var(--sp-md) calc(var(--sp-sm) + env(safe-area-inset-bottom, 0));
+  border-top: 1px solid var(--color-divider); flex-shrink: 0;
+  display: flex; gap: var(--sp-sm);
+}
+.pd-footer button {
+  height: 40px; border-radius: var(--radius-sm);
+  font-size: var(--fs-body); font-weight: var(--fw-bold);
   cursor: pointer; border: none;
   -webkit-tap-highlight-color: transparent;
-  transition: all var(--duration-fast);
 }
-.ps-footer .ps-btn-all {
-  background: var(--color-primary); color: #fff; flex: 1;
-}
-.ps-footer .ps-btn-all:active { background: var(--color-primary-dark); }
-.ps-footer .ps-btn-profile {
+.pd-btn-skip {
+  flex: 0 0 auto; padding: 0 var(--sp-lg);
   background: var(--color-bg); color: var(--color-text-secondary);
 }
-.ps-footer .ps-btn-profile:active { background: var(--color-divider); }
-.ps-footer .ps-btn-opp {
-  background: var(--color-ai-light); color: var(--color-ai);
-  font-size: var(--fs-small);
+.pd-btn-skip:active { background: var(--color-divider); }
+.pd-btn-confirm {
+  flex: 1; background: var(--color-primary); color: #fff;
 }
-.ps-footer .ps-btn-opp:active { opacity: 0.8; }
+.pd-btn-confirm:active { background: var(--color-primary-dark); }
+
+/* 卡片进度徽标 */
+.task-card .card-progress {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: var(--fs-caption); color: var(--color-primary);
+  font-weight: var(--fw-bold); margin-left: var(--sp-xs);
+}
+.task-card .card-progress.badge-done { color: var(--color-success); }
+.task-card.completed .card-progress { display: none; }
 
 /* 卡片完成态 */
 .task-card.completed {
@@ -2824,21 +2956,18 @@ body {
                     <div class="sub-name">王建国 · 男 · 45岁</div>
                     <div class="sub-detail">XX定期存款 25万 · 7月18日到期(3天后)</div>
                   </div>
-                  <button class="sub-btn" onclick="event.stopPropagation();handleSubBtn(this)">处理</button>
                 </div>
                 <div class="sub-item" onclick="showToast('查看张丽华画像')">
                   <div class="sub-info">
                     <div class="sub-name">张丽华 · 女 · 38岁</div>
                     <div class="sub-detail">YY悦享周期理财 10万 · 7月18日到期(3天后)</div>
                   </div>
-                  <button class="sub-btn" onclick="event.stopPropagation();handleSubBtn(this)">处理</button>
                 </div>
                 <div class="sub-item" onclick="showToast('查看赵明辉画像')">
                   <div class="sub-info">
                     <div class="sub-name">赵明辉 · 男 · 52岁</div>
                     <div class="sub-detail">ZZ大额存单 50万 · 7月25日到期(10天后)</div>
                   </div>
-                  <button class="sub-btn" onclick="event.stopPropagation();handleSubBtn(this)">处理</button>
                 </div>
               </div>
             </div>
@@ -2904,14 +3033,12 @@ body {
                     <div class="sub-name">陈晓燕 · 财富客户 · 7月16日</div>
                     <div class="sub-detail">AUM 185万 · 偏好稳健理财</div>
                   </div>
-                  <button class="sub-btn" onclick="event.stopPropagation();handleSubBtn(this)">处理</button>
                 </div>
                 <div class="sub-item" onclick="showToast('查看刘建国画像')">
                   <div class="sub-info">
                     <div class="sub-name">刘建国 · 金卡客户 · 7月16日</div>
                     <div class="sub-detail">AUM 42万 · 持有基金</div>
                   </div>
-                  <button class="sub-btn" onclick="event.stopPropagation();handleSubBtn(this)">处理</button>
                 </div>
               </div>
             </div>
@@ -3218,9 +3345,73 @@ body {
       </div>
       <div class="ps-body" id="psBody"></div>
       <div class="ps-footer">
-        <button class="ps-btn-all" onclick="processAllCustomers()">全部标记完成</button>
-        <button class="ps-btn-profile" onclick="closeProcessPanel();setTimeout(function(){openW8Detail('王建国','process')},200)">查看客户画像</button>
-        <button class="ps-btn-opp" onclick="showToast('标记为商机 → 弹出商机创建浮层');closeProcessPanel()">标记为商机</button>
+        <span class="ps-progress" id="psProgress"></span>
+        <select class="ps-sort" id="psSort" onchange="sortProcessCustomers(this.value)">
+          <option value="default">默认排序</option>
+          <option value="tier">按等级排序</option>
+          <option value="amount">按金额排序</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 电话联系对话框 ===== -->
+  <div class="phone-dialog-overlay" id="phoneDialogOverlay">
+    <div class="pd-backdrop" onclick="closePhoneDialog()"></div>
+    <div class="pd-sheet">
+      <div class="pd-header">
+        <div class="pd-title">📞 电话联系</div>
+        <button class="pd-close" onclick="closePhoneDialog()">✕</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-cust-section">
+          <div class="pd-cust-name" id="pdCustName"></div>
+          <div class="pd-cust-tier" id="pdCustTier"></div>
+        </div>
+        <div class="pd-task-section">
+          <span class="pd-task-tag" id="pdTaskTag"></span>
+          <span class="pd-task-detail" id="pdTaskDetail"></span>
+        </div>
+        <div class="pd-phone-row">
+          <span class="pd-phone-label">📱</span>
+          <span class="pd-phone-num" id="pdPhoneNum">加载中...</span>
+          <button class="pd-copy-btn" onclick="copyPhone()">复制</button>
+        </div>
+        <div class="pd-notes-area">
+          <textarea id="pdNotes" placeholder="记录沟通内容...（可选）" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="pd-footer">
+        <button class="pd-btn-skip" onclick="closePhoneDialog()">取消</button>
+        <button class="pd-btn-confirm" onclick="confirmPhoneCall()">✓ 确认完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 微信联系对话框 ===== -->
+  <div class="phone-dialog-overlay" id="wechatDialogOverlay">
+    <div class="pd-backdrop" onclick="closeWechatDialog()"></div>
+    <div class="pd-sheet">
+      <div class="pd-header">
+        <div class="pd-title">💬 微信联系</div>
+        <button class="pd-close" onclick="closeWechatDialog()">✕</button>
+      </div>
+      <div class="pd-body">
+        <div class="pd-cust-section">
+          <div class="pd-cust-name" id="wcCustName"></div>
+          <div class="pd-cust-tier" id="wcCustTier"></div>
+        </div>
+        <div class="pd-task-section">
+          <span class="pd-task-tag" id="wcTaskTag"></span>
+          <span class="pd-task-detail" id="wcTaskDetail"></span>
+        </div>
+        <div class="pd-notes-area">
+          <textarea id="wcNotes" placeholder="记录微信沟通内容...（可选）" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="pd-footer">
+        <button class="pd-btn-skip" onclick="closeWechatDialog()">取消</button>
+        <button class="pd-btn-confirm" onclick="confirmWechatMsg()">✓ 确认完成</button>
       </div>
     </div>
   </div>
@@ -3580,28 +3771,610 @@ function toggleExpand(expandId, arrowId) {
 }
 
 // ===== 按钮状态机 =====
-function handleTaskBtn(btn) {
-  const orig = btn.textContent;
-  btn.textContent = '处理中...'; btn.disabled = true; btn.style.opacity = '0.7';
-  setTimeout(() => {
-    btn.textContent = '✓ 已处理'; btn.style.background = 'var(--color-success)';
-    btn.style.opacity = '1'; btn.style.border = 'none';
-    showToast('AI已记录处理结果');
-    setTimeout(() => {
-      btn.textContent = orig; btn.style.background = ''; btn.style.opacity = '1'; btn.disabled = false;
-    }, 2500);
-  }, 600);
-}
+// ============================================================
+// API 数据加载器 — 默认从后台 API 获取数据
+// ============================================================
+(function() {
+  var API_BASE = 'http://localhost:8000';
+  var USE_API = true;  // 关闭此项切换回静态数据
 
-function handleSubBtn(btn) {
-  const orig = btn.textContent;
-  btn.textContent = '处理中...'; btn.disabled = true;
-  setTimeout(() => {
-    btn.textContent = '✓'; btn.style.background = 'var(--color-success)';
-    showToast('已处理');
-    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.disabled = false; }, 2000);
-  }, 500);
-}
+  // 如果 API 不可用, 自动降级为静态数据
+  var apiAvailable = false;
+
+  function apiGet(path) {
+    return fetch(API_BASE + path, { signal: AbortSignal.timeout(5000) })
+      .then(function(r) { return r.json(); })
+      .catch(function(e) { console.warn('[API] ' + path + ': ' + e.message); return null; });
+  }
+
+  // 检查 API 是否可用
+  function checkAPI() {
+    return apiGet('/api/customers?size=1').then(function(r) {
+      if (r && r.code === 0) { apiAvailable = true; console.log('[API] 已连接, 数据源: API'); }
+      else { console.log('[API] 不可用, 使用静态数据'); }
+      return apiAvailable;
+    });
+  }
+
+  // ---- taskData 映射 + DOM 刷新 ----
+  var cardDefs = [
+    { type: '产品到期', seg: '☀️ 上午', time: '09:00-10:30', dur: '约1.5h', tagCls: 'tag-danger', icon: '' },
+    { type: '大额异动', seg: '☀️ 上午', time: '10:30-11:00', dur: '约0.5h', tagCls: 'tag-warning', icon: '' },
+    { type: '贷款逾期', seg: '🌤 下午', time: '14:00-14:30', dur: '约0.5h', tagCls: 'tag-warning', icon: '' },
+    { type: '联络超期', seg: '🌤 下午', time: '15:00-16:00', dur: '约1h', tagCls: 'tag-muted', icon: '' },
+    { type: '生日提醒', seg: '🌤 下午', time: '16:00-16:30', dur: '约0.5h', tagCls: 'tag-success', icon: '' },
+    { type: '商机待办', seg: '☀️ 上午', time: '11:00-11:30', dur: '约0.5h', tagCls: 'tag-opportunity', icon: '🟣 ' }
+  ];
+
+  function loadTasks() {
+    var today = new Date().toISOString().slice(0, 10);
+    return apiGet('/api/tasks?date=' + today).then(function(r) {
+      if (!r || r.code !== 0) return;
+      var tasks = r.data.tasks || [];
+      // 按类型分组
+      var groups = {};
+      tasks.forEach(function(t) {
+        var key = t.type;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+
+      // 按 cardDefs 顺序填充 card1-card6
+      var apiTypes = Object.keys(groups);
+      var slotIdx = 0;
+      for (var i = 0; i < cardDefs.length; i++) {
+        var cardId = 'card' + (i + 1);
+        var def = cardDefs[i];
+        if (apiTypes.indexOf(def.type) >= 0) {
+          var list = groups[def.type];
+          var totalAmt = 0;
+          list.forEach(function(t) {
+            var m = (t.summary || '').match(/([\d.]+)万/);
+            if (m) totalAmt += parseFloat(m[1]);
+          });
+          var desc = list.length + '位客户' + def.type;
+          if (def.type === '产品到期' && totalAmt > 0) desc += '，金额合计' + totalAmt.toFixed(0) + '万';
+          if (def.type === '大额异动') desc = list.length + '位客户发生大额资金异动，需及时关注';
+          if (def.type === '贷款逾期') desc = list.length + '位客户贷款逾期，需电话跟进';
+          if (def.type === '联络超期') desc = list.length + '位客户超期未联络';
+
+          taskData[cardId] = {
+            type: def.type,
+            desc: desc,
+            customers: list.map(function(t) {
+              return { name: t.cust_name, detail: t.summary, cust_id: t.cust_id };
+            }),
+            slotIdx: slotIdx,
+            cardDef: def
+          };
+          slotIdx++;
+        } else {
+          taskData[cardId] = null;  // 无数据，隐藏卡片
+        }
+      }
+      console.log('[API] 待办加载完成: ' + slotIdx + ' 类');
+      refreshTaskCardsDOM();
+    });
+  }
+
+  function refreshTaskCardsDOM() {
+    var cardEls = [
+      document.getElementById('taskCard1'), document.getElementById('taskCard2'),
+      document.getElementById('taskCard3'), document.getElementById('taskCard4'),
+      document.getElementById('taskCard5'), document.getElementById('taskCard6')
+    ];
+    var dots = document.querySelectorAll('#schedDots .dot');
+    var visibleCount = 0;
+
+    for (var i = 0; i < 6; i++) {
+      var cardEl = cardEls[i];
+      var cardId = 'card' + (i + 1);
+      var data = taskData[cardId];
+      var dot = dots[i];
+
+      if (!data) {
+        // 隐藏无数据的卡片和圆点
+        if (cardEl) cardEl.style.display = 'none';
+        if (dot) dot.style.display = 'none';
+        continue;
+      }
+      visibleCount++;
+      if (cardEl) cardEl.style.display = '';
+      if (dot) dot.style.display = '';
+
+      var def = data.cardDef;
+      // 更新卡片头
+      var top = cardEl.querySelector('.card-top');
+      if (top) {
+        top.innerHTML = '<span class="time-seg time-seg--am">' + def.seg + '</span>' +
+          '<span class="task-num">#' + (i + 1) + '</span>' +
+          '<span class="task-type-tag ' + def.tagCls + '">' + def.icon + def.type + '</span>';
+      }
+      // 更新摘要
+      var summary = cardEl.querySelector('.task-summary');
+      if (summary) summary.innerHTML = data.desc;
+      // 更新时间
+      var timeRange = cardEl.querySelector('.time-range');
+      if (timeRange) timeRange.textContent = def.time;
+      var timeDur = cardEl.querySelector('.time-dur');
+      if (timeDur) timeDur.textContent = def.dur;
+      // 更新人数
+      var countBadge = cardEl.querySelector('.count-badge');
+      if (countBadge) countBadge.textContent = data.customers.length + '人';
+      // 更新展开区（纯展示，无处理按钮）
+      var expand = cardEl.querySelector('.card-expand');
+      if (expand && data.customers.length > 0) {
+        expand.innerHTML = data.customers.map(function(c, j) {
+          return '<div class="sub-item" onclick="showToast(\'查看' + c.name + '画像\')">' +
+            '<div class="sub-info">' +
+              '<div class="sub-name">' + c.name + '</div>' +
+              '<div class="sub-detail">' + (c.detail || '') + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
+    // 更新圆点索引
+    var newDots = document.querySelectorAll('#schedDots .dot');
+    var vi = 0;
+    newDots.forEach(function(d) {
+      if (d.style.display !== 'none') {
+        d.setAttribute('data-idx', vi);
+        vi++;
+      }
+    });
+
+    // 重新初始化轮播（card 数量可能变了）
+    if (visibleCount > 0 && window.schedCarousel) {
+      window.schedCarousel.goTo(0);
+    }
+    if (visibleCount === 0) {
+      showAllDoneView();
+    }
+  }
+
+  // ---- w3OppData 映射 ----
+  function loadOpps() {
+    return apiGet('/api/opportunities').then(function(r) {
+      if (!r || r.code !== 0) return;
+      var opps = r.data.opportunities || [];
+      var oppMap = { daifa: [], liushi: [], ai: [], mine: [] };
+      opps.forEach(function(o) {
+        var item = {
+          id: o.opp_id,
+          name: o.cust_name,
+          meta: (o.cust_id || ''),
+          tag: o.source,
+          tagClass: o.source === 'AI挖掘' ? 'w3-opp-tag--ai' : (o.source === '规则匹配' ? 'w3-opp-tag--system' : 'w3-opp-tag--manual'),
+          fields: [
+            { label: '预估价值', val: (o.estimated_value ? (o.estimated_value/10000).toFixed(1) + '万' : '--') },
+            { label: '置信度', val: (o.confidence ? (o.confidence*100).toFixed(0) + '%' : '--') }
+          ],
+          estimate: o.estimated_value ? '≈' + (o.estimated_value/10000).toFixed(1) + '万' : '--',
+          img: false,
+          source: (o.source || '') + '·' + (o.type || ''),
+          assets: (o.reasoning || ''),
+          confidence: Math.round((o.confidence || 0) * 100),
+          reason: o.reasoning || ''
+        };
+        var t = o.type || '';
+        if (t.indexOf('代发') >= 0 || t.indexOf('产品到期') >= 0) oppMap.daifa.push(item);
+        else if (t.indexOf('流失') >= 0) oppMap.liushi.push(item);
+        else if (o.source === 'AI挖掘' || t.indexOf('基金') >= 0) oppMap.ai.push(item);
+        else oppMap.mine.push(item);
+      });
+      // 确保每个 tab 至少有数据
+      if (oppMap.daifa.length > 0) w3OppData.daifa = oppMap.daifa;
+      if (oppMap.liushi.length > 0) w3OppData.liushi = oppMap.liushi;
+      if (oppMap.ai.length > 0) w3OppData.ai = oppMap.ai;
+      if (oppMap.mine.length > 0) w3OppData.mine = oppMap.mine;
+      console.log('[API] 商机: daifa=' + oppMap.daifa.length + ' liushi=' + oppMap.liushi.length + ' ai=' + oppMap.ai.length + ' mine=' + oppMap.mine.length);
+    });
+  }
+
+  // ---- w8Data 映射 ----
+  function loadCustomers() {
+    return apiGet('/api/customers?size=50').then(function(r) {
+      if (!r || r.code !== 0) return;
+      var list = r.data.customers || [];
+      if (list.length === 0) return;
+      w8Data.customers = list.map(function(c) {
+        return {
+          name: c.name,
+          gender: c.gender || '男',
+          age: c.age || 30,
+          phone: (c.cust_no || '') + '****',
+          level: (c.tier || '') + '客户',
+          aum: (c.total_aum || 0) / 10000,
+          risk: '稳健型',
+          products: ['理财'],
+          tags: [],
+          lastContact: '',
+          lastContactDays: 0,
+          id: c.id
+        };
+      });
+      // 更新筛选器
+      var tiers = [];
+      list.forEach(function(c) { if (c.tier && tiers.indexOf(c.tier) < 0) tiers.push(c.tier); });
+      if (tiers.length > 0) w8Data.filters = ['全部'].concat(tiers.slice(0, 6));
+      console.log('[API] 客户列表加载完成: ' + w8Data.customers.length + ' 人');
+    });
+  }
+
+  // ---- 活动数据 ----
+  function loadActivities() {
+    return apiGet('/api/activities').then(function(r) {
+      if (!r || r.code !== 0) return;
+      var acts = r.data.activities || [];
+      if (acts.length === 0) return;
+      w8Data.activities = acts.map(function(a) {
+        return {
+          id: a.activity_id,
+          name: a.title,
+          type: (a.type || '') + '活动',
+          startDate: (a.start_date || ''),
+          endDate: (a.end_date || ''),
+          qualification: a.target_tier || '',
+          rewardType: '礼品',
+          reward: a.reward_desc || '',
+          status: '进行中'
+        };
+      });
+      console.log('[API] 活动加载完成: ' + w8Data.activities.length + ' 个');
+    });
+  }
+
+  // ---- 作战包 ----
+  function loadBattlePackages() {
+    return apiGet('/api/battle-packages').then(function(r) {
+      if (!r || r.code !== 0) return;
+      var pkgs = r.data.packages || [];
+      if (pkgs.length === 0) return;
+      // 更新 bpData 引用 — bpData 是 var 声明的, 可以直接赋新值
+      var newBpData = {};
+      pkgs.forEach(function(p, i) {
+        newBpData['bp' + (i + 1)] = {
+          id: p.bp_id,
+          name: p.cust_name,
+          mode: p.mode,
+          status: p.status,
+          generated_at: p.generated_at,
+          expires_at: p.expires_at
+        };
+      });
+      if (Object.keys(newBpData).length > 0) {
+        for (var k in newBpData) { bpData[k] = newBpData[k]; }
+      }
+      console.log('[API] 作战包加载完成: ' + pkgs.length + ' 个');
+    });
+  }
+
+  // ---- 全局搜索数据 ----
+  function loadSearchData() {
+    return apiGet('/api/customers?size=30').then(function(r) {
+      if (!r || r.code !== 0) return;
+      var list = r.data.customers || [];
+      if (list.length === 0) return;
+      gsData = list.map(function(c) {
+        return {
+          type: '客户',
+          name: c.name,
+          sub: (c.tier || '') + ' · ' + (c.occupation || '') + ' · AUM ' + ((c.total_aum || 0) / 10000).toFixed(1) + '万'
+        };
+      });
+      console.log('[API] 搜索数据加载完成: ' + gsData.length + ' 条');
+    });
+  }
+
+  // ---- 商机看板摘要刷新 ----
+  function refreshOppSummary() {
+    function parseEst(v) {
+      if (v == null) return 0;
+      var s = String(v);
+      var m = s.match(/([\d.]+)\s*万/);
+      return m ? parseFloat(m[1]) : (parseFloat(s) || 0);
+    }
+    var tabs = ['daifa', 'liushi', 'ai', 'mine'];
+    var totalOpp = 0, totalValue = 0;
+    tabs.forEach(function(t) {
+      var arr = w3OppData[t] || [];
+      totalOpp += arr.length;
+      arr.forEach(function(o) {
+        totalValue += parseEst(o.estimate);
+      });
+    });
+
+    // 更新商机池统计
+    var poolCount = document.querySelector('.opp-board-card .pool-stat:first-child .val');
+    var poolValue = document.querySelector('.opp-board-card .pool-stat:nth-child(2) .val');
+    if (poolCount) poolCount.innerHTML = totalOpp + '<span style="font-size:11px;font-weight:400">个</span>';
+    if (poolValue) poolValue.innerHTML = totalValue.toFixed(0) + '<span style="font-size:11px;font-weight:400">万</span>';
+
+    // 更新 4 个摘要行
+    var rows = document.querySelectorAll('.opp-board-card .opp-item-row');
+    if (rows.length >= 4) {
+      tabs.forEach(function(t, i) {
+        var arr = w3OppData[t] || [];
+        var row = rows[i];
+        if (!row) return;
+        var meta = row.querySelector('.opp-meta');
+        var val = row.querySelector('.opp-value');
+        if (arr.length === 0) {
+          if (meta) meta.textContent = '暂无商机';
+          if (val) val.textContent = '--';
+          return;
+        }
+        var sumVal = 0;
+        arr.forEach(function(o) {
+          sumVal += parseEst(o.estimate);
+        });
+        if (meta) meta.textContent = arr.length + '位客户';
+        if (val) val.textContent = '≈' + sumVal.toFixed(0) + '万';
+      });
+    }
+    console.log('[API] 商机摘要刷新: ' + totalOpp + '个, 估值' + totalValue.toFixed(0) + '万');
+  }
+
+  // ---- 客户画像 API 加载 ----
+  var profileCache = {};  // { name: profile }
+
+  // 暴露到全局供 openW8Detail 使用
+  window.apiGetProfile = function(cid, name) {
+    // 命中缓存
+    if (profileCache[name]) return Promise.resolve(profileCache[name]);
+
+    var base = API_BASE;
+    function g(p) { return fetch(base + p, {signal: AbortSignal.timeout(8000)}).then(function(r){return r.json();}).catch(function(){return null;}); }
+
+    return Promise.all([
+      g('/api/customers/' + cid + '/profile'),
+      g('/api/customers/' + cid + '/wealth/holdings'),
+      g('/api/customers/' + cid + '/credit/loans'),
+      g('/api/customers/' + cid + '/behavior/preferences'),
+      g('/api/customers/' + cid + '/wealth/fund-flow'),
+      g('/api/customers/' + cid + '/wealth/salary'),
+      g('/api/customers/' + cid + '/benefits'),
+      g('/api/customers/' + cid + '/activities')
+    ]).then(function(results) {
+      var prof = (results[0] && results[0].code === 0) ? results[0].data : null;
+      var holds = (results[1] && results[1].code === 0) ? results[1].data : null;
+      var loans = (results[2] && results[2].code === 0) ? results[2].data : null;
+      var prefs = (results[3] && results[3].code === 0) ? results[3].data : null;
+      var flow = (results[4] && results[4].code === 0) ? results[4].data : null;
+      var salary = (results[5] && results[5].code === 0) ? results[5].data : null;
+      var benefits = (results[6] && results[6].code === 0) ? results[6].data : null;
+      var activities = (results[7] && results[7].code === 0) ? results[7].data : null;
+
+      if (!prof) { console.warn('[API] 未找到客户画像: ' + name); return null; }
+
+      var b = prof.basic || {};
+      var fam = prof.family || {};
+      var biz = prof.business || null;
+      var ws = prof.wealth_summary || {};
+      var cs = prof.credit_summary || {};
+      var bs = prof.behavior_summary || {};
+      var emp = prof.employment_detail || {};
+
+      // 财富数据
+      var wAum = (ws.total_aum || 0) / 10000;
+      var flowIn = flow ? (flow.yearly_inflow || 0) / 10000 : 0;
+      var flowOut = flow ? (flow.yearly_outflow || 0) / 10000 : 0;
+      var salMonth = salary ? (salary.current_month_amount || 0) / 10000 : 0;
+      var salAvg = salary ? (salary.avg_6m || 0) / 10000 : 0;
+
+      // 持仓分布
+      var hd = holds && holds.distribution ? holds.distribution : {};
+      var hTotal = holds ? (holds.total_scale || 0) / 10000 : wAum;
+
+      // 行业映射
+      var industryMap = { '制造业': '制造业', 'IT': '信息技术', '金融': '金融业', '教育': '教育', '医疗': '医疗', '零售': '零售贸易' };
+      var ind = industryMap[b.occupation] || (b.occupation || '其他');
+
+      // 子女教育映射
+      var eduMap = { '幼儿园': '学龄前', '小学': '小学', '初中': '初中', '高中': '高中', '大学': '高等教育', '留学': '海外留学' };
+      var childStage = fam.children ? (eduMap[fam.child_education] || (fam.child_education || '已育')) : '无子女';
+      var childDetail = fam.children ? (fam.child_count || 1) + '个子女 · ' + childStage : '无子女';
+
+      // 构建 profile
+      var profile = {
+        base: {
+          name: name,
+          gender: b.gender || '男',
+          age: b.age || 30,
+          occupation: b.occupation || '未知',
+          industry: ind,
+          city: b.city || '未知',
+          education: '本科',
+          level: (b.tier || '普通') + '客户',
+          manager: '李经理',
+          tenure: '2年',
+          risk: (bs.risk_result || '稳健型') + ' R2'
+        },
+        family: {
+          marriage: fam.marriage ? '已婚' : '未婚',
+          children: fam.children ? childDetail : '无子女',
+          childStage: childStage
+        },
+        business: biz ? {
+          entity: biz.entity || (b.occupation || '') + '经营主体',
+          duration: biz.duration || '3年',
+          share: biz.share || '100%',
+          capital: biz.capital || '100万',
+          address: biz.address || b.city || '',
+          scope: biz.scope || '经营',
+          active: biz.active !== false
+        } : null,
+        wealth: {
+          totalAssets: wAum,
+          aum: wAum,
+          wealthScore: {
+            score: ws.wealth_score || Math.floor(Math.random() * 30 + 50),
+            time: '本月',
+            dims: ['资产配置', '收入水平', '成长性'].slice(0, ws.wealth_score > 70 ? 3 : 2)
+          },
+          cashflow: {
+            yearIn: flowIn.toFixed(0),
+            inDesc: '经营回款+代发工资',
+            yearOut: flowOut.toFixed(0),
+            outDist: '转账 · 消费 · 其他',
+            retain: flow ? (flow.retention_desc || '资金留存正常') : '资金留存正常'
+          },
+          holdings: {
+            total: hTotal.toFixed(1),
+            cumReturn: (wAum * 0.05).toFixed(1),
+            annualYield: '4.1%',
+            peakMonth: '本年',
+            detail: {
+              deposit: (hd.deposit || 0) / 10000,
+              finance: (hd.wealth_mgmt || 0) / 10000,
+              fund: (hd.fund || 0) / 10000,
+              metal: (hd.precious_metal || 0) / 10000,
+              insurance: (hd.insurance || 0) / 10000
+            }
+          }
+        },
+        credit: {
+          loans: loans && Array.isArray(loans) ? loans : [],
+          rejected: [],
+          housingFund: { base: 6800, period: '本年' },
+          socialSecurity: { base: 8200, period: '本年' }
+        },
+        behavior: {
+          finPrefs: (bs.fin_prefs || []).map(function(f) {
+            return { label: f.label || f, basis: f.basis || '近3月行为分析' };
+          }),
+          liquidity: bs.liquidity || '中',
+          risk: {
+            test: (bs.risk_result || '稳健型') + ' R2',
+            browseDist: 'R1-R3为主'
+          },
+          marketing: {
+            channels: ['电话', '微信'],
+            activityCount: activities ? Math.min(activities.length || 0, 5) : 1,
+            bestTime: '上午9:00-11:00'
+          },
+          payroll: {
+            monthAmount: salMonth.toFixed(1),
+            date: '每月发薪日',
+            avg6m: salAvg.toFixed(1),
+            peak: salMonth.toFixed(1) + '万',
+            level: (salary && salary.salary_level) || '中等',
+            retain3d: '70%',
+            retain7d: '45%'
+          },
+          otherOpp: {
+            loanIntent: cs.loan_count > 0,
+            wealthIntent: true
+          }
+        },
+        interactions: ['最近交互记录'],
+        holdings: holds && holds.details ? holds.details.slice(0, 5).map(function(h) {
+          return (h.product_name || '产品') + ' · ' + (h.amount / 10000).toFixed(1) + '万';
+        }) : [],
+        opps: []
+      };
+
+      // 商机（从 opps 数据匹配当前客户）
+      var tabs = ['daifa', 'liushi', 'ai', 'mine'];
+      tabs.forEach(function(t) {
+        (w3OppData[t] || []).forEach(function(o) {
+          if (o.name === name) {
+            profile.opps.push({
+              title: (o.type || '商机'),
+              priority: o.tagClass === 'w3-opp-tag--ai' ? 'yellow' : 'red',
+              label: (o.priority || '') + ' ' + (o.type || '商机'),
+              detail: o.reason || '',
+              bpReady: false
+            });
+          }
+        });
+      });
+      if (profile.opps.length === 0) {
+        profile.opps.push({
+          title: '暂无待跟商机',
+          priority: 'yellow',
+          label: '暂无待跟商机',
+          detail: '可基于客户画像创建新商机',
+          bpReady: false
+        });
+      }
+
+      // 权益数据
+      if (benefits && benefits.benefits && benefits.benefits.length > 0) {
+        if (!w8Data.customerBenefit) w8Data.customerBenefit = {};
+        w8Data.customerBenefit[name] = benefits.benefits.map(function(b) {
+          return {
+            benefitType: b.type || '权益',
+            benefitName: b.name || '权益',
+            benefitValue: b.value || '',
+            status: b.status || '可用',
+            grantDate: b.grant_date || '',
+            expiryDate: b.expiry_date || '',
+            usageDesc: b.description || ''
+          };
+        });
+      }
+      // 活动数据
+      if (activities && activities.activities && activities.activities.length > 0) {
+        if (!w8Data.customerActivity) w8Data.customerActivity = {};
+        w8Data.customerActivity[name] = activities.activities.map(function(a) {
+          return {
+            activityId: a.activity_id || '',
+            eligible: a.eligible !== false,
+            status: a.status || '可参与',
+            rewardStatus: a.reward_status || '未发放',
+            rewardDetail: a.reward_detail || '',
+            participateDate: a.participate_date || ''
+          };
+        });
+      }
+
+      // 缓存并返回
+      profileCache[name] = profile;
+      w8Data.profiles[name] = profile;
+      console.log('[API] 客户画像加载: ' + name);
+      return profile;
+    });
+  };
+
+  // ---- 启动 ----
+  checkAPI().then(function(ok) {
+    if (!ok) return;  // API 不可用, 保留静态数据
+    Promise.all([
+      loadTasks(),
+      loadOpps(),
+      loadCustomers(),
+      loadActivities(),
+      loadBattlePackages(),
+      loadSearchData()
+    ]).then(function() {
+      console.log('[API] 全部数据加载完成');
+      // 刷新顶部待办计数
+      var taskTotal = 0;
+      for (var i = 1; i <= 6; i++) {
+        var td = taskData['card' + i];
+        if (td && td.customers) taskTotal += td.customers.length;
+      }
+      if (taskTotal > 0) {
+        var headerStrong = document.querySelector('.ai-main strong');
+        if (headerStrong) headerStrong.textContent = taskTotal + '项';
+      }
+      // 刷新已渲染的 UI
+      refreshOppSummary();
+      if (typeof renderW3Tab === 'function') {
+        var activeTab = document.querySelector('.w3-tab.active');
+        var tabName = activeTab ? activeTab.getAttribute('data-tab') : 'daifa';
+        renderW3Tab(tabName);
+      }
+      // 刷新搜索数据
+      if (typeof renderGsRecent === 'function') {
+        try { renderGsRecent(); } catch(e) {}
+      }
+    });
+  });
+})();
 
 // ===== 待办客户数据 =====
 const taskData = {
@@ -3633,10 +4406,14 @@ const taskData = {
 };
 let currentProcessCardId = null;
 let completedCards = {}; // { cardId: true }
+// 客户处理状态: { cardId: { custIdx: { action, notes, time } } }
+let customerProcessStatus = {};
+// 客户基本信息缓存: { custId: { phone, tier, aum } }
+let customerInfoCache = {};
 
 // ===== 处理面板 =====
 function openProcessPanel(cardId) {
-  const data = taskData[cardId];
+  var data = taskData[cardId];
   if (!data) return;
   currentProcessCardId = cardId;
 
@@ -3644,55 +4421,359 @@ function openProcessPanel(cardId) {
   document.getElementById('psTaskType').textContent = data.type;
   document.getElementById('psTaskDesc').textContent = data.desc;
 
+  // 确保状态对象存在
+  if (!customerProcessStatus[cardId]) customerProcessStatus[cardId] = {};
+  var status = customerProcessStatus[cardId];
+
   // 填充客户列表
-  const body = document.getElementById('psBody');
-  body.innerHTML = data.customers.map((c, i) =>
-    '<div class="ps-customer" id="psCust-' + i + '">' +
+  var body = document.getElementById('psBody');
+  body.innerHTML = data.customers.map(function(c, i) {
+    var st = status[i];
+    var rowClass = 'ps-customer';
+    if (st && st.action === '跳过') rowClass += ' skipped';
+    else if (st && st.action !== '跳过') rowClass += ' done';
+    return '<div class="' + rowClass + '" id="psCust-' + i + '">' +
       '<div class="ps-cust-info">' +
         '<div class="ps-cust-name">' + c.name + '</div>' +
-        '<div class="ps-cust-detail">' + c.detail + '</div>' +
+        '<div class="ps-cust-detail">' + (st && st.action !== '跳过' ? '✓ ' + st.action + (st.notes ? ' · ' + st.notes.substring(0, 20) : '') : (c.detail || '')) + '</div>' +
       '</div>' +
       '<div class="ps-actions">' +
-        '<button class="ps-act-btn ps-btn-call" onclick="processCustomer(' + i + ', \'电话联系\')" title="电话">📞</button>' +
-        '<button class="ps-act-btn ps-btn-wechat" onclick="processCustomer(' + i + ', \'微信联系\')" title="微信">✉️</button>' +
-        '<button class="ps-act-btn ps-btn-done" onclick="processCustomer(' + i + ', \'标记完成\')" title="标记完成">✓</button>' +
+        (st && st.action !== '跳过' ? '' :
+          '<button class="ps-act-btn ps-btn-call" onclick="openPhoneDialog(' + i + ')" title="电话">📞</button>' +
+          '<button class="ps-act-btn ps-btn-wechat" onclick="openWechatDialog(' + i + ')" title="微信">✉️</button>' +
+          '<button class="ps-act-btn ps-btn-profile" onclick="viewProfileFromProcess(' + i + ')" title="画像">👤</button>' +
+          '<button class="ps-act-btn ps-btn-skip" onclick="skipProcessCustomer(' + i + ')" title="跳过">⏭</button>'
+        ) +
       '</div>' +
-    '</div>'
-  ).join('');
+    '</div>';
+  }).join('');
+
+  // 更新进度条
+  updateProcessProgress();
+
+  // 异步批量加载客户基本信息
+  loadCustomerInfoBatch(data.customers);
 
   document.getElementById('processOverlay').classList.add('open');
 }
 
-function processCustomer(idx, action) {
-  const row = document.getElementById('psCust-' + idx);
-  if (!row || row.classList.contains('done')) return;
-  row.classList.add('done');
-  showToast('已处理 · ' + action);
+function closeProcessPanel() {
+  document.getElementById('processOverlay').classList.remove('open');
+  updateCardBadge(currentProcessCardId);
+}
 
-  // 检查是否全部完成
-  const all = document.querySelectorAll('#psBody .ps-customer');
-  const done = document.querySelectorAll('#psBody .ps-customer.done');
-  if (all.length === done.length) {
-    setTimeout(() => {
-      closeProcessPanel();
-      markCardComplete(currentProcessCardId);
-    }, 600);
+function updateProcessProgress() {
+  var cardId = currentProcessCardId;
+  var data = taskData[cardId];
+  if (!data) return;
+  var total = data.customers.length;
+  var status = customerProcessStatus[cardId] || {};
+  var doneCount = 0;
+  for (var k in status) {
+    if (status[k] && status[k].action !== '跳过') doneCount++;
+  }
+  var el = document.getElementById('psProgress');
+  if (el) {
+    if (doneCount === 0) el.textContent = total + '位客户待处理';
+    else if (doneCount === total) el.textContent = '✓ 全部已处理';
+    else el.textContent = '已处理 ' + doneCount + '/' + total;
   }
 }
 
-function processAllCustomers() {
-  const rows = document.querySelectorAll('#psBody .ps-customer');
-  rows.forEach(r => r.classList.add('done'));
-  const data = taskData[currentProcessCardId];
-  showToast(data ? (data.type + ' · ' + data.customers.length + '位客户已全部处理') : '全部已处理');
-  setTimeout(() => {
-    closeProcessPanel();
-    markCardComplete(currentProcessCardId);
-  }, 600);
+// 批量加载客户基本信息
+function loadCustomerInfoBatch(customers) {
+  customers.forEach(function(c, i) {
+    if (!c.cust_id || customerInfoCache[c.cust_id]) return;
+    fetch('http://localhost:8000/api/customers/' + c.cust_id + '/basic', {signal: AbortSignal.timeout(5000)})
+      .then(function(r) { return r.json(); })
+      .then(function(r) {
+        if (r && r.code === 0 && r.data) {
+          customerInfoCache[c.cust_id] = {
+            phone: r.data.phone_masked || '暂无',
+            tier: r.data.tier || '',
+            aum: r.data.total_aum || 0
+          };
+        }
+      }).catch(function() {});
+  });
 }
 
-function closeProcessPanel() {
-  document.getElementById('processOverlay').classList.remove('open');
+// ===== 电话对话框 =====
+var phoneDialogCustIdx = -1;
+
+function openPhoneDialog(idx) {
+  var data = taskData[currentProcessCardId];
+  if (!data) return;
+  var c = data.customers[idx];
+  phoneDialogCustIdx = idx;
+
+  document.getElementById('pdCustName').textContent = c.name;
+  document.getElementById('pdTaskTag').textContent = data.type;
+  document.getElementById('pdTaskDetail').textContent = c.detail || '';
+  document.getElementById('pdNotes').value = '';
+
+  // 加载电话
+  var info = c.cust_id ? customerInfoCache[c.cust_id] : null;
+  document.getElementById('pdCustTier').textContent = info ? info.tier + '客户' : '';
+  document.getElementById('pdPhoneNum').textContent = info ? info.phone : '加载中...';
+  if (!info && c.cust_id) {
+    fetch('http://localhost:8000/api/customers/' + c.cust_id + '/basic', {signal: AbortSignal.timeout(5000)})
+      .then(function(r) { return r.json(); })
+      .then(function(r) {
+        if (r && r.code === 0 && r.data) {
+          customerInfoCache[c.cust_id] = { phone: r.data.phone_masked || '暂无', tier: r.data.tier || '', aum: r.data.total_aum || 0 };
+          document.getElementById('pdPhoneNum').textContent = r.data.phone_masked || '暂无';
+          document.getElementById('pdCustTier').textContent = (r.data.tier || '') + '客户';
+        }
+      }).catch(function() { document.getElementById('pdPhoneNum').textContent = '获取失败'; });
+  }
+
+  document.getElementById('phoneDialogOverlay').classList.add('open');
+}
+
+function closePhoneDialog() {
+  document.getElementById('phoneDialogOverlay').classList.remove('open');
+  phoneDialogCustIdx = -1;
+}
+
+function confirmPhoneCall() {
+  var idx = phoneDialogCustIdx;
+  if (idx < 0) return;
+  var notes = document.getElementById('pdNotes').value.trim();
+  saveRecordAndMarkDone(idx, '电话联系', notes);
+  closePhoneDialog();
+}
+
+function copyPhone() {
+  var num = document.getElementById('pdPhoneNum').textContent;
+  if (num && num !== '加载中...' && num !== '获取失败') {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(num).then(function() { showToast('已复制电话号码'); });
+    } else {
+      showToast('电话号码: ' + num);
+    }
+  }
+}
+
+// ===== 微信对话框 =====
+var wechatDialogCustIdx = -1;
+
+function openWechatDialog(idx) {
+  var data = taskData[currentProcessCardId];
+  if (!data) return;
+  var c = data.customers[idx];
+  wechatDialogCustIdx = idx;
+
+  document.getElementById('wcCustName').textContent = c.name;
+  document.getElementById('wcTaskTag').textContent = data.type;
+  document.getElementById('wcTaskDetail').textContent = c.detail || '';
+  document.getElementById('wcNotes').value = '';
+
+  var info = c.cust_id ? customerInfoCache[c.cust_id] : null;
+  document.getElementById('wcCustTier').textContent = info ? info.tier + '客户' : '';
+
+  document.getElementById('wechatDialogOverlay').classList.add('open');
+}
+
+function closeWechatDialog() {
+  document.getElementById('wechatDialogOverlay').classList.remove('open');
+  wechatDialogCustIdx = -1;
+}
+
+function confirmWechatMsg() {
+  var idx = wechatDialogCustIdx;
+  if (idx < 0) return;
+  var notes = document.getElementById('wcNotes').value.trim();
+  saveRecordAndMarkDone(idx, '微信联系', notes);
+  closeWechatDialog();
+}
+
+// ===== 跳过客户 =====
+function skipProcessCustomer(idx) {
+  var cardId = currentProcessCardId;
+  if (!customerProcessStatus[cardId]) customerProcessStatus[cardId] = {};
+  customerProcessStatus[cardId][idx] = { action: '跳过', notes: '', time: new Date().toISOString() };
+
+  // 保存跳过记录到后端
+  var data = taskData[cardId];
+  var c = data && data.customers[idx];
+  if (c && c.cust_id) {
+    saveRecord(cardId, idx, '跳过', '');
+  }
+
+  // 更新 UI
+  var row = document.getElementById('psCust-' + idx);
+  if (row) row.classList.add('skipped');
+  updateProcessProgress();
+  updateCardBadge(cardId);
+  showToast('已跳过 · ' + (c ? c.name : ''));
+}
+
+// ===== 查看客户画像 =====
+function viewProfileFromProcess(idx) {
+  var data = taskData[currentProcessCardId];
+  if (!data) return;
+  var c = data.customers[idx];
+  closeProcessPanel();
+  setTimeout(function() {
+    if (c && c.cust_id && window.apiGetProfile) {
+      window.apiGetProfile(c.cust_id, c.name).then(function(p) {
+        if (p) {
+          w8Data.profiles = w8Data.profiles || {};
+          w8Data.profiles[c.name] = p;
+          p._apiLoaded = true;
+          openW8Detail(c.name, 'process');
+        }
+      });
+    } else {
+      openW8Detail(c ? c.name : '王建国', 'process');
+    }
+  }, 200);
+}
+
+// ===== 排序 =====
+function sortProcessCustomers(criteria) {
+  var cardId = currentProcessCardId;
+  var data = taskData[cardId];
+  if (!data) return;
+
+  var list = data.customers.slice();
+  if (criteria === 'tier') {
+    var tierOrder = { '私行': 8, '私钻': 7, '高净值': 6, '财富': 5, '优质': 4, '万元户': 3, '千元户': 2, '千元以下': 1 };
+    list.sort(function(a, b) {
+      var ta = a.cust_id ? (customerInfoCache[a.cust_id] || {}).tier || '' : '';
+      var tb = b.cust_id ? (customerInfoCache[b.cust_id] || {}).tier || '' : '';
+      return (tierOrder[tb] || 0) - (tierOrder[ta] || 0);
+    });
+  } else if (criteria === 'amount') {
+    list.sort(function(a, b) {
+      var aa = a.cust_id ? (customerInfoCache[a.cust_id] || {}).aum || 0 : 0;
+      var ab = b.cust_id ? (customerInfoCache[b.cust_id] || {}).aum || 0 : 0;
+      return ab - aa;
+    });
+  }
+
+  // 更新 taskData 中该卡片的 customers 顺序
+  data.customers = list;
+
+  // 刷新面板
+  var body = document.getElementById('psBody');
+  var status = customerProcessStatus[cardId] || {};
+  body.innerHTML = data.customers.map(function(c, i) {
+    var st = status[i];
+    var rowClass = 'ps-customer';
+    if (st && st.action === '跳过') rowClass += ' skipped';
+    else if (st && st.action !== '跳过') rowClass += ' done';
+    return '<div class="' + rowClass + '" id="psCust-' + i + '">' +
+      '<div class="ps-cust-info">' +
+        '<div class="ps-cust-name">' + c.name + '</div>' +
+        '<div class="ps-cust-detail">' + (st && st.action !== '跳过' ? '✓ ' + st.action + (st.notes ? ' · ' + st.notes.substring(0, 20) : '') : (c.detail || '')) + '</div>' +
+      '</div>' +
+      '<div class="ps-actions">' +
+        (st && st.action !== '跳过' ? '' :
+          '<button class="ps-act-btn ps-btn-call" onclick="openPhoneDialog(' + i + ')" title="电话">📞</button>' +
+          '<button class="ps-act-btn ps-btn-wechat" onclick="openWechatDialog(' + i + ')" title="微信">✉️</button>' +
+          '<button class="ps-act-btn ps-btn-profile" onclick="viewProfileFromProcess(' + i + ')" title="画像">👤</button>' +
+          '<button class="ps-act-btn ps-btn-skip" onclick="skipProcessCustomer(' + i + ')" title="跳过">⏭</button>'
+        ) +
+      '</div>' +
+    '</div>';
+  }).join('');
+  showToast('已按' + (criteria === 'tier' ? '等级' : '金额') + '排序');
+}
+
+// ===== 保存处理记录（核心） =====
+function saveRecordAndMarkDone(idx, action, notes) {
+  var cardId = currentProcessCardId;
+  if (!customerProcessStatus[cardId]) customerProcessStatus[cardId] = {};
+  customerProcessStatus[cardId][idx] = { action: action, notes: notes, time: new Date().toISOString() };
+
+  var data = taskData[cardId];
+  var c = data && data.customers[idx];
+
+  // 保存到后端
+  saveRecord(cardId, idx, action, notes);
+
+  // 更新面板中的行
+  var row = document.getElementById('psCust-' + idx);
+  if (row) {
+    row.classList.add('done');
+    var detailEl = row.querySelector('.ps-cust-detail');
+    if (detailEl) detailEl.textContent = '✓ ' + action + (notes ? ' · ' + notes.substring(0, 20) : '');
+    var actionsEl = row.querySelector('.ps-actions');
+    if (actionsEl) actionsEl.innerHTML = '';
+  }
+
+  updateProcessProgress();
+  updateCardBadge(cardId);
+  showToast('✓ ' + action + ' · ' + (c ? c.name : ''));
+
+  // 检查是否全部完成（含跳过）
+  var total = data.customers.length;
+  var status = customerProcessStatus[cardId] || {};
+  var allDone = true;
+  for (var i = 0; i < total; i++) {
+    if (!status[i]) { allDone = false; break; }
+  }
+  if (allDone) {
+    setTimeout(function() {
+      closeProcessPanel();
+      markCardComplete(cardId);
+    }, 800);
+  }
+}
+
+function saveRecord(cardId, idx, action, notes) {
+  var data = taskData[cardId];
+  if (!data) return;
+  var c = data.customers[idx];
+  if (!c) return;
+  fetch('http://localhost:8000/api/tasks/processing-records', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_type: data.type,
+      cust_id: c.cust_id || 0,
+      cust_name: c.name,
+      action: action,
+      notes: notes || '',
+      card_id: cardId
+    }),
+    signal: AbortSignal.timeout(5000)
+  }).then(function(r) { return r.json(); })
+    .then(function(r) { console.log('[API] 处理记录已保存: ' + c.name + ' ' + action); })
+    .catch(function(e) { console.warn('[API] 保存失败（离线模式）: ' + e.message); });
+}
+
+// ===== 卡片进度徽标 =====
+function updateCardBadge(cardId) {
+  var data = taskData[cardId];
+  if (!data) return;
+  var total = data.customers.length;
+  var status = customerProcessStatus[cardId] || {};
+  var doneCount = 0;
+  for (var k in status) {
+    if (status[k] && status[k].action !== '跳过') doneCount++;
+  }
+  var cardIdx = parseInt(cardId.replace('card', '')) - 1;
+  var cardEl = document.querySelectorAll('#schedTrack .task-card')[cardIdx];
+  if (!cardEl) return;
+
+  // 移除旧徽标
+  var oldBadge = cardEl.querySelector('.card-progress');
+  if (oldBadge) oldBadge.remove();
+
+  // 已完成的不显示徽标
+  if (completedCards[cardId]) return;
+
+  // 有进度时显示徽标
+  if (doneCount > 0) {
+    var summary = cardEl.querySelector('.task-summary');
+    var badge = document.createElement('span');
+    badge.className = 'card-progress';
+    badge.textContent = doneCount + '/' + total;
+    if (summary) summary.appendChild(badge);
+  }
 }
 
 // ===== AI 排程浮层 =====
@@ -3799,21 +4880,31 @@ function markCardComplete(cardId) {
   if (completedCards[cardId]) return;
   completedCards[cardId] = true;
 
-  // 1. 标记卡片完成态
-  const cardEl = document.getElementById('taskCard' + cardId.charAt(cardId.length - 1).toUpperCase() + cardId.slice(4));
-  // cardId is like 'card1', so map to 'taskCard1'
-  const taskCard = document.getElementById('taskCard' + cardId.replace('card', ''));
+  // 标记卡片完成态
+  var cardIdx = parseInt(cardId.replace('card', '')) - 1;
+  var taskCard = document.querySelectorAll('#schedTrack .task-card')[cardIdx];
   if (taskCard) {
     taskCard.classList.add('completed');
+    // 移除进度徽标
+    var badge = taskCard.querySelector('.card-progress');
+    if (badge) badge.remove();
   }
 
-  // 2. Toast 提示
-  const data = taskData[cardId];
+  // Toast
+  var data = taskData[cardId];
+  var status = customerProcessStatus[cardId] || {};
+  var doneCount = 0, skipCount = 0;
+  for (var k in status) {
+    if (status[k].action === '跳过') skipCount++;
+    else doneCount++;
+  }
   if (data) {
-    showToast(data.type + ' · ' + data.customers.length + '位客户已处理');
+    var msg = data.type + ' · ' + doneCount + '位已处理';
+    if (skipCount > 0) msg += '，' + skipCount + '位已跳过';
+    showToast(msg);
   }
 
-  // 3. 轮播衔接：1.5s 后跳到下一个未完成的卡片
+  // 轮播衔接
   setTimeout(function() {
     advanceCarousel();
   }, 1500);
@@ -3821,62 +4912,60 @@ function markCardComplete(cardId) {
 
 function advanceCarousel() {
   if (!window.schedCarousel) return;
-  const total = window.schedCarousel.getTotal();
-  const current = window.schedCarousel.getCurrentIdx();
+  var total = window.schedCarousel.getTotal();
+  var current = window.schedCarousel.getCurrentIdx();
 
-  // 先检查是否全部完成
   if (checkAllComplete()) return;
 
-  // 跳到下一个未完成的卡片
-  for (let i = 1; i < total; i++) {
-    const nextIdx = (current + i) % total;
-    const nextCardId = 'card' + (nextIdx + 1);
+  for (var i = 1; i < total; i++) {
+    var nextIdx = (current + i) % total;
+    var nextCardId = 'card' + (nextIdx + 1);
     if (!completedCards[nextCardId]) {
       window.schedCarousel.goTo(nextIdx);
       return;
     }
   }
-  // 所有都完成了
   showAllDoneView();
 }
 
 function checkAllComplete() {
-  const totalCards = 6;
-  for (let i = 1; i <= totalCards; i++) {
-    if (!completedCards['card' + i]) return false;
+  // 检查所有可见卡片（有 taskData 的）是否都已完成
+  for (var i = 1; i <= 6; i++) {
+    if (taskData['card' + i] && !completedCards['card' + i]) return false;
   }
   showAllDoneView();
   return true;
 }
 
 function showAllDoneView() {
-  // 隐藏轮播和圆点
-  const carousel = document.getElementById('schedCarousel');
-  const dots = document.getElementById('schedDots');
+  var carousel = document.getElementById('schedCarousel');
+  var dots = document.getElementById('schedDots');
   if (carousel) carousel.style.display = 'none';
   if (dots) dots.style.display = 'none';
-  // 显示庆祝视图
-  const doneView = document.getElementById('allDoneView');
+  var doneView = document.getElementById('allDoneView');
   if (doneView) doneView.classList.add('show');
   showToast('🎉 今日待办已全部完成');
 }
 
 function resetAllCards() {
   completedCards = {};
+  customerProcessStatus = {};
   skippedCustomers = {};
-  const cards = document.querySelectorAll('#schedTrack .task-card');
+  var cards = document.querySelectorAll('#schedTrack .task-card');
   cards.forEach(function(c) {
     c.classList.remove('completed');
     c.style.opacity = '';
     c.style.transform = '';
     c.style.display = '';
-    // 恢复展开区样式
     var subItems = c.querySelectorAll('.sub-item');
     subItems.forEach(function(s) { s.style.opacity = ''; s.style.textDecoration = ''; });
+    // 移除进度徽标
+    var badge = c.querySelector('.card-progress');
+    if (badge) badge.remove();
   });
-  const carousel = document.getElementById('schedCarousel');
-  const dots = document.getElementById('schedDots');
-  const doneView = document.getElementById('allDoneView');
+  var carousel = document.getElementById('schedCarousel');
+  var dots = document.getElementById('schedDots');
+  var doneView = document.getElementById('allDoneView');
   if (carousel) carousel.style.display = '';
   if (dots) dots.style.display = '';
   if (doneView) doneView.classList.remove('show');
@@ -4570,7 +5659,20 @@ var bpData = {
     { icon:'⚠️', text:'合规红线：不得承诺保本保收益，不得夸大产品收益' },
     { icon:'📌', text:'该客户有50万大额存单在ZZ银行，面谈中可适时对比我行优势' },
     { icon:'📌', text:'客户最近一笔转账指向券商，可能已有炒股行为，注意话术分寸' }
-  ]
+  ],
+  // 营销切入点 — 权益与活动
+  benefitEntries: {
+    defaultEntry: { type:'activity', id:'act1', title:'财富客户专享理财', description:'王先生，我们本月有一个财富客户专享活动，您可领取定制礼盒和0.2%的加息券，正好可以和您的定存到期一起考虑。' },
+    allBenefits: [
+      { type:'benefit', benType:'生日权益', name:'生日专属理财券', value:'0.3%加成券', status:'可用', desc:'' },
+      { type:'benefit', benType:'权益星', name:'权益星', value:'2,800分', status:'可用', desc:'' },
+      { type:'benefit', benType:'等级权益', name:'机场贵宾厅', value:'2次/年', status:'未使用', desc:'' }
+    ],
+    allActivities: [
+      { type:'activity', actId:'act4', name:'稳健投资·达标有礼', reward:'品牌保温杯+100元京东卡', status:'已达标·奖励待领取', desc:'' },
+      { type:'activity', actId:'act3', name:'季度积分翻倍', reward:'消费积分×2倍', status:'可参与', desc:'' }
+    ]
+  }
 };
 
 var bpPhoneData = {
@@ -4580,6 +5682,14 @@ var bpPhoneData = {
       { name:'XX稳健增长A', risk:'R2', yield:'3.8%', min:'1万' },
       { name:'YY悦享周期', risk:'R3', yield:'4.1%', min:'5万' },
       { name:'ZZ现金管理', risk:'R1', yield:'2.5%', min:'1元' }
+    ]
+  },
+  // 营销切入点 — 权益与活动（电话版，精简）
+  benefitEntries: {
+    defaultEntry: { type:'activity', name:'财富客户专享活动', hook:'另外王先生，我们本月财富客户专享活动正在进行中，您还可以领一份定制礼盒和加息券，我微信把活动详情发您？' },
+    quickHooks: [
+      { name:'生日专属理财券', hook:'对了，您这个月的生日专属理财券还没领取，买理财能额外加成0.3%，要不要我帮您操作一下？' },
+      { name:'稳健投资达标礼', hook:'您之前参与的稳健投资活动奖励已达标，保温杯和京东卡可以到网点领取了。' }
     ]
   }
 };
@@ -4889,6 +5999,70 @@ function renderP1Content() {
     }
     html += '</div></div></div>';
   });
+
+  html += '</div></div></div>';
+
+  // 营销切入点 — 权益与活动（面谈版和电话版均显示）
+  html += '<div class="p1-section">' +
+    '<div class="p1-sec-header" onclick="toggleP1Section(this)">' +
+      '<span class="p1-sec-num" style="background:#6C5CE7">🎁</span>' +
+      '<div class="p1-sec-info">' +
+        '<div class="p1-sec-title">营销切入点 · 权益与活动</div>' +
+        '<div class="p1-sec-sub">AI推荐1条默认切入点，可手动切换</div>' +
+      '</div>' +
+      '<span class="p1-sec-arrow">▼</span>' +
+    '</div>' +
+    '<div class="p1-sec-body">' +
+      '<div class="p1-sec-inner">';
+
+  // 电话版和面谈版使用不同的数据结构
+  var beData = isPhone ? bpPhoneData.benefitEntries : bpData.benefitEntries;
+  if (beData) {
+    // 优先切入点（AI推荐，高亮显示）
+    html += '<div style="background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(51,102,255,0.05));border:1px solid rgba(108,92,231,0.25);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">';
+    html += '<div style="font-size:var(--fs-caption);color:#6C5CE7;font-weight:var(--fw-bold);margin-bottom:4px">🤖 AI 推荐切入方式</div>';
+    if (isPhone) {
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);margin-bottom:4px">'+(beData.defaultEntry.name||'')+'</div>';
+      html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);line-height:1.6">'+(beData.defaultEntry.hook||'')+'</div>';
+    } else {
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);margin-bottom:4px">'+(beData.defaultEntry.title||'')+'</div>';
+      html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);line-height:1.6">'+(beData.defaultEntry.description||'')+'</div>';
+    }
+    html += '</div>';
+
+    // 电话版：快捷切入点列表
+    if (isPhone && beData.quickHooks) {
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:6px">💡 可选切入方式（点击切换）</div>';
+      beData.quickHooks.forEach(function(h, i) {
+        html += '<div style="font-size:var(--fs-small);padding:8px;margin-bottom:4px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;'+(i===0?'background:#F5F3FF;':'')+'" onclick="var t=this;var d=document.querySelector(&#39;[data-be-default-phone]&#39;);if(d){d.innerHTML=&#39;<strong>&#39;+h.name+&#39;</strong><br><span style=font-size:var(--fs-small)>&#39;+h.hook+&#39;</span>&#39;;};showToast(&#39;已切换优先切入点：&#39;+h.name+&#39;&#39;)">';
+        html += (i===0?'<span style="font-size:10px;color:#6C5CE7;font-weight:var(--fw-bold)">当前选中</span><br>':'')+h.name+'</div>';
+      });
+    }
+
+    // 面谈版：全部可用权益（折叠）
+    if (!isPhone && beData.allBenefits) {
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px">💎 全部可用权益</div>';
+      beData.allBenefits.forEach(function(b, i) {
+        var typeIcon = { '生日权益':'🎂', '权益星':'⭐', '等级权益':'👑', '活动权益':'🎉' };
+        html += '<div style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;border-radius:var(--radius-sm);background:#F8F9FC;border:1px solid var(--color-divider);cursor:pointer" onclick="showToast(&#39;已切换切入方式：'+b.name+'&#39;)">';
+        html += '<span>'+(typeIcon[b.benType]||'💎')+'</span> ';
+        html += '<span style="font-size:var(--fs-small);flex:1"><strong>'+b.name+'</strong> · '+b.value+'</span>';
+        html += '<span style="font-size:10px;color:#6C5CE7">可选</span>';
+        html += '</div>';
+      });
+    }
+
+    // 面谈版：全部可参与活动（折叠）
+    if (!isPhone && beData.allActivities) {
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px">📋 全部可参与活动</div>';
+      beData.allActivities.forEach(function(a, i) {
+        html += '<div style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;border-radius:var(--radius-sm);background:#F8F9FC;border:1px solid var(--color-divider);cursor:pointer" onclick="showToast(&#39;已切换切入方式：'+a.name+'&#39;)">';
+        html += '<span style="font-size:var(--fs-small);flex:1"><strong>'+a.name+'</strong> · '+a.reward+'</span>';
+        html += '<span style="font-size:10px;color:#DC2626">'+(a.status||'')+'</span>';
+        html += '</div>';
+      });
+    }
+  }
 
   html += '</div></div></div>';
 
@@ -5349,6 +6523,73 @@ var w8Data = {
     { name:'孙丽', gender:'女', age:55, phone:'133****7890', level:'财富客户', aum:210.5, risk:'稳健型', products:['定存','理财','保险','贵金属'], tags:[{t:'保险意向',c:'#9b59b6'},{t:'大额定存',c:'#2980b9'}], lastContact:'7月8日 · 面谈', lastContactDays:7 },
     { name:'周强', gender:'男', age:29, phone:'131****0123', level:'普通客户', aum:3.2, risk:'成长型', products:[], tags:[{t:'新开户·7天',c:'#95a5a6'}], lastContact:'7月14日 · 微信', lastContactDays:1 }
   ],
+  // 营销活动 Mock 数据
+  activities: [
+    { id:'act1', name:'财富客户专享理财', type:'理财活动', startDate:'2026-07-01', endDate:'2026-08-31', qualification:'财富客户 · AUM≥50万', rewardType:'礼品', reward:'定制礼盒+0.2%加息券', status:'进行中' },
+    { id:'act2', name:'新客理财体验', type:'理财活动', startDate:'2026-07-10', endDate:'2026-09-30', qualification:'近3月新开户 · 首次购买理财', rewardType:'返现', reward:'首次认购返现50元', status:'进行中' },
+    { id:'act3', name:'季度积分翻倍', type:'积分活动', startDate:'2026-07-01', endDate:'2026-09-30', qualification:'金卡及以上客户', rewardType:'积分', reward:'消费积分×2倍', status:'进行中' },
+    { id:'act4', name:'稳健投资·达标有礼', type:'理财活动', startDate:'2026-06-15', endDate:'2026-08-15', qualification:'购买指定稳健理财≥10万', rewardType:'礼品', reward:'品牌保温杯+100元京东卡', status:'进行中' },
+    { id:'act5', name:'老友推荐计划', type:'推荐活动', startDate:'2026-07-01', endDate:'2026-12-31', qualification:'所有客户', rewardType:'返现', reward:'每推荐1位新客奖励30元', status:'进行中' }
+  ],
+  // 客户活动参与 Mock 数据
+  customerActivity: {
+    '王建国': [
+      { activityId:'act1', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'定制礼盒+0.2%加息券（认购后发放）', participateDate:'' },
+      { activityId:'act4', eligible:true, status:'已达标', rewardStatus:'已发放', rewardDetail:'品牌保温杯+100元京东卡', participateDate:'2026-07-15' },
+      { activityId:'act3', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'消费积分×2倍', participateDate:'' }
+    ],
+    '赵明辉': [
+      { activityId:'act1', eligible:true, status:'已参与', rewardStatus:'已领取', rewardDetail:'定制礼盒+0.2%加息券', participateDate:'2026-07-10' },
+      { activityId:'act4', eligible:true, status:'已达标', rewardStatus:'已发放', rewardDetail:'品牌保温杯+100元京东卡', participateDate:'2026-07-12' },
+      { activityId:'act5', eligible:true, status:'已参与', rewardStatus:'已发放', rewardDetail:'30元×2=60元', participateDate:'2026-07-08' }
+    ],
+    '孙丽': [
+      { activityId:'act1', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'定制礼盒+0.2%加息券', participateDate:'' },
+      { activityId:'act3', eligible:true, status:'已参与', rewardStatus:'已发放', rewardDetail:'消费积分×2倍', participateDate:'2026-07-05' },
+      { activityId:'act4', eligible:true, status:'已达标', rewardStatus:'已发放', rewardDetail:'品牌保温杯+100元京东卡', participateDate:'2026-06-30' }
+    ],
+    '陈晓燕': [
+      { activityId:'act2', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'首次认购返现50元', participateDate:'' },
+      { activityId:'act3', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'消费积分×2倍', participateDate:'' }
+    ],
+    '张丽华': [
+      { activityId:'act1', eligible:false, status:'可参与', rewardStatus:'未发放', rewardDetail:'AUM不足50万，暂不达标', participateDate:'' },
+      { activityId:'act3', eligible:true, status:'已参与', rewardStatus:'已发放', rewardDetail:'消费积分×2倍', participateDate:'2026-07-03' }
+    ],
+    '李强': [
+      { activityId:'act2', eligible:false, status:'可参与', rewardStatus:'未发放', rewardDetail:'非新开户客户', participateDate:'' },
+      { activityId:'act5', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'每推荐1位新客奖励30元', participateDate:'' }
+    ]
+  },
+  // 客户权益 Mock 数据
+  customerBenefit: {
+    '王建国': [
+      { benefitType:'生日权益', benefitName:'生日专属理财券', benefitValue:'0.3%加成券', status:'可用', grantDate:'2026-07-18', expiryDate:'2026-08-18', usageDesc:'购买理财产品时享额外0.3%年化收益加成，有效期30天' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'2,800分', status:'可用', grantDate:'2026-06-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'等级权益', benefitName:'机场贵宾厅', benefitValue:'2次/年', status:'未使用', grantDate:'2026-01-01', expiryDate:'2026-12-31', usageDesc:'全国主要机场贵宾厅候机服务，每次可携1位同伴' }
+    ],
+    '赵明辉': [
+      { benefitType:'生日权益', benefitName:'生日专属蛋糕券', benefitValue:'价值200元', status:'未使用', grantDate:'2026-03-15', expiryDate:'2026-07-15', usageDesc:'指定蛋糕品牌200元抵扣券，线上线下均可使用' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'5,600分', status:'可用', grantDate:'2026-04-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'等级权益', benefitName:'体检套餐', benefitValue:'1次/年', status:'已使用', grantDate:'2026-01-01', expiryDate:'2026-12-31', usageDesc:'爱康国宾/美年大健康基础体检套餐' }
+    ],
+    '孙丽': [
+      { benefitType:'生日权益', benefitName:'生日专属护理套装', benefitValue:'价值500元', status:'可用', grantDate:'2026-06-01', expiryDate:'2026-07-31', usageDesc:'高端护肤品礼盒，生日当月领取' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'8,200分', status:'可用', grantDate:'2026-05-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'活动权益', benefitName:'贵金属投资讲座', benefitValue:'VIP席位', status:'可用', grantDate:'2026-07-01', expiryDate:'2026-07-25', usageDesc:'7月25日贵金属投资策略讲座VIP席位，含茶歇' }
+    ],
+    '陈晓燕': [
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'1,200分', status:'可用', grantDate:'2026-04-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'等级权益', benefitName:'生日蛋糕券', benefitValue:'价值100元', status:'未使用', grantDate:'2026-05-20', expiryDate:'2026-07-20', usageDesc:'指定蛋糕品牌100元抵扣券' }
+    ],
+    '张丽华': [
+      { benefitType:'生日权益', benefitName:'生日现金红包', benefitValue:'88元', status:'未领取', grantDate:'2026-07-01', expiryDate:'2026-07-31', usageDesc:'88元微信现金红包，需手动领取' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'3,500分', status:'可用', grantDate:'2026-03-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' }
+    ],
+    '李强': [
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'600分', status:'可用', grantDate:'2026-07-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' }
+    ]
+  },
   profiles: {
     '王建国': {
       base: { name:'王建国', gender:'男', age:45, occupation:'制造业企业主', industry:'制造业', city:'合肥市', education:'本科', level:'财富客户', manager:'李经理', tenure:'2年', risk:'稳健型 R2' },
@@ -5518,13 +6759,24 @@ function renderW8() {
   } else {
     filtered.forEach(function(c) {
       var tagsHtml = c.tags.map(function(t){return '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:'+t.c+'20;color:'+t.c+'">'+t.t+'</span>';}).join(' ');
+      // 权益与活动动态徽标
+      var baBadges = '';
+      if (hasUnclaimedReward(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#FEE2E2;color:#DC2626">🎁 有未领奖励</span> ';
+      if (hasBirthdayBenefit(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#EDE9FE;color:#6C5CE7">🎂 生日权益</span> ';
+      var availBens = (w8Data.customerBenefit || {})[c.name] || [];
+      var availCount = 0;
+      for (var bi = 0; bi < availBens.length; bi++) {
+        if (availBens[bi].status === '可用' || availBens[bi].status === '未使用' || availBens[bi].status === '未领取') availCount++;
+      }
+      if (availCount > 0) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#DBEAFE;color:#1D4ED8">⭐ '+availCount+'权益待用</span> ';
+      var allTagsHtml = (tagsHtml + ' ' + baBadges).trim();
       html +=
         '<div class="w8-cust-card" onclick="openW8Detail(\''+c.name+'\')">' +
           '<div class="w8-cust-avatar">●</div>' +
           '<div class="w8-cust-info">' +
             '<div class="w8-cust-name">'+c.name+' · '+c.gender+' · '+c.age+'岁</div>' +
             '<div class="w8-cust-meta">'+c.level+' · AUM '+c.aum+'万 · '+c.risk+'</div>' +
-            (tagsHtml?'<div class="w8-cust-tags">'+tagsHtml+'</div>':'') +
+            (allTagsHtml?'<div class="w8-cust-tags">'+allTagsHtml+'</div>':'') +
             '<div class="w8-cust-meta">最后联络：'+c.lastContact+'</div>' +
           '</div>' +
           '<span class="w8-cust-cta">详情&gt;</span>' +
@@ -5570,9 +6822,45 @@ function onW8Search(val) { w8Search = val; renderW8(); }
 function claimCustomer(name) { showToast('已认领：'+name); }
 function ignoreNewCustomer(btn) { btn.closest('.w8-new-cust-card').style.display='none'; }
 
+// ---- API 画像缓存标记 (确保 apiGetProfile 写入时携带) ----
+// 注意: apiGetProfile 在 API 加载器 IIFE 中定义, 通过 window.apiGetProfile 暴露
+
 function openW8Detail(name, source) {
   w8Source = source || w8Source; // 继承来源
-  var p = w8Data.profiles[name] || w8Data.profiles['王建国'];
+
+  // 尝试从 w8Data.customers 查找 API ID
+  var cust = (w8Data.customers || []).find(function(c) { return c.name === name; });
+  var profile = w8Data.profiles[name];
+
+  // 如果有 API ID 且画像未从 API 加载过, 异步获取
+  if (cust && cust.id && (!profile || !profile._apiLoaded)) {
+    if (window.apiGetProfile) {
+      document.getElementById('w8DetailOverlay').classList.add('open');
+      document.getElementById('w8DetailBody').innerHTML =
+        '<div style="text-align:center;padding:80px 20px;color:var(--color-text-tertiary)">' +
+        '<div style="font-size:32px;margin-bottom:12px">⏳</div>' +
+        '<div>正在加载客户画像...</div></div>';
+      window.apiGetProfile(cust.id, name).then(function(p) {
+        if (p) {
+          p._apiLoaded = true;
+          w8Data.profiles[name] = p;
+          renderW8DetailContent(name, p);
+        } else {
+          // API 失败, 回退到静态数据
+          renderW8DetailContent(name, w8Data.profiles['王建国']);
+        }
+      }).catch(function() {
+        renderW8DetailContent(name, w8Data.profiles['王建国']);
+      });
+      return;
+    }
+  }
+
+  var p = profile || w8Data.profiles['王建国'];
+  renderW8DetailContent(name, p);
+}
+
+function renderW8DetailContent(name, p) {
   var b = p.base;
 
   // Helper: generate a collapsible section
@@ -5743,6 +7031,78 @@ function openW8Detail(name, source) {
   });
   s9 += '</div>';
 
+  // --- Section 10: 权益与活动 (NEW) ---
+  function buildBenefitActivitySection(custName) {
+    var acts = w8Data.customerActivity[custName] || [];
+    var bens = w8Data.customerBenefit[custName] || [];
+    var actMap = {};
+    (w8Data.activities || []).forEach(function(a) { actMap[a.id] = a; });
+
+    var html = '';
+
+    // 待领取奖励（未领取的活动奖励）
+    var unclaimed = acts.filter(function(a) { return a.rewardStatus === '已发放' || a.rewardStatus === '未发放'; });
+    if (unclaimed.length > 0) {
+      html += '<div style="background:#FFF5F5;border:1px solid #FECACA;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:10px">';
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);color:#DC2626;margin-bottom:6px">待领取奖励</div>';
+      unclaimed.forEach(function(a) {
+        var act = actMap[a.activityId] || {};
+        var statusLabel = a.rewardStatus === '已发放' ? '已发放·待领取' : '未发放';
+        var statusColor = a.rewardStatus === '已发放' ? '#DC2626' : '#F59E0B';
+        html += '<div style="font-size:var(--fs-small);padding:4px 0;border-bottom:1px solid #FEE2E2;cursor:pointer" onclick="showToast(\'奖励详情：'+a.rewardDetail+'\')">';
+        html += '<span style="color:'+statusColor+';font-weight:var(--fw-bold)">●</span> ';
+        html += '<strong>'+(act.name||a.activityId)+'</strong> · '+a.rewardDetail;
+        html += ' <span style="font-size:10px;color:'+statusColor+'">['+statusLabel+']</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 可用权益
+    var availBens = bens.filter(function(b) { return b.status === '可用' || b.status === '未使用' || b.status === '未领取'; });
+    if (availBens.length > 0) {
+      html += '<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:10px">';
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);color:#6C5CE7;margin-bottom:6px">可用权益</div>';
+      availBens.forEach(function(b) {
+        var statusLabel = b.status === '未领取' ? '未领取' : (b.status === '未使用' ? '未使用' : '可用');
+        var statusColor = b.status === '未领取' ? '#DC2626' : '#6C5CE7';
+        var typeIcon = { '生日权益':'🎂', '权益星':'⭐', '等级权益':'👑', '活动权益':'🎉' };
+        html += '<div style="font-size:var(--fs-small);padding:6px 0;border-bottom:1px solid #EDE9FE;cursor:pointer" onclick="showToast(\''+b.usageDesc+'\')">';
+        html += '<span>'+(typeIcon[b.benefitType]||'💎')+'</span> ';
+        html += '<strong>'+b.benefitName+'</strong> · '+b.benefitValue;
+        html += ' <span style="font-size:10px;color:'+statusColor+'">['+statusLabel+']</span>';
+        html += '<div style="font-size:10px;color:var(--color-text-tertiary)">有效期至 '+b.expiryDate+'</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 可参与活动
+    var eligibleActs = acts.filter(function(a) { return a.status === '可参与' && a.eligible; });
+    if (eligibleActs.length > 0) {
+      html += '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:10px">';
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);color:#00B578;margin-bottom:6px">可参与活动</div>';
+      eligibleActs.forEach(function(a) {
+        var act = actMap[a.activityId] || {};
+        html += '<div style="font-size:var(--fs-small);padding:4px 0;border-bottom:1px solid #DCFCE7;cursor:pointer" onclick="showToast(\'活动详情：'+(act.name||a.activityId)+'\\n奖励：'+a.rewardDetail+'\')">';
+        html += '<strong>'+(act.name||a.activityId)+'</strong>';
+        html += ' <span style="font-size:10px;color:var(--color-text-tertiary)">'+act.reward+'</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 无数据
+    if (!html) {
+      html = '<div style="text-align:center;padding:16px;color:var(--color-text-tertiary);font-size:var(--fs-small)">暂无权益与活动数据</div>';
+    }
+
+    return html;
+  }
+
+  var s10_name = b.name;
+  var s10 = buildBenefitActivitySection(s10_name);
+
   // --- Assemble ---
   var html =
     sec('base', '📋 基础信息', '', true, s1) +
@@ -5754,6 +7114,7 @@ function openW8Detail(name, source) {
     sec('opps', '🎯 商机与待办', '', true, s7) +
     sec('interact', '📝 最近交互', '', false, s8) +
     sec('products', '📦 持有产品', '', false, s9) +
+    sec('benefits', '🎁 权益与活动', '', true, s10) +
 
     '<div class="profile-bottom-actions">' +
       '<button class="w8-action-btn">📞 拨号</button>' +
@@ -5973,6 +7334,24 @@ var AiChat = {
     var minBuy2 = t.match(/起购\s*(\d+)\s*[万元]/);
     if (minBuy2) queries.push({type:'prodMin',value:parseFloat(minBuy2[1]),label:'起购≤'+minBuy2[1]+'万'});
 
+    // ==== 权益与活动 ====
+    // 未领取奖励
+    if (/奖励.*未领|未领.*奖励|没领.*奖励|奖励.*没领/.test(t)) queries.push({type:'unclaimed_reward',value:true,label:'有未领取奖励'});
+    if (/未领取/.test(t) && !/奖励/.test(t)) queries.push({type:'unclaimed_reward',value:true,label:'有未领取奖励'});
+    // 生日权益
+    if (/生日/.test(t)) queries.push({type:'birthday_benefit',value:true,label:'有生日权益'});
+    // 权益星
+    if (/权益星/.test(t)) queries.push({type:'has_benefit_star',value:true,label:'有权益星'});
+    // 权益
+    if (/权益.*未用|未用.*权益|权益.*可用|可用.*权益/.test(t)) queries.push({type:'benefit_available',value:true,label:'有可用权益'});
+    // 权益到期/快过期
+    if (/权益.*到期|权益.*过期|权益.*快/.test(t)) queries.push({type:'benefit_expiring',value:true,label:'权益即将到期'});
+    // 活动
+    if (/可参加.*活动|活动.*可参加/.test(t)) queries.push({type:'has_activity',value:true,label:'有可参与活动'});
+    // 单客户查询（提取客户姓名）
+    var custNameMatch = t.match(/(?:王建国|张丽华|赵明辉|陈晓燕|李强|孙丽|周强)/);
+    if (custNameMatch) queries.push({type:'customer_name',value:custNameMatch[0],label:'客户：'+custNameMatch[0]});
+
     return queries;
   },
 
@@ -6189,6 +7568,55 @@ var AiChat = {
   }
 };
 
+// ===== 权益与活动辅助函数 =====
+function hasUnclaimedReward(custName) {
+  var acts = (w8Data.customerActivity || {})[custName] || [];
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].rewardStatus === '已发放') return true;
+  }
+  return false;
+}
+function hasBirthdayBenefit(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].benefitType === '生日权益' && (bens[i].status === '可用' || bens[i].status === '未使用' || bens[i].status === '未领取')) return true;
+  }
+  return false;
+}
+function hasBenefitStar(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].benefitType === '权益星' && (bens[i].status === '可用' || bens[i].status === '未使用')) return true;
+  }
+  return false;
+}
+function hasAvailableBenefit(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].status === '可用' || bens[i].status === '未使用' || bens[i].status === '未领取') return true;
+  }
+  return false;
+}
+function hasBenefitExpiring(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  var now = new Date('2026-07-15');
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].status === '可用' || bens[i].status === '未使用' || bens[i].status === '未领取') {
+      var expiry = new Date(bens[i].expiryDate);
+      var daysLeft = (expiry - now) / (1000*3600*24);
+      if (daysLeft >= 0 && daysLeft <= 30) return true;
+    }
+  }
+  return false;
+}
+function hasEligibleActivity(custName) {
+  var acts = (w8Data.customerActivity || {})[custName] || [];
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].status === '可参与' && acts[i].eligible) return true;
+  }
+  return false;
+}
+
 // ===== 频道注册 =====
 
 // W8 客户服务频道
@@ -6202,6 +7630,8 @@ AiChat.register('w8', {
     { label:'7天未联系', text:'最近7天未联系的稳健型客户' },
     { label:'持有基金', text:'持有基金产品的客户' },
     { label:'40-55岁财富', text:'年龄40-55岁的财富客户' },
+    { label:'奖励未领', text:'哪些客户有未领取的活动奖励' },
+    { label:'生日权益', text:'本月有哪些客户生日权益可用' },
     { label:'定存到期', text:'有定存即将到期的客户' },
     { label:'进取型未联', text:'上月未联系的进取型客户' }
   ],
@@ -6218,6 +7648,14 @@ AiChat.register('w8', {
       else if (q.type === 'days_max') list = list.filter(function(c) { return c.lastContactDays <= q.value; });
       else if (q.type === 'product') list = list.filter(function(c) { return c.products && c.products.indexOf(q.value)>=0; });
       else if (q.type === 'gender') list = list.filter(function(c) { return c.gender === q.value; });
+      // 权益与活动筛选
+      else if (q.type === 'unclaimed_reward') list = list.filter(function(c) { return hasUnclaimedReward(c.name); });
+      else if (q.type === 'birthday_benefit') list = list.filter(function(c) { return hasBirthdayBenefit(c.name); });
+      else if (q.type === 'has_benefit_star') list = list.filter(function(c) { return hasBenefitStar(c.name); });
+      else if (q.type === 'benefit_available') list = list.filter(function(c) { return hasAvailableBenefit(c.name); });
+      else if (q.type === 'benefit_expiring') list = list.filter(function(c) { return hasBenefitExpiring(c.name); });
+      else if (q.type === 'has_activity') list = list.filter(function(c) { return hasEligibleActivity(c.name); });
+      else if (q.type === 'customer_name') list = list.filter(function(c) { return c.name === q.value; });
     });
     return { count: list.length, total: w8Data.customers.length, sample: list.slice(0,3).map(function(c){return c.name;}) };
   },
@@ -6891,6 +8329,11 @@ function clearGsSearch() {
   renderGsRecent();
   document.getElementById('gsClear').style.display = 'none';
 }
+
+// ============================================================
+// 数据源说明: 默认从 http://localhost:8000 API 获取实时数据
+// 关闭 API: 在浏览器控制台设置 USE_API = false 后刷新页面
+// ============================================================
 </script>
 </body>
 </html>

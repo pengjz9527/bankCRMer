@@ -4570,7 +4570,20 @@ var bpData = {
     { icon:'⚠️', text:'合规红线：不得承诺保本保收益，不得夸大产品收益' },
     { icon:'📌', text:'该客户有50万大额存单在ZZ银行，面谈中可适时对比我行优势' },
     { icon:'📌', text:'客户最近一笔转账指向券商，可能已有炒股行为，注意话术分寸' }
-  ]
+  ],
+  // 营销切入点 — 权益与活动
+  benefitEntries: {
+    defaultEntry: { type:'activity', id:'act1', title:'财富客户专享理财', description:'王先生，我们本月有一个财富客户专享活动，您可领取定制礼盒和0.2%的加息券，正好可以和您的定存到期一起考虑。' },
+    allBenefits: [
+      { type:'benefit', benType:'生日权益', name:'生日专属理财券', value:'0.3%加成券', status:'可用', desc:'' },
+      { type:'benefit', benType:'权益星', name:'权益星', value:'2,800分', status:'可用', desc:'' },
+      { type:'benefit', benType:'等级权益', name:'机场贵宾厅', value:'2次/年', status:'未使用', desc:'' }
+    ],
+    allActivities: [
+      { type:'activity', actId:'act4', name:'稳健投资·达标有礼', reward:'品牌保温杯+100元京东卡', status:'已达标·奖励待领取', desc:'' },
+      { type:'activity', actId:'act3', name:'季度积分翻倍', reward:'消费积分×2倍', status:'可参与', desc:'' }
+    ]
+  }
 };
 
 var bpPhoneData = {
@@ -4580,6 +4593,14 @@ var bpPhoneData = {
       { name:'XX稳健增长A', risk:'R2', yield:'3.8%', min:'1万' },
       { name:'YY悦享周期', risk:'R3', yield:'4.1%', min:'5万' },
       { name:'ZZ现金管理', risk:'R1', yield:'2.5%', min:'1元' }
+    ]
+  },
+  // 营销切入点 — 权益与活动（电话版，精简）
+  benefitEntries: {
+    defaultEntry: { type:'activity', name:'财富客户专享活动', hook:'另外王先生，我们本月财富客户专享活动正在进行中，您还可以领一份定制礼盒和加息券，我微信把活动详情发您？' },
+    quickHooks: [
+      { name:'生日专属理财券', hook:'对了，您这个月的生日专属理财券还没领取，买理财能额外加成0.3%，要不要我帮您操作一下？' },
+      { name:'稳健投资达标礼', hook:'您之前参与的稳健投资活动奖励已达标，保温杯和京东卡可以到网点领取了。' }
     ]
   }
 };
@@ -4889,6 +4910,70 @@ function renderP1Content() {
     }
     html += '</div></div></div>';
   });
+
+  html += '</div></div></div>';
+
+  // 营销切入点 — 权益与活动（面谈版和电话版均显示）
+  html += '<div class="p1-section">' +
+    '<div class="p1-sec-header" onclick="toggleP1Section(this)">' +
+      '<span class="p1-sec-num" style="background:#6C5CE7">🎁</span>' +
+      '<div class="p1-sec-info">' +
+        '<div class="p1-sec-title">营销切入点 · 权益与活动</div>' +
+        '<div class="p1-sec-sub">AI推荐1条默认切入点，可手动切换</div>' +
+      '</div>' +
+      '<span class="p1-sec-arrow">▼</span>' +
+    '</div>' +
+    '<div class="p1-sec-body">' +
+      '<div class="p1-sec-inner">';
+
+  // 电话版和面谈版使用不同的数据结构
+  var beData = isPhone ? bpPhoneData.benefitEntries : bpData.benefitEntries;
+  if (beData) {
+    // 优先切入点（AI推荐，高亮显示）
+    html += '<div style="background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(51,102,255,0.05));border:1px solid rgba(108,92,231,0.25);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">';
+    html += '<div style="font-size:var(--fs-caption);color:#6C5CE7;font-weight:var(--fw-bold);margin-bottom:4px">🤖 AI 推荐切入方式</div>';
+    if (isPhone) {
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);margin-bottom:4px">'+(beData.defaultEntry.name||'')+'</div>';
+      html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);line-height:1.6">'+(beData.defaultEntry.hook||'')+'</div>';
+    } else {
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);margin-bottom:4px">'+(beData.defaultEntry.title||'')+'</div>';
+      html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);line-height:1.6">'+(beData.defaultEntry.description||'')+'</div>';
+    }
+    html += '</div>';
+
+    // 电话版：快捷切入点列表
+    if (isPhone && beData.quickHooks) {
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:6px">💡 可选切入方式（点击切换）</div>';
+      beData.quickHooks.forEach(function(h, i) {
+        html += '<div style="font-size:var(--fs-small);padding:8px;margin-bottom:4px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;'+(i===0?'background:#F5F3FF;':'')+'" onclick="var t=this;var d=document.querySelector(&#39;[data-be-default-phone]&#39;);if(d){d.innerHTML=&#39;<strong>&#39;+h.name+&#39;</strong><br><span style=font-size:var(--fs-small)>&#39;+h.hook+&#39;</span>&#39;;};showToast(&#39;已切换优先切入点：&#39;+h.name+&#39;&#39;)">';
+        html += (i===0?'<span style="font-size:10px;color:#6C5CE7;font-weight:var(--fw-bold)">当前选中</span><br>':'')+h.name+'</div>';
+      });
+    }
+
+    // 面谈版：全部可用权益（折叠）
+    if (!isPhone && beData.allBenefits) {
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px">💎 全部可用权益</div>';
+      beData.allBenefits.forEach(function(b, i) {
+        var typeIcon = { '生日权益':'🎂', '权益星':'⭐', '等级权益':'👑', '活动权益':'🎉' };
+        html += '<div style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;border-radius:var(--radius-sm);background:#F8F9FC;border:1px solid var(--color-divider);cursor:pointer" onclick="showToast(&#39;已切换切入方式：'+b.name+'&#39;)">';
+        html += '<span>'+(typeIcon[b.benType]||'💎')+'</span> ';
+        html += '<span style="font-size:var(--fs-small);flex:1"><strong>'+b.name+'</strong> · '+b.value+'</span>';
+        html += '<span style="font-size:10px;color:#6C5CE7">可选</span>';
+        html += '</div>';
+      });
+    }
+
+    // 面谈版：全部可参与活动（折叠）
+    if (!isPhone && beData.allActivities) {
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px">📋 全部可参与活动</div>';
+      beData.allActivities.forEach(function(a, i) {
+        html += '<div style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;border-radius:var(--radius-sm);background:#F8F9FC;border:1px solid var(--color-divider);cursor:pointer" onclick="showToast(&#39;已切换切入方式：'+a.name+'&#39;)">';
+        html += '<span style="font-size:var(--fs-small);flex:1"><strong>'+a.name+'</strong> · '+a.reward+'</span>';
+        html += '<span style="font-size:10px;color:#DC2626">'+(a.status||'')+'</span>';
+        html += '</div>';
+      });
+    }
+  }
 
   html += '</div></div></div>';
 
@@ -5349,6 +5434,73 @@ var w8Data = {
     { name:'孙丽', gender:'女', age:55, phone:'133****7890', level:'财富客户', aum:210.5, risk:'稳健型', products:['定存','理财','保险','贵金属'], tags:[{t:'保险意向',c:'#9b59b6'},{t:'大额定存',c:'#2980b9'}], lastContact:'7月8日 · 面谈', lastContactDays:7 },
     { name:'周强', gender:'男', age:29, phone:'131****0123', level:'普通客户', aum:3.2, risk:'成长型', products:[], tags:[{t:'新开户·7天',c:'#95a5a6'}], lastContact:'7月14日 · 微信', lastContactDays:1 }
   ],
+  // 营销活动 Mock 数据
+  activities: [
+    { id:'act1', name:'财富客户专享理财', type:'理财活动', startDate:'2026-07-01', endDate:'2026-08-31', qualification:'财富客户 · AUM≥50万', rewardType:'礼品', reward:'定制礼盒+0.2%加息券', status:'进行中' },
+    { id:'act2', name:'新客理财体验', type:'理财活动', startDate:'2026-07-10', endDate:'2026-09-30', qualification:'近3月新开户 · 首次购买理财', rewardType:'返现', reward:'首次认购返现50元', status:'进行中' },
+    { id:'act3', name:'季度积分翻倍', type:'积分活动', startDate:'2026-07-01', endDate:'2026-09-30', qualification:'金卡及以上客户', rewardType:'积分', reward:'消费积分×2倍', status:'进行中' },
+    { id:'act4', name:'稳健投资·达标有礼', type:'理财活动', startDate:'2026-06-15', endDate:'2026-08-15', qualification:'购买指定稳健理财≥10万', rewardType:'礼品', reward:'品牌保温杯+100元京东卡', status:'进行中' },
+    { id:'act5', name:'老友推荐计划', type:'推荐活动', startDate:'2026-07-01', endDate:'2026-12-31', qualification:'所有客户', rewardType:'返现', reward:'每推荐1位新客奖励30元', status:'进行中' }
+  ],
+  // 客户活动参与 Mock 数据
+  customerActivity: {
+    '王建国': [
+      { activityId:'act1', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'定制礼盒+0.2%加息券（认购后发放）', participateDate:'' },
+      { activityId:'act4', eligible:true, status:'已达标', rewardStatus:'已发放', rewardDetail:'品牌保温杯+100元京东卡', participateDate:'2026-07-15' },
+      { activityId:'act3', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'消费积分×2倍', participateDate:'' }
+    ],
+    '赵明辉': [
+      { activityId:'act1', eligible:true, status:'已参与', rewardStatus:'已领取', rewardDetail:'定制礼盒+0.2%加息券', participateDate:'2026-07-10' },
+      { activityId:'act4', eligible:true, status:'已达标', rewardStatus:'已发放', rewardDetail:'品牌保温杯+100元京东卡', participateDate:'2026-07-12' },
+      { activityId:'act5', eligible:true, status:'已参与', rewardStatus:'已发放', rewardDetail:'30元×2=60元', participateDate:'2026-07-08' }
+    ],
+    '孙丽': [
+      { activityId:'act1', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'定制礼盒+0.2%加息券', participateDate:'' },
+      { activityId:'act3', eligible:true, status:'已参与', rewardStatus:'已发放', rewardDetail:'消费积分×2倍', participateDate:'2026-07-05' },
+      { activityId:'act4', eligible:true, status:'已达标', rewardStatus:'已发放', rewardDetail:'品牌保温杯+100元京东卡', participateDate:'2026-06-30' }
+    ],
+    '陈晓燕': [
+      { activityId:'act2', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'首次认购返现50元', participateDate:'' },
+      { activityId:'act3', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'消费积分×2倍', participateDate:'' }
+    ],
+    '张丽华': [
+      { activityId:'act1', eligible:false, status:'可参与', rewardStatus:'未发放', rewardDetail:'AUM不足50万，暂不达标', participateDate:'' },
+      { activityId:'act3', eligible:true, status:'已参与', rewardStatus:'已发放', rewardDetail:'消费积分×2倍', participateDate:'2026-07-03' }
+    ],
+    '李强': [
+      { activityId:'act2', eligible:false, status:'可参与', rewardStatus:'未发放', rewardDetail:'非新开户客户', participateDate:'' },
+      { activityId:'act5', eligible:true, status:'可参与', rewardStatus:'未发放', rewardDetail:'每推荐1位新客奖励30元', participateDate:'' }
+    ]
+  },
+  // 客户权益 Mock 数据
+  customerBenefit: {
+    '王建国': [
+      { benefitType:'生日权益', benefitName:'生日专属理财券', benefitValue:'0.3%加成券', status:'可用', grantDate:'2026-07-18', expiryDate:'2026-08-18', usageDesc:'购买理财产品时享额外0.3%年化收益加成，有效期30天' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'2,800分', status:'可用', grantDate:'2026-06-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'等级权益', benefitName:'机场贵宾厅', benefitValue:'2次/年', status:'未使用', grantDate:'2026-01-01', expiryDate:'2026-12-31', usageDesc:'全国主要机场贵宾厅候机服务，每次可携1位同伴' }
+    ],
+    '赵明辉': [
+      { benefitType:'生日权益', benefitName:'生日专属蛋糕券', benefitValue:'价值200元', status:'未使用', grantDate:'2026-03-15', expiryDate:'2026-07-15', usageDesc:'指定蛋糕品牌200元抵扣券，线上线下均可使用' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'5,600分', status:'可用', grantDate:'2026-04-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'等级权益', benefitName:'体检套餐', benefitValue:'1次/年', status:'已使用', grantDate:'2026-01-01', expiryDate:'2026-12-31', usageDesc:'爱康国宾/美年大健康基础体检套餐' }
+    ],
+    '孙丽': [
+      { benefitType:'生日权益', benefitName:'生日专属护理套装', benefitValue:'价值500元', status:'可用', grantDate:'2026-06-01', expiryDate:'2026-07-31', usageDesc:'高端护肤品礼盒，生日当月领取' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'8,200分', status:'可用', grantDate:'2026-05-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'活动权益', benefitName:'贵金属投资讲座', benefitValue:'VIP席位', status:'可用', grantDate:'2026-07-01', expiryDate:'2026-07-25', usageDesc:'7月25日贵金属投资策略讲座VIP席位，含茶歇' }
+    ],
+    '陈晓燕': [
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'1,200分', status:'可用', grantDate:'2026-04-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' },
+      { benefitType:'等级权益', benefitName:'生日蛋糕券', benefitValue:'价值100元', status:'未使用', grantDate:'2026-05-20', expiryDate:'2026-07-20', usageDesc:'指定蛋糕品牌100元抵扣券' }
+    ],
+    '张丽华': [
+      { benefitType:'生日权益', benefitName:'生日现金红包', benefitValue:'88元', status:'未领取', grantDate:'2026-07-01', expiryDate:'2026-07-31', usageDesc:'88元微信现金红包，需手动领取' },
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'3,500分', status:'可用', grantDate:'2026-03-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' }
+    ],
+    '李强': [
+      { benefitType:'权益星', benefitName:'权益星', benefitValue:'600分', status:'可用', grantDate:'2026-07-01', expiryDate:'2026-12-31', usageDesc:'可在权益商城兑换礼品、话费、视频会员等' }
+    ]
+  },
   profiles: {
     '王建国': {
       base: { name:'王建国', gender:'男', age:45, occupation:'制造业企业主', industry:'制造业', city:'合肥市', education:'本科', level:'财富客户', manager:'李经理', tenure:'2年', risk:'稳健型 R2' },
@@ -5518,13 +5670,24 @@ function renderW8() {
   } else {
     filtered.forEach(function(c) {
       var tagsHtml = c.tags.map(function(t){return '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:'+t.c+'20;color:'+t.c+'">'+t.t+'</span>';}).join(' ');
+      // 权益与活动动态徽标
+      var baBadges = '';
+      if (hasUnclaimedReward(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#FEE2E2;color:#DC2626">🎁 有未领奖励</span> ';
+      if (hasBirthdayBenefit(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#EDE9FE;color:#6C5CE7">🎂 生日权益</span> ';
+      var availBens = (w8Data.customerBenefit || {})[c.name] || [];
+      var availCount = 0;
+      for (var bi = 0; bi < availBens.length; bi++) {
+        if (availBens[bi].status === '可用' || availBens[bi].status === '未使用' || availBens[bi].status === '未领取') availCount++;
+      }
+      if (availCount > 0) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#DBEAFE;color:#1D4ED8">⭐ '+availCount+'权益待用</span> ';
+      var allTagsHtml = (tagsHtml + ' ' + baBadges).trim();
       html +=
         '<div class="w8-cust-card" onclick="openW8Detail(\''+c.name+'\')">' +
           '<div class="w8-cust-avatar">●</div>' +
           '<div class="w8-cust-info">' +
             '<div class="w8-cust-name">'+c.name+' · '+c.gender+' · '+c.age+'岁</div>' +
             '<div class="w8-cust-meta">'+c.level+' · AUM '+c.aum+'万 · '+c.risk+'</div>' +
-            (tagsHtml?'<div class="w8-cust-tags">'+tagsHtml+'</div>':'') +
+            (allTagsHtml?'<div class="w8-cust-tags">'+allTagsHtml+'</div>':'') +
             '<div class="w8-cust-meta">最后联络：'+c.lastContact+'</div>' +
           '</div>' +
           '<span class="w8-cust-cta">详情&gt;</span>' +
@@ -5743,6 +5906,78 @@ function openW8Detail(name, source) {
   });
   s9 += '</div>';
 
+  // --- Section 10: 权益与活动 (NEW) ---
+  function buildBenefitActivitySection(custName) {
+    var acts = w8Data.customerActivity[custName] || [];
+    var bens = w8Data.customerBenefit[custName] || [];
+    var actMap = {};
+    (w8Data.activities || []).forEach(function(a) { actMap[a.id] = a; });
+
+    var html = '';
+
+    // 待领取奖励（未领取的活动奖励）
+    var unclaimed = acts.filter(function(a) { return a.rewardStatus === '已发放' || a.rewardStatus === '未发放'; });
+    if (unclaimed.length > 0) {
+      html += '<div style="background:#FFF5F5;border:1px solid #FECACA;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:10px">';
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);color:#DC2626;margin-bottom:6px">待领取奖励</div>';
+      unclaimed.forEach(function(a) {
+        var act = actMap[a.activityId] || {};
+        var statusLabel = a.rewardStatus === '已发放' ? '已发放·待领取' : '未发放';
+        var statusColor = a.rewardStatus === '已发放' ? '#DC2626' : '#F59E0B';
+        html += '<div style="font-size:var(--fs-small);padding:4px 0;border-bottom:1px solid #FEE2E2;cursor:pointer" onclick="showToast(\'奖励详情：'+a.rewardDetail+'\')">';
+        html += '<span style="color:'+statusColor+';font-weight:var(--fw-bold)">●</span> ';
+        html += '<strong>'+(act.name||a.activityId)+'</strong> · '+a.rewardDetail;
+        html += ' <span style="font-size:10px;color:'+statusColor+'">['+statusLabel+']</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 可用权益
+    var availBens = bens.filter(function(b) { return b.status === '可用' || b.status === '未使用' || b.status === '未领取'; });
+    if (availBens.length > 0) {
+      html += '<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:10px">';
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);color:#6C5CE7;margin-bottom:6px">可用权益</div>';
+      availBens.forEach(function(b) {
+        var statusLabel = b.status === '未领取' ? '未领取' : (b.status === '未使用' ? '未使用' : '可用');
+        var statusColor = b.status === '未领取' ? '#DC2626' : '#6C5CE7';
+        var typeIcon = { '生日权益':'🎂', '权益星':'⭐', '等级权益':'👑', '活动权益':'🎉' };
+        html += '<div style="font-size:var(--fs-small);padding:6px 0;border-bottom:1px solid #EDE9FE;cursor:pointer" onclick="showToast(\''+b.usageDesc+'\')">';
+        html += '<span>'+(typeIcon[b.benefitType]||'💎')+'</span> ';
+        html += '<strong>'+b.benefitName+'</strong> · '+b.benefitValue;
+        html += ' <span style="font-size:10px;color:'+statusColor+'">['+statusLabel+']</span>';
+        html += '<div style="font-size:10px;color:var(--color-text-tertiary)">有效期至 '+b.expiryDate+'</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 可参与活动
+    var eligibleActs = acts.filter(function(a) { return a.status === '可参与' && a.eligible; });
+    if (eligibleActs.length > 0) {
+      html += '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:10px">';
+      html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);color:#00B578;margin-bottom:6px">可参与活动</div>';
+      eligibleActs.forEach(function(a) {
+        var act = actMap[a.activityId] || {};
+        html += '<div style="font-size:var(--fs-small);padding:4px 0;border-bottom:1px solid #DCFCE7;cursor:pointer" onclick="showToast(\'活动详情：'+(act.name||a.activityId)+'\\n奖励：'+a.rewardDetail+'\')">';
+        html += '<strong>'+(act.name||a.activityId)+'</strong>';
+        html += ' <span style="font-size:10px;color:var(--color-text-tertiary)">'+act.reward+'</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 无数据
+    if (!html) {
+      html = '<div style="text-align:center;padding:16px;color:var(--color-text-tertiary);font-size:var(--fs-small)">暂无权益与活动数据</div>';
+    }
+
+    return html;
+  }
+
+  var s10_name = b.name;
+  var s10 = buildBenefitActivitySection(s10_name);
+
   // --- Assemble ---
   var html =
     sec('base', '📋 基础信息', '', true, s1) +
@@ -5754,6 +5989,7 @@ function openW8Detail(name, source) {
     sec('opps', '🎯 商机与待办', '', true, s7) +
     sec('interact', '📝 最近交互', '', false, s8) +
     sec('products', '📦 持有产品', '', false, s9) +
+    sec('benefits', '🎁 权益与活动', '', true, s10) +
 
     '<div class="profile-bottom-actions">' +
       '<button class="w8-action-btn">📞 拨号</button>' +
@@ -5973,6 +6209,24 @@ var AiChat = {
     var minBuy2 = t.match(/起购\s*(\d+)\s*[万元]/);
     if (minBuy2) queries.push({type:'prodMin',value:parseFloat(minBuy2[1]),label:'起购≤'+minBuy2[1]+'万'});
 
+    // ==== 权益与活动 ====
+    // 未领取奖励
+    if (/奖励.*未领|未领.*奖励|没领.*奖励|奖励.*没领/.test(t)) queries.push({type:'unclaimed_reward',value:true,label:'有未领取奖励'});
+    if (/未领取/.test(t) && !/奖励/.test(t)) queries.push({type:'unclaimed_reward',value:true,label:'有未领取奖励'});
+    // 生日权益
+    if (/生日/.test(t)) queries.push({type:'birthday_benefit',value:true,label:'有生日权益'});
+    // 权益星
+    if (/权益星/.test(t)) queries.push({type:'has_benefit_star',value:true,label:'有权益星'});
+    // 权益
+    if (/权益.*未用|未用.*权益|权益.*可用|可用.*权益/.test(t)) queries.push({type:'benefit_available',value:true,label:'有可用权益'});
+    // 权益到期/快过期
+    if (/权益.*到期|权益.*过期|权益.*快/.test(t)) queries.push({type:'benefit_expiring',value:true,label:'权益即将到期'});
+    // 活动
+    if (/可参加.*活动|活动.*可参加/.test(t)) queries.push({type:'has_activity',value:true,label:'有可参与活动'});
+    // 单客户查询（提取客户姓名）
+    var custNameMatch = t.match(/(?:王建国|张丽华|赵明辉|陈晓燕|李强|孙丽|周强)/);
+    if (custNameMatch) queries.push({type:'customer_name',value:custNameMatch[0],label:'客户：'+custNameMatch[0]});
+
     return queries;
   },
 
@@ -6189,6 +6443,55 @@ var AiChat = {
   }
 };
 
+// ===== 权益与活动辅助函数 =====
+function hasUnclaimedReward(custName) {
+  var acts = (w8Data.customerActivity || {})[custName] || [];
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].rewardStatus === '已发放') return true;
+  }
+  return false;
+}
+function hasBirthdayBenefit(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].benefitType === '生日权益' && (bens[i].status === '可用' || bens[i].status === '未使用' || bens[i].status === '未领取')) return true;
+  }
+  return false;
+}
+function hasBenefitStar(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].benefitType === '权益星' && (bens[i].status === '可用' || bens[i].status === '未使用')) return true;
+  }
+  return false;
+}
+function hasAvailableBenefit(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].status === '可用' || bens[i].status === '未使用' || bens[i].status === '未领取') return true;
+  }
+  return false;
+}
+function hasBenefitExpiring(custName) {
+  var bens = (w8Data.customerBenefit || {})[custName] || [];
+  var now = new Date('2026-07-15');
+  for (var i = 0; i < bens.length; i++) {
+    if (bens[i].status === '可用' || bens[i].status === '未使用' || bens[i].status === '未领取') {
+      var expiry = new Date(bens[i].expiryDate);
+      var daysLeft = (expiry - now) / (1000*3600*24);
+      if (daysLeft >= 0 && daysLeft <= 30) return true;
+    }
+  }
+  return false;
+}
+function hasEligibleActivity(custName) {
+  var acts = (w8Data.customerActivity || {})[custName] || [];
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].status === '可参与' && acts[i].eligible) return true;
+  }
+  return false;
+}
+
 // ===== 频道注册 =====
 
 // W8 客户服务频道
@@ -6202,6 +6505,8 @@ AiChat.register('w8', {
     { label:'7天未联系', text:'最近7天未联系的稳健型客户' },
     { label:'持有基金', text:'持有基金产品的客户' },
     { label:'40-55岁财富', text:'年龄40-55岁的财富客户' },
+    { label:'奖励未领', text:'哪些客户有未领取的活动奖励' },
+    { label:'生日权益', text:'本月有哪些客户生日权益可用' },
     { label:'定存到期', text:'有定存即将到期的客户' },
     { label:'进取型未联', text:'上月未联系的进取型客户' }
   ],
@@ -6218,6 +6523,14 @@ AiChat.register('w8', {
       else if (q.type === 'days_max') list = list.filter(function(c) { return c.lastContactDays <= q.value; });
       else if (q.type === 'product') list = list.filter(function(c) { return c.products && c.products.indexOf(q.value)>=0; });
       else if (q.type === 'gender') list = list.filter(function(c) { return c.gender === q.value; });
+      // 权益与活动筛选
+      else if (q.type === 'unclaimed_reward') list = list.filter(function(c) { return hasUnclaimedReward(c.name); });
+      else if (q.type === 'birthday_benefit') list = list.filter(function(c) { return hasBirthdayBenefit(c.name); });
+      else if (q.type === 'has_benefit_star') list = list.filter(function(c) { return hasBenefitStar(c.name); });
+      else if (q.type === 'benefit_available') list = list.filter(function(c) { return hasAvailableBenefit(c.name); });
+      else if (q.type === 'benefit_expiring') list = list.filter(function(c) { return hasBenefitExpiring(c.name); });
+      else if (q.type === 'has_activity') list = list.filter(function(c) { return hasEligibleActivity(c.name); });
+      else if (q.type === 'customer_name') list = list.filter(function(c) { return c.name === q.value; });
     });
     return { count: list.length, total: w8Data.customers.length, sample: list.slice(0,3).map(function(c){return c.name;}) };
   },

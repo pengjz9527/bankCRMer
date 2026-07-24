@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>易会办 · 管理后台</title>
+<style>
+/* ==========================================
+   易会办 Management Console v0.1
+   定位：分行管理者工作台首页
+   三栏布局 · 浅色桌面风格 · 数字+文字
+   ========================================== */
+
+:root {
+  --color-primary: #3366FF;
+  --color-primary-dark: #2555DD;
+  --color-primary-light: #EEF3FF;
+  --color-success: #00B86B;
+  --color-success-light: #EDFAF3;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FFFAED;
+  --color-danger: #F04444;
+  --color-danger-light: #FFF0F0;
+  --color-ai: #6C5CE7;
+  --color-ai-light: #F3F0FF;
+
+  --color-bg: #F5F6FA;
+  --color-card: #FFFFFF;
+  --color-divider: #E8EAF0;
+  --color-border: #D8DAE2;
+
+  --color-text-primary: #0F1117;
+  --color-text-secondary: #5F6570;
+  --color-text-tertiary: #959BA5;
+
+  --font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-number: "DIN Alternate", "SF Mono", "Menlo", monospace;
+
+  --fs-h1: 20px; --fs-h2: 16px; --fs-h3: 14px;
+  --fs-body: 13px; --fs-caption: 12px; --fs-small: 11px;
+  --fs-num-xl: 32px; --fs-num-lg: 24px; --fs-num-md: 18px; --fs-num-sm: 15px;
+
+  --sp-xxs: 4px; --sp-xs: 8px; --sp-sm: 12px; --sp-md: 16px; --sp-lg: 20px; --sp-xl: 24px;
+
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.10);
+
+  --nav-height: 52px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--fs-body);
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ---------- Top Nav ---------- */
+.top-nav {
+  height: var(--nav-height);
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-divider);
+  display: flex; align-items: center;
+  padding: 0 var(--sp-xl);
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.nav-brand {
+  display: flex; align-items: center; gap: var(--sp-xs);
+  font-size: var(--fs-h2); font-weight: 600; color: var(--color-text-primary);
+  margin-right: var(--sp-xl);
+}
+.nav-brand .logo-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-primary);
+}
+.nav-divider {
+  width: 1px; height: 20px; background: var(--color-divider);
+}
+.nav-org {
+  margin-left: var(--sp-md);
+  font-size: var(--fs-body);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+.nav-org strong { color: var(--color-text-primary); }
+
+.nav-spacer { flex: 1; }
+
+.nav-actions { display: flex; gap: var(--sp-sm); align-items: center; }
+.nav-btn {
+  height: 32px; padding: 0 var(--sp-sm);
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-card); color: var(--color-text-secondary);
+  font-size: var(--fs-caption); cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all var(--duration-fast);
+  position: relative;
+}
+.nav-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.nav-btn .badge {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--color-danger); color: #fff;
+  font-size: 10px; border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; border: 2px solid #fff;
+}
+.nav-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--color-primary-light); color: var(--color-primary);
+  font-size: var(--fs-caption); font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  margin-left: var(--sp-xs);
+}
+
+/* ---------- Main Layout ---------- */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* 25% / 50% / 25% */
+  gap: var(--sp-lg);
+  padding: var(--sp-lg) var(--sp-xl);
+  max-width: 1440px; margin: 0 auto;
+  min-height: calc(100vh - var(--nav-height));
+  align-items: start;
+}
+
+/* ---------- Column Shared ---------- */
+.col { display: flex; flex-direction: column; gap: var(--sp-md); }
+
+/* ---------- Card Base ---------- */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  padding: var(--sp-md) var(--sp-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-divider);
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: var(--sp-sm);
+}
+.card-title {
+  font-size: var(--fs-h3); font-weight: 600; color: var(--color-text-primary);
+}
+.card-subtitle {
+  font-size: var(--fs-caption); color: var(--color-text-tertiary);
+}
+.card-link {
+  font-size: var(--fs-caption); color: var(--color-primary);
+  cursor: pointer; text-decoration: none;
+}
+.card-link:hover { text-decoration: underline; }
+
+/* ---------- Metric Row ---------- */
+.metric-row {
+  display: flex; gap: var(--sp-lg);
+  margin-top: var(--sp-xs);
+}
+.metric-item { flex: 1; }
+.metric-value {
+  font-family: var(--font-number); font-size: var(--fs-num-md);
+  font-weight: 600; color: var(--color-text-primary);
+  line-height: 1.2;
+}
+.metric-value.sm { font-size: var(--fs-num-sm); }
+.metric-value.lg { font-size: var(--fs-num-lg); }
+.metric-label {
+  font-size: var(--fs-caption); color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+.metric-rate {
+  font-family: var(--font-number); font-size: var(--fs-body);
+  font-weight: 600; margin-left: 4px;
+}
+.metric-rate.up { color: var(--color-success); }
+.metric-rate.down { color: var(--color-danger); }
+.metric-rate.warn { color: var(--color-warning); }
+
+/* ---------- Progress Mini ---------- */
+.progress-mini {
+  display: flex; align-items: center; gap: var(--sp-xs);
+  margin-top: var(--sp-xxs);
+}
+.progress-mini .bar-track {
+  flex: 1; height: 4px; background: var(--color-divider);
+  border-radius: var(--radius-full); overflow: hidden;
+}
+.progress-mini .bar-fill {
+  height: 100%; border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+.progress-mini .bar-fill.good { background: var(--color-success); }
+.progress-mini .bar-fill.warn { background: var(--color-warning); }
+.progress-mini .bar-fill.danger { background: var(--color-danger); }
+.progress-mini .pct {
+  font-family: var(--font-number); font-size: var(--fs-caption);
+  font-weight: 600; color: var(--color-text-secondary);
+  min-width: 36px; text-align: right;
+}
+
+/* ---------- AI Banner ---------- */
+.ai-banner {
+  background: linear-gradient(135deg, var(--color-ai-light), #F8F7FF);
+  border: 1px solid rgba(108,92,231,0.15);
+  border-radius: var(--radius-md);
+  padding: var(--sp-sm) var(--sp-lg);
+  display: flex; align-items: flex-start; gap: var(--sp-sm);
+}
+.ai-banner .ai-icon {
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
+  background: var(--color-ai); color: #fff;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+.ai-banner .ai-body { flex: 1; }
+.ai-banner .ai-title {
+  font-size: var(--fs-body); font-weight: 600; color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+.ai-banner .ai-desc {
+  font-size: var(--fs-caption); color: var(--color-text-secondary); line-height: 1.5;
+}
+.ai-banner .ai-actions {
+  display: flex; gap: var(--sp-xs); margin-top: var(--sp-xs);
+}
+.ai-banner .ai-btn {
+  font-size: var(--fs-caption); color: var(--color-ai);
+  cursor: pointer; border: none; background: none;
+  font-weight: 500; padding: 2px 0;
+}
+.ai-banner .ai-btn:hover { text-decoration: underline; }
+
+/* ---------- Ranking List ---------- */
+.rank-list { list-style: none; margin-top: var(--sp-xs); }
+.rank-item {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: var(--sp-xs) 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+.rank-item:last-child { border-bottom: none; }
+.rank-num {
+  width: 22px; text-align: center;
+  font-family: var(--font-number); font-size: var(--fs-body);
+  font-weight: 600; color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+.rank-num.top { color: var(--color-warning); font-size: var(--fs-h3); }
+.rank-num.bottom { color: var(--color-danger); }
+.rank-name {
+  flex: 1; font-size: var(--fs-body); color: var(--color-text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rank-value {
+  font-family: var(--font-number); font-size: var(--fs-body);
+  font-weight: 600; color: var(--color-text-secondary);
+  min-width: 38px; text-align: right;
+}
+.rank-arrow {
+  font-size: var(--fs-caption); min-width: 20px; text-align: center;
+}
+.rank-arrow.up { color: var(--color-success); }
+.rank-arrow.down { color: var(--color-danger); }
+
+/* ---------- Alert List ---------- */
+.alert-list { list-style: none; margin-top: var(--sp-xs); }
+.alert-item {
+  display: flex; align-items: flex-start; gap: var(--sp-sm);
+  padding: var(--sp-xs) 0;
+  border-bottom: 1px solid var(--color-divider);
+  cursor: pointer; transition: background var(--duration-fast);
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--color-bg); margin: 0 calc(-1 * var(--sp-lg)); padding: var(--sp-xs) var(--sp-lg); border-radius: var(--radius-sm); }
+.alert-dot {
+  width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+}
+.alert-dot.danger { background: var(--color-danger); }
+.alert-dot.warn { background: var(--color-warning); }
+.alert-info { flex: 1; }
+.alert-title {
+  font-size: var(--fs-body); color: var(--color-text-primary); font-weight: 500;
+  line-height: 1.4;
+}
+.alert-meta {
+  font-size: var(--fs-caption); color: var(--color-text-tertiary);
+  margin-top: 1px;
+}
+
+/* ---------- Quick Insight ---------- */
+.insight-row {
+  display: flex; gap: var(--sp-sm);
+  margin-top: var(--sp-xs);
+}
+.insight-chip {
+  flex: 1; padding: var(--sp-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  cursor: pointer; transition: background var(--duration-fast);
+}
+.insight-chip:hover { background: var(--color-divider); }
+.insight-chip .chip-icon { font-size: 16px; margin-bottom: 2px; }
+.insight-chip .chip-value {
+  font-family: var(--font-number); font-size: var(--fs-num-sm);
+  font-weight: 600; color: var(--color-text-primary);
+}
+.insight-chip .chip-label {
+  font-size: var(--fs-small); color: var(--color-text-tertiary);
+}
+
+/* ---------- Pending Task ---------- */
+.task-list { list-style: none; margin-top: var(--sp-xs); }
+.task-item {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: var(--sp-xs) 0;
+  border-bottom: 1px solid var(--color-divider);
+  cursor: pointer;
+}
+.task-item:last-child { border-bottom: none; }
+.task-priority {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.task-priority.urgent { background: var(--color-danger); }
+.task-priority.normal { background: var(--color-warning); }
+.task-priority.low { background: var(--color-text-tertiary); }
+.task-text {
+  flex: 1; font-size: var(--fs-body); color: var(--color-text-primary);
+  line-height: 1.4;
+}
+.task-time {
+  font-size: var(--fs-small); color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+/* ---------- Quick Action ---------- */
+.action-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: var(--sp-xs); margin-top: var(--sp-xs);
+}
+.action-btn {
+  padding: var(--sp-sm);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  background: var(--color-card);
+  font-size: var(--fs-caption); color: var(--color-text-secondary);
+  cursor: pointer; text-align: center;
+  transition: all var(--duration-fast);
+}
+.action-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* ---------- Scorecard Row ---------- */
+.scorecard-row {
+  display: flex; gap: var(--sp-sm);
+  margin-top: var(--sp-xs);
+}
+.scorecard {
+  flex: 1; text-align: center;
+  padding: var(--sp-sm) var(--sp-xs);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+.scorecard .sc-value {
+  font-family: var(--font-number); font-size: var(--fs-num-md);
+  font-weight: 600; color: var(--color-text-primary);
+}
+.scorecard .sc-label {
+  font-size: var(--fs-small); color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+/* ---------- AI Panel ---------- */
+.ai-panel-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2); z-index: 200;
+  display: none; justify-content: flex-end;
+}
+.ai-panel-overlay.show { display: flex; }
+.ai-panel {
+  width: 420px; height: 100%;
+  background: var(--color-card);
+  box-shadow: var(--shadow-elevated);
+  display: flex; flex-direction: column;
+  animation: slideInRight 0.25s ease;
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.ai-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-md) var(--sp-lg);
+  border-bottom: 1px solid var(--color-divider);
+}
+.ai-panel-title {
+  font-size: var(--fs-h3); font-weight: 600; display: flex; align-items: center; gap: var(--sp-xs);
+}
+.ai-panel-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: none; background: var(--color-bg);
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.ai-panel-body {
+  flex: 1; overflow-y: auto;
+  padding: var(--sp-lg);
+  display: flex; flex-direction: column; gap: var(--sp-md);
+}
+.ai-panel-body .ai-msg { display: flex; gap: var(--sp-sm); }
+.ai-panel-body .ai-msg .bubble {
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-body); line-height: 1.6;
+  max-width: 85%;
+}
+.ai-panel-body .ai-msg.user { justify-content: flex-end; }
+.ai-panel-body .ai-msg.user .bubble {
+  background: var(--color-primary); color: #fff;
+}
+.ai-panel-body .ai-msg.bot .bubble {
+  background: var(--color-bg); color: var(--color-text-primary);
+}
+.ai-panel-body .ai-status {
+  font-size: var(--fs-caption); color: var(--color-text-tertiary);
+  text-align: center; padding: var(--sp-sm);
+}
+.ai-panel-input {
+  display: flex; gap: var(--sp-sm);
+  padding: var(--sp-md) var(--sp-lg);
+  border-top: 1px solid var(--color-divider);
+}
+.ai-panel-input input {
+  flex: 1; height: 40px; padding: 0 var(--sp-md);
+  border: 1px solid var(--color-border); border-radius: var(--radius-full);
+  font-size: var(--fs-body); outline: none;
+  font-family: var(--font-family);
+}
+.ai-panel-input input:focus { border-color: var(--color-ai); }
+.ai-panel-input button {
+  height: 40px; padding: 0 var(--sp-md);
+  border: none; border-radius: var(--radius-full);
+  background: var(--color-ai); color: #fff;
+  font-size: var(--fs-body); font-weight: 500; cursor: pointer;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1280px) {
+  .main-layout { grid-template-columns: 1fr 1fr; gap: var(--sp-md); padding: var(--sp-md); }
+  .col-right { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+  .col-right .card { flex: 1; min-width: 280px; }
+}
+@media (max-width: 960px) {
+  .main-layout { grid-template-columns: 1fr; }
+}
+
+/* ---------- Transitions ---------- */
+:root {
+  --duration-fast: 150ms; --duration-normal: 250ms;
+}
+</style>
+</head>
+<body>
+
+<!-- ========== Top Navigation ========== -->
+<nav class="top-nav">
+  <div class="nav-brand">
+    <span class="logo-dot"></span>易会办
+  </div>
+  <span class="nav-divider"></span>
+  <span class="nav-org">当前机构：<strong>徽商银行总行</strong></span>
+  <span class="nav-spacer"></span>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="toggleAIPanel()" style="border-color:var(--color-ai);color:var(--color-ai);">
+      &#9670; AI 助手
+    </button>
+    <button class="nav-btn">
+      &#128276; 消息
+    </button>
+    <button class="nav-btn">
+      待办<span class="badge">5</span>
+    </button>
+    <div class="nav-avatar">陈</div>
+  </div>
+</nav>
+
+<!-- ========== Main Layout: 3-Column Grid ========== -->
+<div class="main-layout">
+
+  <!-- ===== LEFT COLUMN (25%) ===== -->
+  <div class="col col-left">
+
+    <!-- 经营概览 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#128202; 全行经营概览</span>
+        <span class="card-subtitle">Q3 · 截至7月17日</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric-item">
+          <div class="metric-value lg">67<span style="font-size:14px;color:var(--color-text-tertiary);">%</span></div>
+          <div class="metric-label">AUM净增</div>
+          <div class="progress-mini">
+            <div class="bar-track"><div class="bar-fill warn" style="width:67%"></div></div>
+            <span class="pct">+12,850万</span>
+          </div>
+        </div>
+      </div>
+      <div class="metric-row" style="margin-top:var(--sp-sm);">
+        <div class="metric-item">
+          <div class="metric-value sm">73<span style="font-size:12px;color:var(--color-text-tertiary);">%</span></div>
+          <div class="metric-label">理财销量</div>
+          <div class="progress-mini">
+            <div class="bar-track"><div class="bar-fill good" style="width:73%"></div></div>
+            <span class="pct">83,200万</span>
+          </div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-value sm" style="color:var(--color-danger);">58<span style="font-size:12px;color:var(--color-text-tertiary);">%</span></div>
+          <div class="metric-label">客户新增</div>
+          <div class="progress-mini">
+            <div class="bar-track"><div class="bar-fill danger" style="width:58%"></div></div>
+            <span class="pct">28,410户</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商机概览 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#127919; 全行商机概览</span>
+        <a class="card-link" href="#">详情 &rarr;</a>
+      </div>
+      <div class="scorecard-row">
+        <div class="scorecard">
+          <div class="sc-value">1,283</div>
+          <div class="sc-label">活跃商机</div>
+        </div>
+        <div class="scorecard">
+          <div class="sc-value">4.6<span style="font-size:12px;">亿</span></div>
+          <div class="sc-label">预估价值</div>
+        </div>
+        <div class="scorecard">
+          <div class="sc-value">34<span style="font-size:12px;">%</span></div>
+          <div class="sc-label">本月转化率</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 预测预警 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#9888; 全行预测预警</span>
+        <span class="card-subtitle">AI 推算</span>
+      </div>
+      <div style="margin-top:var(--sp-xs);">
+        <div style="display:flex;align-items:baseline;gap:var(--sp-xs);">
+          <span style="font-family:var(--font-number);font-size:var(--fs-num-lg);font-weight:600;color:var(--color-warning);">81<span style="font-size:14px;">%</span></span>
+          <span style="font-size:var(--fs-caption);color:var(--color-text-secondary);">Q3末预计达成</span>
+        </div>
+        <div style="margin-top:var(--sp-sm);">
+          <div style="display:flex;justify-content:space-between;font-size:var(--fs-caption);margin-bottom:2px;">
+            <span style="color:var(--color-text-tertiary);">AUM 缺口</span>
+            <span style="font-family:var(--font-number);color:var(--color-danger);font-weight:600;">~18,000 万</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:var(--fs-caption);">
+            <span style="color:var(--color-text-tertiary);">主要缺口来源</span>
+            <span style="color:var(--color-text-secondary);">BB分行(6,200万) · AA分行(4,500万)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 客户分层速览 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#128101; 全行客户分层</span>
+        <a class="card-link" href="#">全部 &rarr;</a>
+      </div>
+      <ul class="rank-list">
+        <li class="rank-item">
+          <span class="rank-name">私行客户</span>
+          <span class="rank-value">580户</span>
+          <span style="font-size:var(--fs-caption);color:var(--color-text-tertiary);">AUM 152亿</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-name">财富客户</span>
+          <span class="rank-value">7,200户</span>
+          <span style="font-size:var(--fs-caption);color:var(--color-text-tertiary);">AUM 218亿</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-name">贵宾客户</span>
+          <span class="rank-value">38,500户</span>
+          <span style="font-size:var(--fs-caption);color:var(--color-text-tertiary);">AUM 156亿</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-name">大众客户</span>
+          <span class="rank-value">310,000户</span>
+          <span style="font-size:var(--fs-caption);color:var(--color-text-tertiary);">AUM 52亿</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ===== CENTER COLUMN (50%) ===== -->
+  <div class="col col-center">
+
+    <!-- AI 诊断横幅 -->
+    <div class="ai-banner">
+      <div class="ai-icon">AI</div>
+      <div class="ai-body">
+        <div class="ai-title">&#128269; AI 全行经营诊断</div>
+        <div class="ai-desc">
+          &#128308; <strong>客户新增全行落后（58%）</strong>——BB分行（完成率43%）和AA分行（完成率55%）为主要拖累。BB分行上月出现较大规模客户流失。
+        </div>
+        <div class="ai-desc" style="margin-top:4px;">
+          &#128308; XX分行<strong>AUM净增连续2月为负</strong>，且商机转化率仅19%（全行均值34%），需重点关注。
+        </div>
+        <div class="ai-desc" style="margin-top:4px;">
+          &#128992; 全行AI挖掘商机转化率持续下降（28%&rarr;21%），AI推荐模型效果需评估优化。
+        </div>
+        <div class="ai-actions">
+          <button class="ai-btn" onclick="toggleAIPanel()">&#128269; 追问归因</button>
+          <button class="ai-btn">&#128279; 查看BB分行详情</button>
+          <button class="ai-btn">&#128279; 查看XX分行详情</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分行排名速览 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#127942; 辖内分行 · 综合完成率排名</span>
+        <a class="card-link" href="#">完整排名 &rarr;</a>
+      </div>
+      <ul class="rank-list">
+        <li class="rank-item">
+          <span class="rank-num top">1</span>
+          <span class="rank-name">合肥分行</span>
+          <span class="rank-value">89%</span>
+          <span class="rank-arrow up">&#8593;1</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-num top">2</span>
+          <span class="rank-name">南京分行</span>
+          <span class="rank-value">81%</span>
+          <span class="rank-arrow up">&#8593;2</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-num top">3</span>
+          <span class="rank-name">芜湖分行</span>
+          <span class="rank-value">78%</span>
+          <span class="rank-arrow down">&#8595;1</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-num">4</span>
+          <span class="rank-name">马鞍山分行</span>
+          <span class="rank-value">74%</span>
+          <span class="rank-arrow">—</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-num">5</span>
+          <span class="rank-name">安庆分行</span>
+          <span class="rank-value">65%</span>
+          <span class="rank-arrow down">&#8595;1</span>
+        </li>
+        <li class="rank-item">
+          <span class="rank-num bottom">6</span>
+          <span class="rank-name">蚌埠分行</span>
+          <span class="rank-value" style="color:var(--color-danger);">43%</span>
+          <span class="rank-arrow down">&#8595;1</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 异常聚焦 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#9888; 需关注事项</span>
+        <span class="card-subtitle">按严重程度排序</span>
+      </div>
+      <ul class="alert-list">
+        <li class="alert-item">
+          <span class="alert-dot danger"></span>
+          <div class="alert-info">
+            <div class="alert-title">蚌埠分行连续2月综合完成率低于50%</div>
+            <div class="alert-meta">客户新增 43% · AUM净增为负 · 辖内3家支行出现管户真空期</div>
+          </div>
+        </li>
+        <li class="alert-item">
+          <span class="alert-dot danger"></span>
+          <div class="alert-info">
+            <div class="alert-title">XX分行AUM净增连续2月为负</div>
+            <div class="alert-meta">本周 AUM 净流出 1,200 万 · 商机转化率仅 19%（全行均值 34%）</div>
+          </div>
+        </li>
+        <li class="alert-item">
+          <span class="alert-dot warn"></span>
+          <div class="alert-info">
+            <div class="alert-title">全行AI挖掘商机转化率持续3周下滑（28%&rarr;21%）</div>
+            <div class="alert-meta">AI推荐模型效果衰减 · 建议评估并更新商机推送规则</div>
+          </div>
+        </li>
+        <li class="alert-item">
+          <span class="alert-dot warn"></span>
+          <div class="alert-info">
+            <div class="alert-title">安庆分行理财产品销量连续3周低于目标线</div>
+            <div class="alert-meta">本周完成率仅 52% · 在途商机中理财类占比不足 12%</div>
+          </div>
+        </li>
+        <li class="alert-item">
+          <span class="alert-dot warn"></span>
+          <div class="alert-info">
+            <div class="alert-title">5家分行客户新增指标低于60%</div>
+            <div class="alert-meta">涉及蚌埠(43%)、安庆(55%)、马鞍山(58%)、六安(58%)、滁州(59%)</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+   <!-- 行为洞察与标杆 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#128064; 全行标杆与洞察</span>
+        <a class="card-link" href="#">完整洞察 &rarr;</a>
+      </div>
+      <div class="insight-row">
+        <div class="insight-chip">
+          <div class="chip-icon">&#127942;</div>
+          <div class="chip-value">张晓明</div>
+          <div class="chip-label">全行标杆 · 商机转化率 67%</div>
+          <div style="font-size:var(--fs-small);color:var(--color-text-tertiary);margin-top:2px;">合肥分行 · 触达2h内响应率 100%</div>
+        </div>
+        <div class="insight-chip">
+          <div class="chip-icon">&#128200;</div>
+          <div class="chip-value">李芳</div>
+          <div class="chip-label">进步最快 · 排名 86→12</div>
+          <div style="font-size:var(--fs-small);color:var(--color-text-tertiary);margin-top:2px;">南京分行 · AUM月均净增 +85万</div>
+        </div>
+        <div class="insight-chip" style="background:var(--color-primary-light);">
+          <div class="chip-icon">&#128640;</div>
+          <div class="chip-value">"即时响应法"</div>
+          <div class="chip-label">推广中套路 · 采纳率 67%</div>
+          <div style="font-size:var(--fs-small);color:var(--color-success);margin-top:2px;">采纳组转化率 ↑23%</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== RIGHT COLUMN (25%) ===== -->
+  <div class="col col-right">
+
+   <!-- 待办任务 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#128221; 我的待办</span>
+        <span style="font-size:var(--fs-caption);color:var(--color-danger);font-weight:600;">5 项</span>
+      </div>
+      <ul class="task-list">
+        <li class="task-item">
+          <span class="task-priority urgent"></span>
+          <span class="task-text">蚌埠分行Q3目标调整申请 — 待审批</span>
+          <span class="task-time">今日</span>
+        </li>
+        <li class="task-item">
+          <span class="task-priority urgent"></span>
+          <span class="task-text">AI商机推送规则优化方案 — 待审核</span>
+          <span class="task-time">今日</span>
+        </li>
+        <li class="task-item">
+          <span class="task-priority normal"></span>
+          <span class="task-text">"即时响应法"套路全行推广 — 待确认范围</span>
+          <span class="task-time">昨日</span>
+        </li>
+        <li class="task-item">
+          <span class="task-priority normal"></span>
+          <span class="task-text">7月全行经营月报 — 待审阅</span>
+          <span class="task-time">7月17日</span>
+        </li>
+        <li class="task-item">
+          <span class="task-priority low"></span>
+          <span class="task-text">Q3全行经营分析会材料准备</span>
+          <span class="task-time">7月25日</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 快捷操作 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">&#9889; 快捷操作</span>
+      </div>
+      <div class="action-grid">
+        <button class="action-btn">&#127919; 目标下达</button>
+        <button class="action-btn">&#128196; 全行报告</button>
+        <button class="action-btn">&#128640; 套路发布</button>
+        <button class="action-btn">&#128218; 套路库管理</button>
+        <button class="action-btn">&#128202; 经营看板</button>
+        <button class="action-btn">&#127942; 机构排名</button>
+      </div>
+    </div>
+
+    <!-- AI 对话入口 -->
+    <div class="card" style="background:linear-gradient(135deg,var(--color-ai-light),#F8F7FF);border:1px solid rgba(108,92,231,0.15);cursor:pointer;" onclick="toggleAIPanel()">
+      <div style="display:flex;align-items:center;gap:var(--sp-sm);">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--color-ai);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;">AI</div>
+        <div style="flex:1;">
+          <div style="font-size:var(--fs-body);font-weight:600;color:var(--color-text-primary);">AI 管理驾驶舱副驾</div>
+          <div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);">点此唤起 · 自然语言问数据</div>
+        </div>
+      </div>
+      <div style="margin-top:var(--sp-sm);padding:var(--sp-sm);background:rgba(255,255,255,0.7);border-radius:var(--radius-sm);font-size:var(--fs-caption);color:var(--color-text-secondary);">
+        &#128172; 试试问："XX支行这个月表现怎么样？"<br>
+        &#128172; "帮我生成这周的周报"<br>
+        &#128172; "最近谁进步最快？"
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========== AI 对话面板（右侧滑出） ========== -->
+<div class="ai-panel-overlay" id="aiPanelOverlay" onclick="closeAIPanelOutside(event)">
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-panel-header">
+      <span class="ai-panel-title">
+        <span style="width:24px;height:24px;border-radius:50%;background:var(--color-ai);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">AI</span>
+        管理驾驶舱副驾
+      </span>
+      <button class="ai-panel-close" onclick="closeAIPanel()">&times;</button>
+    </div>
+    <div class="ai-panel-body">
+      <div class="ai-msg bot">
+        <div class="bubble">
+          &#128075; 你好，我是易会办管理后台的 AI 助手。可以帮你查数据、作分析、写报告、找原因。试试问我：<br><br>
+          &#8226; "BB支行为什么一直落后？"<br>
+          &#8226; "辖内客户经理谁最近进步最快？"<br>
+          &#8226; "帮我生成本周经营简报"
+        </div>
+      </div>
+      <div class="ai-status">今日已自动更新经营诊断，检测到 2 项红灯、3 项黄灯</div>
+    </div>
+    <div class="ai-panel-input">
+      <input type="text" placeholder="输入问题，如"XX支行表现怎么样？"…">
+      <button>&#10148;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// AI Panel toggle
+function toggleAIPanel() {
+  document.getElementById('aiPanelOverlay').classList.add('show');
+}
+function closeAIPanel() {
+  document.getElementById('aiPanelOverlay').classList.remove('show');
+}
+function closeAIPanelOutside(e) {
+  if (e.target === document.getElementById('aiPanelOverlay')) {
+    closeAIPanel();
+  }
+}
+// ESC key to close AI panel
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeAIPanel();
+  }
+});
+</script>
+
+</body>
+</html>

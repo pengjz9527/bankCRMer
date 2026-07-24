@@ -179,6 +179,21 @@ CREATE TABLE customer_relations (
 );
 
 -- ============================================================
+-- Domain 9b: 管户关系 (客户经理 ↔ 客户)
+-- ============================================================
+CREATE TABLE cust_manager_rel (
+    id              SERIAL PRIMARY KEY,
+    cust_id         INT NOT NULL REFERENCES customers(id),
+    manager_id      VARCHAR(20) NOT NULL,
+    manager_name    VARCHAR(50) NOT NULL,
+    assigned_date   DATE NOT NULL DEFAULT CURRENT_DATE,
+    is_primary      BOOLEAN DEFAULT TRUE,               -- TRUE=主客户经理
+    CONSTRAINT uq_cust_manager UNIQUE (cust_id, manager_id)
+);
+CREATE INDEX idx_cmr_cust ON cust_manager_rel (cust_id);
+CREATE INDEX idx_cmr_mgr ON cust_manager_rel (manager_id);
+
+-- ============================================================
 -- Domain 10: 沟通记录
 -- ============================================================
 CREATE TYPE comm_channel_enum AS ENUM ('电话', '面谈', '微信', '短信', '手机银行消息');

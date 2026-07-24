@@ -348,6 +348,49 @@ body {
 }
 .sub-item .sub-btn:active { background: var(--color-primary-dark); }
 
+/* 卡片展开区 — 分类摘要 */
+.card-summary { padding: var(--sp-xs) 0; }
+.cs-section { margin-bottom: var(--sp-sm); }
+.cs-section:last-of-type { margin-bottom: 0; }
+.cs-title {
+  font-size: var(--fs-caption); color: var(--color-text-secondary);
+  font-weight: var(--fw-bold); margin-bottom: 6px;
+}
+.cs-bar-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 3px; font-size: var(--fs-caption);
+}
+.cs-bar-row:last-child { margin-bottom: 0; }
+.cs-label {
+  width: 52px; color: var(--color-text-secondary);
+  text-align: right; flex-shrink: 0; font-size: 10px;
+}
+.cs-bar {
+  flex: 1; height: 7px; background: var(--color-bg);
+  border-radius: 4px; overflow: hidden; min-width: 20px;
+}
+.cs-fill { height: 100%; border-radius: 4px; transition: width 0.6s var(--ease-default); }
+.cs-fill.high { background: #e74c3c; }
+.cs-fill.mid { background: #f0ad4e; }
+.cs-fill.low { background: #95a5a6; }
+.cs-val {
+  width: 52px; color: var(--color-text-primary); font-weight: var(--fw-bold);
+  text-align: left; flex-shrink: 0; font-size: 10px;
+}
+.cs-val .cs-pct { font-weight: var(--fw-regular); color: var(--color-text-tertiary); }
+.cs-tag {
+  display: inline-block; padding: 0 5px; border-radius: 6px;
+  font-size: 9px; font-weight: var(--fw-bold); line-height: 16px;
+}
+.cs-tag.urgent { background: #fde8e8; color: #c0392b; }
+.cs-tag.warn { background: #fef3e2; color: #d68910; }
+.cs-foot {
+  font-size: var(--fs-caption); color: var(--color-text-secondary);
+  padding-top: var(--sp-xs); border-top: 1px dotted var(--color-divider);
+  margin-top: 2px;
+}
+.cs-foot b { color: var(--color-text-primary); }
+
 /* ========================================
    BLOCK 3: 商机看板（统一卡片 + 双页签）
    ======================================== */
@@ -546,6 +589,172 @@ body {
 @keyframes mining-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* ===== SSE 流式挖掘浮层 ===== */
+.mining-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45); z-index: 9999;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+  animation: overlay-in 0.25s ease;
+}
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+
+.mining-modal {
+  width: calc(100% - 32px); max-width: 340px; background: #fff;
+  border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  overflow: hidden; animation: modal-slide 0.3s ease;
+}
+@keyframes modal-slide {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mining-modal-header {
+  padding: 18px 20px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, #f0f5ff 0%, #f8faff 100%);
+}
+.mining-modal-header .ai-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--color-ai); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  animation: icon-glow 1.5s ease-in-out infinite;
+}
+@keyframes icon-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(56,145,255,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(56,145,255,0); }
+}
+.mining-modal-header h3 {
+  margin: 0; font-size: 15px; font-weight: 600; color: var(--color-text-primary);
+}
+.mining-modal-header .sub {
+  font-size: 11px; color: var(--color-text-tertiary); font-weight: 400;
+}
+
+.mining-modal-body {
+  padding: 16px 20px; max-height: 320px; overflow-y: auto;
+}
+.mining-modal-body::-webkit-scrollbar { width: 4px; }
+.mining-modal-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+.mining-step {
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 0;
+}
+.mining-step:not(:last-child) { border-bottom: 1px solid var(--color-border-light, #f0f0f0); }
+.mining-step .step-dot {
+  width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  background: var(--color-border); transition: background 0.3s;
+}
+.mining-step.done .step-dot { background: var(--color-success); }
+.mining-step.active .step-dot {
+  background: var(--color-ai);
+  animation: dot-pulse 0.8s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.8); opacity: 0.4; }
+}
+.mining-step .step-info { flex: 1; min-width: 0; }
+.mining-step .step-label {
+  font-size: 13px; font-weight: 500; color: var(--color-text-primary);
+}
+.mining-step .step-detail {
+  font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px;
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.mining-step .step-detail .cust-tag {
+  padding: 1px 6px; background: #e8f4ff; color: #3891ff;
+  border-radius: 8px; font-size: 11px; white-space: nowrap;
+}
+.mining-step .step-detail .signal-tag {
+  padding: 1px 6px; background: #fff3e0; color: #e65100;
+  border-radius: 8px; font-size: 11px;
+}
+.mining-step .step-time {
+  font-size: 11px; color: var(--color-text-tertiary);
+  white-space: nowrap; margin-top: 2px;
+}
+
+/* 完成态 */
+.mining-modal-footer {
+  padding: 12px 20px 16px; text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+.mining-modal-footer .result-summary {
+  font-size: 13px; color: var(--color-text-primary); margin-bottom: 6px;
+}
+.mining-modal-footer .result-detail {
+  font-size: 11px; color: var(--color-text-tertiary);
+}
+
+/* 作战包生成浮层 */
+.bpgen-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45); z-index: 9999;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+  animation: overlay-in 0.25s ease;
+}
+.bpgen-modal {
+  width: calc(100% - 32px); max-width: 340px; background: #fff;
+  border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  overflow: hidden; animation: modal-slide 0.3s ease;
+}
+.bpgen-modal-header {
+  padding: 18px 20px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, #f3f0ff 0%, #faf8ff 100%);
+}
+.bpgen-modal-header .ai-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--color-ai); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  animation: icon-glow 1.5s ease-in-out infinite;
+}
+.bpgen-modal-header h3 {
+  margin: 0; font-size: 15px; font-weight: 600; color: var(--color-text-primary);
+}
+.bpgen-modal-header .sub {
+  font-size: 11px; color: var(--color-text-tertiary); font-weight: 400;
+}
+.bpgen-modal-body {
+  padding: 16px 20px; max-height: 300px; overflow-y: auto;
+}
+.bpgen-modal-body::-webkit-scrollbar { width: 4px; }
+.bpgen-modal-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+.bpgen-step {
+  display: flex; align-items: flex-start; gap: 10px; padding: 8px 0;
+}
+.bpgen-step:not(:last-child) { border-bottom: 1px solid var(--color-border-light, #f0f0f0); }
+.bpgen-step .step-dot {
+  width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  background: var(--color-border); transition: background 0.3s;
+}
+.bpgen-step.done .step-dot { background: var(--color-success); }
+.bpgen-step.active .step-dot {
+  background: var(--color-ai);
+  animation: dot-pulse 0.8s ease-in-out infinite;
+}
+.bpgen-step .step-info { flex: 1; min-width: 0; }
+.bpgen-step .step-label {
+  font-size: 13px; font-weight: 500; color: var(--color-text-primary);
+}
+.bpgen-step .step-detail {
+  font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px;
+}
+.bpgen-modal-footer {
+  padding: 12px 20px 16px; text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+.bpgen-modal-footer .result-summary {
+  font-size: 13px; color: var(--color-text-primary); margin-bottom: 6px;
+}
+.bpgen-modal-footer .result-detail {
+  font-size: 11px; color: var(--color-text-tertiary);
 }
 
 /* 商机来源标识 */
@@ -2386,6 +2595,8 @@ body {
 .w9-day .dot { width: 4px; height: 4px; border-radius: 50%; }
 .w9-day .dot.normal { background: var(--color-text-tertiary); }
 .w9-day .dot.opp { background: var(--color-ai); }
+.w9-day .dot.report { background: #E67E00; }
+.w9-day .dot.meeting { background: #2E7D32; }
 
 .w9-day-list { margin-top: var(--sp-md); }
 .w9-day-title { font-size: var(--fs-body); font-weight: var(--fw-bold); margin-bottom: 8px; }
@@ -2891,6 +3102,11 @@ body {
   <!-- ===== Header ===== -->
   <div class="app-header">
     <span class="greeting" id="greeting">下午好，李经理</span>
+    <select id="managerSelector" onchange="onManagerChange(this.value)" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid #d0d5dd;background:#fff;color:#333;margin-left:8px;max-width:110px;cursor:pointer">
+      <option value="M001">👤 李建国</option>
+      <option value="M002">👤 王芳</option>
+      <option value="M003">👤 张伟</option>
+    </select>
     <div class="header-actions">
       <button class="icon-btn" onclick="openGs()">🔍</button>
       <button class="icon-btn" id="btnNotify" onclick="openMsgOverlay()">
@@ -2950,26 +3166,7 @@ body {
               <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand1','arrow1')">
                 展开详情 <span class="arrow" id="arrow1">▼</span>
               </div>
-              <div class="card-expand" id="expand1">
-                <div class="sub-item" onclick="showToast('查看王建国画像')">
-                  <div class="sub-info">
-                    <div class="sub-name">王建国 · 男 · 45岁</div>
-                    <div class="sub-detail">XX定期存款 25万 · 7月18日到期(3天后)</div>
-                  </div>
-                </div>
-                <div class="sub-item" onclick="showToast('查看张丽华画像')">
-                  <div class="sub-info">
-                    <div class="sub-name">张丽华 · 女 · 38岁</div>
-                    <div class="sub-detail">YY悦享周期理财 10万 · 7月18日到期(3天后)</div>
-                  </div>
-                </div>
-                <div class="sub-item" onclick="showToast('查看赵明辉画像')">
-                  <div class="sub-info">
-                    <div class="sub-name">赵明辉 · 男 · 52岁</div>
-                    <div class="sub-detail">ZZ大额存单 50万 · 7月25日到期(10天后)</div>
-                  </div>
-                </div>
-              </div>
+              <div class="card-expand" id="expand1"></div>
             </div>
 
             <!-- #2 大额异动 · 上午 -->
@@ -2988,6 +3185,10 @@ body {
                 <span class="count-badge">1人</span>
                 <button class="btn-action" onclick="event.stopPropagation();openProcessPanel('card2')">开始处理</button>
               </div>
+              <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand2','arrow2')">
+                展开详情 <span class="arrow" id="arrow2">▼</span>
+              </div>
+              <div class="card-expand" id="expand2"></div>
             </div>
 
             <!-- #3 贷款逾期 · 下午 -->
@@ -3006,6 +3207,10 @@ body {
                 <span class="count-badge">1人</span>
                 <button class="btn-action" onclick="event.stopPropagation();openProcessPanel('card3')">开始处理</button>
               </div>
+              <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand3','arrow3')">
+                展开详情 <span class="arrow" id="arrow3">▼</span>
+              </div>
+              <div class="card-expand" id="expand3"></div>
             </div>
 
             <!-- #4 生日提醒 · 下午 -->
@@ -3212,26 +3417,19 @@ body {
         <!-- 页签2：商机挖掘 -->
         <div class="opp-tab-panel" id="panel-mining">
           <div class="mining-header">
-            <span class="mining-badge mining-badge--gap">目标缺口 7个</span>
-            <span style="font-size:12px;color:var(--color-text-tertiary)">完成目标还需7个商机</span>
+            <span class="mining-badge mining-badge--gap" id="miningGapBadge">目标缺口 --</span>
+            <span style="font-size:12px;color:var(--color-text-tertiary)" id="miningGapDesc">加载中...</span>
           </div>
-          <div class="mining-desc">AI已扫描全量管户238位客户，发现以下可挖掘方向：</div>
-
-          <div class="mining-item">
-            <span>沉睡客户激活（238位中识别）</span>
-            <span class="est">预计 +5个</span>
+          <div class="mining-desc" id="miningDesc">AI已扫描全量管户客户，发现以下可挖掘方向：</div>
+          <div id="miningDirections">
+            <div class="mining-item">
+              <span>加载中...</span>
+              <span class="est">--</span>
+            </div>
           </div>
-          <div class="mining-item">
-            <span>7月代发新名单筛选</span>
-            <span class="est">预计 +3个</span>
-          </div>
-          <div class="mining-item">
-            <span>贷款客户交叉销售理财</span>
-            <span class="est">预计 +2个</span>
-          </div>
-          <div class="mining-total">
+          <div class="mining-total" id="miningTotal">
             <span>合计可挖掘</span>
-            <span style="color:var(--color-ai)">≈10个商机 · 约50万 → 可覆盖缺口</span>
+            <span style="color:var(--color-ai)">--</span>
           </div>
           <button class="btn-mining" id="btnMining" onclick="triggerAiMining()">⚡ 一键AI挖掘</button>
         </div>
@@ -3736,6 +3934,42 @@ body {
     <div class="w-page-body" id="gsBody"></div>
   </div>
 
+  <!-- ===== SSE 流式挖掘浮层 ===== -->
+  <div class="mining-overlay" id="miningOverlay" style="display:none">
+    <div class="mining-modal">
+      <div class="mining-modal-header">
+        <div class="ai-icon">🤖</div>
+        <div>
+          <h3>AI 商机挖掘中</h3>
+          <div class="sub" id="miningSubtitle">正在扫描客户数据...</div>
+        </div>
+      </div>
+      <div class="mining-modal-body" id="miningBody"></div>
+      <div class="mining-modal-footer" id="miningFooter" style="display:none">
+        <div class="result-summary" id="miningResultSummary"></div>
+        <div class="result-detail" id="miningResultDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 作战包 AI 生成浮层 ===== -->
+  <div class="bpgen-overlay" id="bpgenOverlay" style="display:none">
+    <div class="bpgen-modal">
+      <div class="bpgen-modal-header">
+        <div class="ai-icon">📋</div>
+        <div>
+          <h3>AI 作战包生成中</h3>
+          <div class="sub" id="bpgenSubtitle">正在分析客户数据...</div>
+        </div>
+      </div>
+      <div class="bpgen-modal-body" id="bpgenBody"></div>
+      <div class="bpgen-modal-footer" id="bpgenFooter" style="display:none">
+        <div class="result-summary" id="bpgenResultSummary"></div>
+        <div class="result-detail" id="bpgenResultDetail"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -3772,19 +4006,66 @@ function toggleExpand(expandId, arrowId) {
 
 // ===== 按钮状态机 =====
 // ============================================================
+// 客户经理选择器
+// ============================================================
+window.currentManagerId = 'M001';
+window.currentManagerName = '李建国';
+
+var managerNames = { 'M001': '李建国', 'M002': '王芳', 'M003': '张伟' };
+
+function onManagerChange(mgrId) {
+  window.currentManagerId = mgrId;
+  window.currentManagerName = managerNames[mgrId] || '';
+  // 同步 select 显示
+  var sel = document.getElementById('managerSelector');
+  if (sel) sel.value = mgrId;
+  // 更新问候语
+  var g = document.getElementById('greeting');
+  if (g) {
+    var hour = new Date().getHours();
+    var prefix = hour < 12 ? '上午好' : (hour < 18 ? '下午好' : '晚上好');
+    g.textContent = prefix + '，' + window.currentManagerName + '经理';
+  }
+  // 更新 W8 标题
+  var w8t = document.getElementById('w8Title');
+  if (w8t) w8t.textContent = '我的客户';
+  // 重新加载所有数据
+  if (window._apiReloadAll) window._apiReloadAll();
+  showToast('已切换至: ' + window.currentManagerName + '经理');
+}
+
+// ============================================================
 // API 数据加载器 — 默认从后台 API 获取数据
 // ============================================================
 (function() {
-  var API_BASE = 'http://localhost:8000';
+  var API_BASE = 'http://localhost:8008';
   var USE_API = true;  // 关闭此项切换回静态数据
 
   // 如果 API 不可用, 自动降级为静态数据
   var apiAvailable = false;
 
   function apiGet(path) {
-    return fetch(API_BASE + path, { signal: AbortSignal.timeout(5000) })
+    var url = API_BASE + path;
+    // 自动注入 manager_id 参数
+    var mgrId = window.currentManagerId;
+    if (mgrId) {
+      var sep = path.indexOf('?') >= 0 ? '&' : '?';
+      url += sep + 'manager_id=' + encodeURIComponent(mgrId);
+    }
+    return fetch(url, { signal: AbortSignal.timeout(5000) })
       .then(function(r) { return r.json(); })
       .catch(function(e) { console.warn('[API] ' + path + ': ' + e.message); return null; });
+  }
+
+  function apiPost(path, body) {
+    return fetch(API_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(600000),
+    })
+      .then(function(r) { return r.json(); })
+      .catch(function(e) { console.warn('[API] POST ' + path + ': ' + e.message); return null; });
   }
 
   // 检查 API 是否可用
@@ -3901,17 +4182,10 @@ function toggleExpand(expandId, arrowId) {
       // 更新人数
       var countBadge = cardEl.querySelector('.count-badge');
       if (countBadge) countBadge.textContent = data.customers.length + '人';
-      // 更新展开区（纯展示，无处理按钮）
+      // 更新展开区 — 分类摘要（不再列客户清单）
       var expand = cardEl.querySelector('.card-expand');
       if (expand && data.customers.length > 0) {
-        expand.innerHTML = data.customers.map(function(c, j) {
-          return '<div class="sub-item" onclick="showToast(\'查看' + c.name + '画像\')">' +
-            '<div class="sub-info">' +
-              '<div class="sub-name">' + c.name + '</div>' +
-              '<div class="sub-detail">' + (c.detail || '') + '</div>' +
-            '</div>' +
-          '</div>';
-        }).join('');
+        expand.innerHTML = generateCardSummary(cardId);
       }
     }
 
@@ -3934,6 +4208,112 @@ function toggleExpand(expandId, arrowId) {
     }
   }
 
+  // ---- 分类摘要生成 ----
+  function generateCardSummary(cardId) {
+    var data = taskData[cardId];
+    if (!data || !data.customers || data.customers.length === 0) return '';
+
+    var type = data.type;
+    var customers = data.customers;
+    var total = customers.length;
+
+    function pAmt(d) { var m = (d||'').match(/([\d.]+)\s*万/); return m ? parseFloat(m[1]) : 0; }
+    function pDay(d) { var m = (d||'').match(/(\d+)天/); return m ? parseInt(m[1]) : null; }
+    function pCnt(d) { var m = (d||'').match(/(\d+)笔/); return m ? parseInt(m[1]) : 1; }
+    function pOd(d) { var m = (d||'').match(/逾期(\d+)/); return m ? parseInt(m[1]) : 0; }
+
+    function bar(label, count, totalN, cls, tag) {
+      var pct = totalN > 0 ? Math.round(count / totalN * 100) : 0;
+      var w = Math.max(pct, count > 0 ? 3 : 0);
+      return '<div class="cs-bar-row">' +
+        '<span class="cs-label">' + label + '</span>' +
+        '<div class="cs-bar"><div class="cs-fill ' + cls + '" style="width:' + w + '%"></div></div>' +
+        '<span class="cs-val">' + count + '位' + (pct > 0 ? ' <span class="cs-pct">' + pct + '%</span>' : '') + '</span>' +
+        (tag ? '<span class="cs-tag ' + (tag === '紧急'||tag==='预警' ? 'urgent' : 'warn') + '">' + tag + '</span>' : '') +
+      '</div>';
+    }
+
+    var html = '<div class="card-summary">';
+
+    if (type === '产品到期') {
+      var amounts = customers.map(function(c) { return pAmt(c.detail); });
+      var daysA = customers.map(function(c) { return pDay(c.detail); });
+      var counts = customers.map(function(c) { return pCnt(c.detail); });
+
+      var ge50 = 0, ge10 = 0, lt10 = 0;
+      amounts.forEach(function(a) { if (a >= 50) ge50++; else if (a >= 10) ge10++; else lt10++; });
+      var totalAmt = amounts.reduce(function(s,a){return s+a;}, 0);
+      var totalCnt = counts.reduce(function(s,c){return s+c;}, 0);
+
+      html += '<div class="cs-section">';
+      html += '<div class="cs-title">💰 金额分布</div>';
+      if (ge50 > 0) html += bar('≥50万', ge50, total, 'high');
+      html += bar('10-50万', ge10, total, 'mid');
+      html += bar('<10万', lt10, total, 'low');
+      html += '</div>';
+
+      var le3 = 0, gt3 = 0;
+      daysA.forEach(function(d) { if (d !== null && d <= 3) le3++; else if (d !== null) gt3++; });
+      if (le3 + gt3 > 0) {
+        html += '<div class="cs-section">';
+        html += '<div class="cs-title">⏰ 到期时效</div>';
+        if (le3 > 0) html += bar('≤3天到期', le3, total, 'high', '紧急');
+        if (gt3 > 0) html += bar('4-7天', gt3, total, 'mid');
+        html += '</div>';
+      }
+
+      html += '<div class="cs-foot">共 <b>' + total + '</b> 位客户 · <b>' + totalCnt + '</b> 笔产品 · 合计 <b>' + totalAmt.toFixed(0) + '</b> 万</div>';
+    }
+
+    else if (type === '大额异动') {
+      var amounts = customers.map(function(c) { return pAmt(c.detail); });
+      var totalAmt = amounts.reduce(function(s,a){return s+a;}, 0);
+      var big = 0, mid = 0;
+      amounts.forEach(function(a) { if (a >= 20) big++; else mid++; });
+
+      html += '<div class="cs-section">';
+      html += '<div class="cs-title">💸 转出金额</div>';
+      if (big > 0) html += bar('≥20万', big, total, 'high');
+      if (mid > 0) html += bar('<20万', mid, total, 'mid');
+      html += '</div>';
+      html += '<div class="cs-foot">共 <b>' + total + '</b> 位客户 · 合计转出 <b>' + totalAmt.toFixed(1) + '</b> 万</div>';
+    }
+
+    else if (type === '贷款逾期') {
+      var ods = customers.map(function(c) { return pOd(c.detail); });
+      var severe = 0, normal = 0;
+      ods.forEach(function(o) { if (o >= 3) severe++; else normal++; });
+
+      html += '<div class="cs-section">';
+      html += '<div class="cs-title">⚠️ 逾期期数</div>';
+      if (severe > 0) html += bar('≥3期', severe, total, 'high', '严重');
+      if (normal > 0) html += bar('1-2期', normal, total, 'mid');
+      html += '</div>';
+      html += '<div class="cs-foot">共 <b>' + total + '</b> 位逾期客户，需立即跟进</div>';
+    }
+
+    else if (type === '联络超期') {
+      var daysA = customers.map(function(c) { return pDay(c.detail); });
+      var never = 0, long = 0, short = 0;
+      daysA.forEach(function(d) {
+        if (d === null) never++;
+        else if (d >= 7) long++;
+        else short++;
+      });
+
+      html += '<div class="cs-section">';
+      html += '<div class="cs-title">📅 超期天数</div>';
+      if (never > 0) html += bar('从未联络', never, total, 'high', '预警');
+      if (long > 0) html += bar('≥7天', long, total, 'mid');
+      if (short > 0) html += bar('4-6天', short, total, 'low');
+      html += '</div>';
+      html += '<div class="cs-foot">共 <b>' + total + '</b> 位客户超期 · 建议优先联系</div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
   // ---- w3OppData 映射 ----
   function loadOpps() {
     return apiGet('/api/opportunities').then(function(r) {
@@ -3945,6 +4325,8 @@ function toggleExpand(expandId, arrowId) {
           id: o.opp_id,
           name: o.cust_name,
           meta: (o.cust_id || ''),
+          type: o.type || '',
+          priority: o.source === 'AI挖掘' ? 'AI' : (o.source === '规则匹配' ? '系统' : '手动'),
           tag: o.source,
           tagClass: o.source === 'AI挖掘' ? 'w3-opp-tag--ai' : (o.source === '规则匹配' ? 'w3-opp-tag--system' : 'w3-opp-tag--manual'),
           fields: [
@@ -3956,7 +4338,8 @@ function toggleExpand(expandId, arrowId) {
           source: (o.source || '') + '·' + (o.type || ''),
           assets: (o.reasoning || ''),
           confidence: Math.round((o.confidence || 0) * 100),
-          reason: o.reasoning || ''
+          reason: o.reasoning || '',
+          bp_id: o.bp_id || ''
         };
         var t = o.type || '';
         if (t.indexOf('代发') >= 0 || t.indexOf('产品到期') >= 0) oppMap.daifa.push(item);
@@ -4000,6 +4383,41 @@ function toggleExpand(expandId, arrowId) {
       list.forEach(function(c) { if (c.tier && tiers.indexOf(c.tier) < 0) tiers.push(c.tier); });
       if (tiers.length > 0) w8Data.filters = ['全部'].concat(tiers.slice(0, 6));
       console.log('[API] 客户列表加载完成: ' + w8Data.customers.length + ' 人');
+    });
+  }
+
+  // ---- 客户洞察数据 ----
+  function loadCustomerInsights() {
+    var mgrId = window.currentManagerId || 'M001';
+    return apiGet('/api/customer-insights?manager_id=' + encodeURIComponent(mgrId)).then(function(r) {
+      if (!r || r.code !== 0) return;
+      var insights = r.data.insights || [];
+      if (insights.length === 0) return;
+      // 建立 cust_id → insight 映射
+      var insightMap = {};
+      insights.forEach(function(ins) {
+        insightMap[ins.cust_id] = ins;
+      });
+      // 附加到 w8Data.customers
+      w8Data.customers.forEach(function(c) {
+        var ins = insightMap[c.id];
+        if (ins) {
+          c.hasInsight = true;
+          c.hasChange = ins.has_change || false;
+          c.hasRisk = ins.has_risk || false;
+          c.changeCount = ins.change_count || 0;
+          c.riskCount = ins.risk_count || 0;
+          c.riskLevel = ins.risk_level || 'green';
+          c.insightCustId = ins.cust_id;
+        } else {
+          c.hasInsight = false;
+          c.hasChange = false;
+          c.hasRisk = false;
+          c.changeCount = 0;
+          c.riskCount = 0;
+        }
+      });
+      console.log('[API] 客户洞察加载完成: ' + insights.length + ' 条');
     });
   }
 
@@ -4068,6 +4486,17 @@ function toggleExpand(expandId, arrowId) {
     });
   }
 
+  // ---- 产品数据 ----
+  function loadProducts() {
+    return apiGet('/api/products').then(function(r) {
+      if (!r || r.code !== 0) return;
+      var list = r.data.products || [];
+      if (list.length === 0) return;
+      prodSearchData = list;
+      console.log('[API] 产品数据加载完成: ' + prodSearchData.length + ' 款');
+    });
+  }
+
   // ---- 商机看板摘要刷新 ----
   function refreshOppSummary() {
     function parseEst(v) {
@@ -4115,6 +4544,102 @@ function toggleExpand(expandId, arrowId) {
       });
     }
     console.log('[API] 商机摘要刷新: ' + totalOpp + '个, 估值' + totalValue.toFixed(0) + '万');
+  }
+
+  // ---- 商机挖掘面板动态刷新 ----
+  function refreshMiningPanel() {
+    function parseEst(v) {
+      if (v == null) return 0;
+      var s = String(v);
+      var m = s.match(/([\d.]+)\s*万/);
+      return m ? parseFloat(m[1]) : (parseFloat(s) || 0);
+    }
+
+    var totalCustomers = w8Data.customers ? w8Data.customers.length : 0;
+    if (totalCustomers === 0) {
+      // w8Data 还没加载，用静态整数兜底
+      totalCustomers = 0;
+    }
+
+    // 从 w3OppData 聚合
+    var typeMap = {};  // typeName -> { count, totalValue, icon, priority }
+    var tabs = ['daifa', 'liushi', 'ai', 'mine'];
+    var typeConfig = {
+      '代发到账配置': { icon: '📥', label: '代发工资客群', desc: '近7天有代发到账记录' },
+      '产品到期承接': { icon: '📅', label: '产品到期承接', desc: '30天内产品即将到期' },
+      '流失预警挽回': { icon: '⚠️', label: '流失预警挽回', desc: 'AUM持续走低需挽回' },
+      '基金购买意向': { icon: '📈', label: '基金/理财意向', desc: '浏览基金但无持仓' },
+      '大额配置建议': { icon: '💎', label: '大额资产配置', desc: '高AUM存款客户待转化' },
+    };
+
+    tabs.forEach(function(t) {
+      var arr = w3OppData[t] || [];
+      arr.forEach(function(o) {
+        var typeKey = o.type || t;
+        if (!typeMap[typeKey]) {
+          var cfg = typeConfig[typeKey] || { icon: '📌', label: typeKey, desc: '' };
+          typeMap[typeKey] = { count: 0, totalValue: 0, icon: cfg.icon, label: cfg.label, desc: cfg.desc };
+        }
+        typeMap[typeKey].count++;
+        typeMap[typeKey].totalValue += parseEst(o.estimate);
+      });
+    });
+
+    var keys = Object.keys(typeMap);
+    var totalOpp = 0, totalValue = 0;
+    keys.forEach(function(k) {
+      totalOpp += typeMap[k].count;
+      totalValue += typeMap[k].totalValue;
+    });
+
+    // 目标 12 个商机
+    var target = 12;
+    var gap = Math.max(0, target - totalOpp);
+
+    // 更新 gap badge
+    var badge = document.getElementById('miningGapBadge');
+    if (badge) badge.textContent = gap > 0 ? ('目标缺口 ' + gap + '个') : '目标已达成 ✓';
+    var gapDesc = document.getElementById('miningGapDesc');
+    if (gapDesc) gapDesc.textContent = gap > 0 ? ('完成目标还需' + gap + '个商机') : '商机已充足，持续跟进即可';
+
+    // 更新扫描描述
+    var desc = document.getElementById('miningDesc');
+    if (desc) {
+      if (totalCustomers > 0) {
+        desc.textContent = 'AI已扫描全量管户' + totalCustomers + '位客户，发现以下可挖掘方向：';
+      } else {
+        desc.textContent = 'AI正在分析管户数据，发现以下可挖掘方向：';
+      }
+    }
+
+    // 更新挖掘方向列表
+    var dirsEl = document.getElementById('miningDirections');
+    if (dirsEl && keys.length > 0) {
+      var html = '';
+      keys.forEach(function(k) {
+        var d = typeMap[k];
+        html += '<div class="mining-item">' +
+          '<span>' + d.icon + ' ' + d.label + (d.desc ? '（' + d.desc + '）' : '') + '</span>' +
+          '<span class="est">' + d.count + '个 · ≈' + d.totalValue.toFixed(0) + '万</span>' +
+        '</div>';
+      });
+      dirsEl.innerHTML = html;
+    } else if (dirsEl) {
+      dirsEl.innerHTML = '<div class="mining-item"><span>暂无商机数据，点击下方按钮开始AI挖掘</span><span class="est">--</span></div>';
+    }
+
+    // 更新合计
+    var totalEl = document.getElementById('miningTotal');
+    if (totalEl) {
+      var totalSpan = totalEl.querySelector('span:last-child');
+      if (totalSpan) {
+        if (totalOpp > 0) {
+          totalSpan.textContent = '≈' + totalOpp + '个商机 · 约' + totalValue.toFixed(0) + '万' + (gap <= 0 ? ' → 已覆盖目标' : ' → 可覆盖缺口');
+        } else {
+          totalSpan.textContent = '暂无商机数据';
+        }
+      }
+    }
   }
 
   // ---- 客户画像 API 加载 ----
@@ -4276,18 +4801,25 @@ function toggleExpand(expandId, arrowId) {
         opps: []
       };
 
-      // 商机（从 opps 数据匹配当前客户）
+      // 商机（从 opps 数据匹配当前客户，按 opp_id 去重 + cust_id 精确过滤）
       var tabs = ['daifa', 'liushi', 'ai', 'mine'];
+      var seenOppIds = {};
       tabs.forEach(function(t) {
         (w3OppData[t] || []).forEach(function(o) {
-          if (o.name === name) {
-            profile.opps.push({
-              title: (o.type || '商机'),
-              priority: o.tagClass === 'w3-opp-tag--ai' ? 'yellow' : 'red',
-              label: (o.priority || '') + ' ' + (o.type || '商机'),
-              detail: o.reason || '',
-              bpReady: false
-            });
+          // 按姓名匹配 且 按 opp_id 去重
+          if (o.name === name && !seenOppIds[o.id]) {
+            // 如果有 cust_id，要求精确匹配当前客户的 cid
+            var matchesCustId = !cid || !o.meta || String(o.meta) === String(cid);
+            if (matchesCustId) {
+              seenOppIds[o.id] = true;
+              profile.opps.push({
+                title: (o.type || '商机'),
+                priority: o.tagClass === 'w3-opp-tag--ai' ? 'yellow' : 'red',
+                label: (o.priority || '') + ' ' + (o.type || '商机'),
+                detail: o.reason || '',
+                bpReady: false
+              });
+            }
           }
         });
       });
@@ -4339,18 +4871,35 @@ function toggleExpand(expandId, arrowId) {
     });
   };
 
-  // ---- 启动 ----
-  checkAPI().then(function(ok) {
-    if (!ok) return;  // API 不可用, 保留静态数据
-    Promise.all([
-      loadTasks(),
-      loadOpps(),
-      loadCustomers(),
-      loadActivities(),
-      loadBattlePackages(),
-      loadSearchData()
-    ]).then(function() {
-      console.log('[API] 全部数据加载完成');
+  // ---- 启动 & 重载 ----
+  function reloadAllData() {
+    // 清除缓存（不同经理看到的数据不同）
+    profileCache = {};
+    w8Data.customers = [];
+    w8Data.profiles = {};
+    w8Data.customerBenefit = {};
+    w8Data.customerActivity = {};
+    // 清除 W3 商机缓存
+    w3OppData.daifa = [];
+    w3OppData.liushi = [];
+    w3OppData.ai = [];
+    w3OppData.mine = [];
+    taskData = {};
+
+    // 先加载客户基础数据，再加载洞察（避免时序竞争导致洞察丢失）
+    return loadCustomers().then(function() {
+      return loadCustomerInsights();
+    }).then(function() {
+      return Promise.all([
+        loadTasks(),
+        loadOpps(),
+        loadActivities(),
+        loadBattlePackages(),
+        loadSearchData(),
+        loadProducts()
+      ]);
+    }).then(function() {
+      console.log('[API] 全部数据加载完成 (manager=' + window.currentManagerId + ')');
       // 刷新顶部待办计数
       var taskTotal = 0;
       for (var i = 1; i <= 6; i++) {
@@ -4363,6 +4912,7 @@ function toggleExpand(expandId, arrowId) {
       }
       // 刷新已渲染的 UI
       refreshOppSummary();
+      refreshMiningPanel();
       if (typeof renderW3Tab === 'function') {
         var activeTab = document.querySelector('.w3-tab.active');
         var tabName = activeTab ? activeTab.getAttribute('data-tab') : 'daifa';
@@ -4372,12 +4922,40 @@ function toggleExpand(expandId, arrowId) {
       if (typeof renderGsRecent === 'function') {
         try { renderGsRecent(); } catch(e) {}
       }
+      // 更新 W8 标题
+      var w8t = document.getElementById('w8Title');
+      var cc = w8Data.customers ? w8Data.customers.length : 0;
+      if (w8t) w8t.textContent = '我的客户 (' + cc + ')';
+      // 初始加载时同步问候语
+      if (!window._greetingInited) {
+        window._greetingInited = true;
+        var g = document.getElementById('greeting');
+        if (g) {
+          var hour = new Date().getHours();
+          var prefix = hour < 12 ? '上午好' : (hour < 18 ? '下午好' : '晚上好');
+          g.textContent = prefix + '，' + window.currentManagerName + '经理';
+        }
+      }
     });
+  }
+
+  window._apiReloadAll = reloadAllData;
+
+  checkAPI().then(function(ok) {
+    if (!ok) return;  // API 不可用, 保留静态数据
+    reloadAllData();
   });
+
+  // 暴露到全局供外部调用
+  window.apiPost = apiPost;
+  window.loadOpps = loadOpps;
+  window.loadProducts = loadProducts;
+  window.API_BASE = API_BASE;
+  window.refreshMiningPanel = refreshMiningPanel;
 })();
 
 // ===== 待办客户数据 =====
-const taskData = {
+var taskData = {
   card1: { type: '产品到期', desc: '3位客户产品到期，金额合计80万', customers: [
     { name: '王建国', detail: '男 · 45岁 · XX定期存款 25万 · 7月18日到期(3天后)' },
     { name: '张丽华', detail: '女 · 38岁 · YY悦享周期理财 10万 · 7月18日到期(3天后)' },
@@ -4484,7 +5062,7 @@ function updateProcessProgress() {
 function loadCustomerInfoBatch(customers) {
   customers.forEach(function(c, i) {
     if (!c.cust_id || customerInfoCache[c.cust_id]) return;
-    fetch('http://localhost:8000/api/customers/' + c.cust_id + '/basic', {signal: AbortSignal.timeout(5000)})
+    fetch('http://localhost:8008/api/customers/' + c.cust_id + '/basic', {signal: AbortSignal.timeout(5000)})
       .then(function(r) { return r.json(); })
       .then(function(r) {
         if (r && r.code === 0 && r.data) {
@@ -4517,7 +5095,7 @@ function openPhoneDialog(idx) {
   document.getElementById('pdCustTier').textContent = info ? info.tier + '客户' : '';
   document.getElementById('pdPhoneNum').textContent = info ? info.phone : '加载中...';
   if (!info && c.cust_id) {
-    fetch('http://localhost:8000/api/customers/' + c.cust_id + '/basic', {signal: AbortSignal.timeout(5000)})
+    fetch('http://localhost:8008/api/customers/' + c.cust_id + '/basic', {signal: AbortSignal.timeout(5000)})
       .then(function(r) { return r.json(); })
       .then(function(r) {
         if (r && r.code === 0 && r.data) {
@@ -4728,7 +5306,7 @@ function saveRecord(cardId, idx, action, notes) {
   if (!data) return;
   var c = data.customers[idx];
   if (!c) return;
-  fetch('http://localhost:8000/api/tasks/processing-records', {
+  fetch('http://localhost:8008/api/tasks/processing-records', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -5419,6 +5997,8 @@ function switchOppTab(tabName) {
   // 切换面板
   document.getElementById('panel-current').classList.toggle('active', tabName === 'current');
   document.getElementById('panel-mining').classList.toggle('active', tabName === 'mining');
+  // 切换到挖掘面板时刷新数据
+  if (tabName === 'mining') window.refreshMiningPanel();
 }
 
 // ===== 进度条详情浮层 =====
@@ -5442,25 +6022,342 @@ function showConvExplain(e) {
   showToast('基于您过去3个月的商机→AUM实际转化率（7~12%）取均值计算，当前按15%预估');
 }
 
-// ===== AI 商机挖掘 =====
+// ===== AI 商机挖掘（SSE 流式） =====
 function triggerAiMining() {
-  const btn = document.getElementById('btnMining');
+  var btn = document.getElementById('btnMining');
   if (!btn || btn.classList.contains('loading')) return;
+
+  // 打开浮层
+  openMiningModal();
+
+  // 按钮进入加载态
   btn.classList.add('loading');
-  btn.textContent = '⏳ AI 挖掘中...';
-  setTimeout(() => {
+  btn.textContent = '⏳ AI 正在分析客户数据...';
+
+  // 收集 SSE 事件
+  var miningResult = null;
+  var steps = [];
+
+  // 使用 fetch + ReadableStream 消费 SSE（兼容 CORS + POST）
+  fetch((window.API_BASE || 'http://localhost:8008') + '/api/ai/opportunity/mining/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ manager_id: window.currentManagerId || 'M001' }),
+    signal: AbortSignal.timeout(600000),
+  }).then(function(response) {
+    if (!response.ok) {
+      btn.classList.remove('loading');
+      btn.textContent = '⚠️ 挖掘失败，请重试';
+      btn.style.background = 'var(--color-danger)';
+      closeMiningModal();
+      showToast('AI 挖掘服务异常（HTTP ' + response.status + '）');
+      setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+      return;
+    }
+
+    var reader = response.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+
+    function readStream() {
+      reader.read().then(function(result) {
+        if (result.done) {
+          // 流结束，处理剩余 buffer
+          if (buffer.trim()) {
+            var lastEv = parseSSEEventBlock(buffer);
+            if (lastEv) {
+              handleSSEEvent(lastEv.type, lastEv.data, steps);
+              if (lastEv.type === 'done') miningResult = lastEv.data;
+            }
+          }
+          finishMining(btn, miningResult, steps);
+          return;
+        }
+
+        buffer += decoder.decode(result.value, { stream: true });
+
+        // SSE 事件以双换行分隔，按完整事件块解析
+        var blocks = buffer.split('\n\n');
+        buffer = blocks.pop() || '';
+
+        for (var i = 0; i < blocks.length; i++) {
+          var ev = parseSSEEventBlock(blocks[i]);
+          if (ev) {
+            handleSSEEvent(ev.type, ev.data, steps);
+            if (ev.type === 'done') miningResult = ev.data;
+          }
+        }
+
+        readStream();
+      }).catch(function(e) {
+        console.error('[SSE] stream error:', e);
+        btn.classList.remove('loading');
+        btn.textContent = '⚠️ 连接中断，请重试';
+        btn.style.background = 'var(--color-danger)';
+        closeMiningModal();
+        showToast('AI 挖掘连接中断: ' + e.message);
+        setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+      });
+    }
+
+    function parseSSEEventBlock(block) {
+      var eventType = '';
+      var dataStr = '';
+      var lines = block.split('\n');
+      for (var j = 0; j < lines.length; j++) {
+        var line = lines[j];
+        if (line.startsWith('event: ')) eventType = line.substring(7).trim();
+        else if (line.startsWith('data: ')) dataStr = line.substring(6);
+      }
+      if (!dataStr) return null;
+      try { return { type: eventType, data: JSON.parse(dataStr) }; }
+      catch (e) { console.warn('[SSE] parse error:', e); return null; }
+    }
+
+    readStream();
+  }).catch(function(e) {
     btn.classList.remove('loading');
-    btn.textContent = '✅ 挖掘完成 · 发现 3 个新商机';
+    btn.textContent = '⚠️ 网络错误，请重试';
+    btn.style.background = 'var(--color-danger)';
+    closeMiningModal();
+    console.error('[AI Mining SSE] error:', e);
+    showToast('AI 挖掘请求失败，请检查后端服务');
+    setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+  });
+}
+
+// 处理 SSE 事件
+function handleSSEEvent(eventType, data, steps) {
+  var body = document.getElementById('miningBody');
+  if (!body) return;
+
+  if (eventType === 'phase' && data.phase === 'start') {
+    // 启动阶段
+    var subtitle = document.getElementById('miningSubtitle');
+    subtitle.textContent = '已选定 ' + data.fresh + ' 位待挖掘客户' +
+      (data.skipped > 0 ? '（跳过' + data.skipped + '位近期已挖掘）' : '') +
+      '，分 ' + data.batch_count + ' 批分析';
+
+    var html = '<div class="mining-step done"><div class="step-dot"></div>' +
+      '<div class="step-info"><div class="step-label">🔍 筛选目标客户</div>' +
+      '<div class="step-detail">全库 ' + data.total_customers + ' 人 → 按AUM取Top ' + data.selected +
+      ' → 去重后 ' + data.fresh + ' 人待分析</div></div></div>';
+    body.innerHTML = html;
+    steps.push({ phase: 'start' });
+
+  } else if (eventType === 'batch_progress') {
+    // 批量完成
+    var tagHtml = data.customers.map(function(n) {
+      return '<span class="cust-tag">' + n + '</span>';
+    }).join('');
+    var signalHtml = data.batch_signals > 0
+      ? ' <span class="signal-tag">+ ' + data.batch_signals + ' 个信号</span>'
+      : '';
+
+    var stepEl = document.createElement('div');
+    stepEl.className = 'mining-step done';
+    stepEl.innerHTML = '<div class="step-dot"></div>' +
+      '<div class="step-info"><div class="step-label">📊 第 ' + data.batch + '/' + data.total_batches + ' 批分析完成</div>' +
+      '<div class="step-detail">' + tagHtml + signalHtml + '</div>' +
+      '<div class="step-time">耗时 ' + data.elapsed_s + 's</div></div>';
+    body.appendChild(stepEl);
+
+    // 如果还有下一批，添加"进行中"步骤
+    if (data.batch < data.total_batches) {
+      var activeEl = document.createElement('div');
+      activeEl.className = 'mining-step active';
+      activeEl.id = 'miningActiveStep';
+      activeEl.innerHTML = '<div class="step-dot"></div>' +
+        '<div class="step-info"><div class="step-label">🔄 第 ' + (data.batch + 1) + '/' + data.total_batches + ' 批分析中...</div>' +
+        '<div class="step-detail">正在调用 DeepSeek V4 Flash 分析客户数据</div></div>';
+      body.appendChild(activeEl);
+    }
+
+    // 更新副标题
+    var subtitle = document.getElementById('miningSubtitle');
+    subtitle.textContent = '第 ' + data.batch + '/' + data.total_batches + ' 批完成，已发现 ' + data.total_signals_so_far + ' 个商机信号';
+
+    // 滚动到底部
+    body.scrollTop = body.scrollHeight;
+
+    steps.push({ batch: data.batch });
+
+  } else if (eventType === 'error') {
+    body.innerHTML = '<div class="mining-step done" style="color:var(--color-danger)">' +
+      '<div class="step-dot" style="background:var(--color-danger)"></div>' +
+      '<div class="step-info"><div class="step-label">❌ 挖掘异常</div>' +
+      '<div class="step-detail">' + (data.message || '未知错误') + '</div></div></div>';
+  }
+}
+
+// 挖掘完成
+function finishMining(btn, result, steps) {
+  var body = document.getElementById('miningBody');
+  var footer = document.getElementById('miningFooter');
+
+  // 移除"进行中"步骤
+  var activeStep = document.getElementById('miningActiveStep');
+  if (activeStep) activeStep.remove();
+
+  btn.classList.remove('loading');
+
+  if (!result) {
+    closeMiningModal();
+    btn.textContent = '⚠️ 挖掘失败，请重试';
+    btn.style.background = 'var(--color-danger)';
+    setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+    return;
+  }
+
+  // 显示结果
+  footer.style.display = 'block';
+  var summary = document.getElementById('miningResultSummary');
+  var detail = document.getElementById('miningResultDetail');
+
+  if (result.status === 'no_new_data') {
+    summary.textContent = '✅ 数据无变化 · 暂无新商机';
+    detail.textContent = result.message || '';
+    btn.textContent = '✅ 无新商机';
+    btn.style.background = 'var(--color-text-tertiary)';
+    showToast(result.message || '所有客户近24小时内已挖掘，数据无变化');
+  } else {
+    var signals = result.signals || 0;
+    var highConf = result.high_confidence || 0;
+    var highlights = result.highlights || [];
+
+    summary.textContent = '🎉 挖掘完成！发现 ' + signals + ' 个新商机（高置信度 ' + highConf + ' 个）';
+    if (highlights.length > 0) {
+      detail.innerHTML = highlights.slice(0, 3).map(function(h) {
+        return '<span class="cust-tag">' + h.title + ' · ' + h.estimated_value + '万</span>';
+      }).join(' ');
+    }
+
+    btn.textContent = '✅ 发现 ' + signals + ' 个新商机';
     btn.style.background = 'var(--color-success)';
-    // 更新统计数
-    const valEl = document.querySelector('#panel-current .pool-stat:first-child .val');
-    if (valEl) valEl.innerHTML = '8<span style="font-size:11px;font-weight:400">个</span>';
-    showToast('AI 已发现 3 个新商机，请查看');
-    setTimeout(() => {
-      btn.textContent = '⚡ 一键AI挖掘';
-      btn.style.background = '';
-    }, 3000);
+    showToast('AI 已发现 ' + signals + ' 个新商机（高置信度 ' + highConf + ' 个），请查看');
+
+    // 更新商机看板
+    updateMiningSummary({ signals: signals, highlights: highlights }, result.total_customers || 0, result.skipped || 0);
+    window.loadOpps().then(function() { renderOppSummary(); window.refreshMiningPanel(); });
+  }
+
+  // 添加完成步骤
+  var doneEl = document.createElement('div');
+  doneEl.className = 'mining-step done';
+  doneEl.innerHTML = '<div class="step-dot"></div>' +
+    '<div class="step-info"><div class="step-label">✅ 挖掘流程结束</div>' +
+    '<div class="step-detail">共经历 ' + steps.length + ' 个阶段，商机已入库</div></div>';
+  body.appendChild(doneEl);
+
+  // 2 秒后自动关闭浮层
+  setTimeout(function() {
+    closeMiningModal();
+    // 3秒后恢复按钮
+    setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 1000);
   }, 2000);
+}
+
+// 打开浮层
+function openMiningModal() {
+  var overlay = document.getElementById('miningOverlay');
+  var body = document.getElementById('miningBody');
+  var footer = document.getElementById('miningFooter');
+  var subtitle = document.getElementById('miningSubtitle');
+  if (overlay) overlay.style.display = 'flex';
+  if (body) body.innerHTML = '';
+  if (footer) footer.style.display = 'none';
+  if (subtitle) subtitle.textContent = '正在扫描客户数据...';
+}
+
+// 关闭浮层
+function closeMiningModal() {
+  var overlay = document.getElementById('miningOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// 更新商机挖掘面板摘要
+function updateMiningSummary(data, total, skipped) {
+  var panel = document.getElementById('panel-mining');
+  if (!panel) return;
+
+  var highlights = data.highlights || [];
+  var signals = data.signals || 0;
+
+  // 更新描述文字
+  var desc = panel.querySelector('.mining-desc');
+  if (desc) {
+    desc.textContent = 'AI已扫描 ' + total + ' 位管户' + (skipped > 0 ? '（跳过' + skipped + '位近期已挖掘）' : '') + '，本次发现 ' + signals + ' 个新商机：';
+  }
+
+  // 更新目标缺口
+  var badge = panel.querySelector('.mining-badge');
+  if (badge) {
+    if (signals >= 3) {
+      badge.className = 'mining-badge mining-badge--done';
+      badge.textContent = '目标达成 ✓';
+    } else {
+      badge.className = 'mining-badge mining-badge--gap';
+      badge.textContent = '目标缺口 ' + Math.max(0, 3 - signals) + '个';
+    }
+  }
+
+  // 更新 mining-item 列表
+  var itemsContainer = panel.querySelector('.mining-total');
+  if (!itemsContainer) return;
+
+  // 清除旧的 mining items
+  var prev = itemsContainer.previousElementSibling;
+  while (prev && prev.classList.contains('mining-item')) {
+    var toRemove = prev;
+    prev = prev.previousElementSibling;
+    toRemove.remove();
+  }
+
+  // 插入新的 mining items
+  var totalEst = 0;
+  highlights.forEach(function(h, i) {
+    var div = document.createElement('div');
+    div.className = 'mining-item';
+    var confPct = Math.round((h.confidence || 0) * 100);
+    totalEst += (h.estimated_value || 0);
+    div.innerHTML = '<span>' + (h.title || h.opportunity_type || '新商机') + ' · ' + (h.customer_name || '') + '</span>' +
+      '<span class="est">置信度 ' + confPct + '% · ≈' + ((h.estimated_value || 0) / 10000).toFixed(1) + '万</span>';
+    itemsContainer.parentNode.insertBefore(div, itemsContainer);
+  });
+
+  // 更新合计
+  itemsContainer.innerHTML = '<span>合计可挖掘</span>' +
+    '<span style="color:var(--color-ai)">≈' + signals + '个商机 · 约' + (totalEst / 10000).toFixed(0) + '万 → ' +
+    (signals >= 3 ? '可覆盖缺口' : '继续挖掘') + '</span>';
+}
+
+// 刷新商机看板摘要（current 页签）
+function renderOppSummary() {
+  // 统计各来源商机数量
+  var counts = { daifa: 0, liushi: 0, ai: 0, mine: 0 };
+  if (window.w3OppData) {
+    counts.daifa = (window.w3OppData.daifa || []).length;
+    counts.liushi = (window.w3OppData.liushi || []).length;
+    counts.ai = (window.w3OppData.ai || []).length;
+    counts.mine = (window.w3OppData.mine || []).length;
+  }
+
+  // 更新 tab 角标
+  var tabs = document.querySelectorAll('#w3Tabs .w3-tab');
+  tabs.forEach(function(tab) {
+    var key = tab.getAttribute('data-w3tab');
+    var badge = tab.querySelector('.w3-tab-badge');
+    if (badge && counts[key] !== undefined) {
+      badge.textContent = counts[key];
+    }
+  });
+
+  // 更新 current 面板统计
+  var valEl = document.querySelector('#panel-current .pool-stat:first-child .val');
+  if (valEl) {
+    var total = counts.daifa + counts.liushi + counts.ai + counts.mine;
+    valEl.innerHTML = total + '<span style="font-size:11px;font-weight:400">个</span>';
+  }
 }
 
 // ===== Block 4 状态切换 =====
@@ -5800,7 +6697,7 @@ function renderW3OppCard(opp) {
     '<div class="w3-opp-meta"><span>' + opp.meta + '</span>' + metaHtml + '</div>' +
     '<div class="w3-opp-footer">' +
       '<button class="w3-opp-btn" onclick="event.stopPropagation();closeW3Page();setTimeout(function(){openW8Detail(\'王建国\',\'w3\')},200)">查看画像</button>' +
-      '<button class="w3-opp-btn btn-primary" onclick="event.stopPropagation();openBpMode(\'' + opp.id + '\')">生成作战包</button>' +
+      '<button class="w3-opp-btn btn-primary" onclick="event.stopPropagation();' + (opp.bp_id ? 'viewExistingBp(\'' + opp.bp_id + '\')">查看作战包' : 'openBpMode(\'' + opp.id + '\')">生成作战包') + '</button>' +
     '</div>' +
   '</div>';
 }
@@ -5840,11 +6737,18 @@ function openOppDetail(oppId) {
       '<div style="text-align:right;margin-top:6px"><span style="font-size:var(--fs-small);color:var(--color-primary);cursor:pointer" onclick="closeOppDetail();closeW3Page();setTimeout(function(){openW8Detail(\'王建国\',\'w3\')},200)">查看完整客户画像 →</span></div>' +
     '</div>' +
     '<div class="od-section">' +
-      '<div class="od-action-card" onclick="openBpMode(\'' + oppId + '\')">' +
-        '<div class="od-action-icon">⚡</div>' +
-        '<div class="od-action-title">生成作战包</div>' +
-        '<div class="od-action-desc">为该客户生成电话版或面谈版作战包，生成后将同步创建商机待办 🟣</div>' +
-      '</div>' +
+      (opp.bp_id
+        ? '<div class="od-action-card" style="border-left-color:var(--color-primary)" onclick="viewExistingBp(\'' + opp.bp_id + '\')">' +
+            '<div class="od-action-icon">📋</div>' +
+            '<div class="od-action-title">查看作战包</div>' +
+            '<div class="od-action-desc">该商机已生成作战包，点击查看电话版或面谈版作战包详情</div>' +
+          '</div>'
+        : '<div class="od-action-card" onclick="openBpMode(\'' + oppId + '\')">' +
+            '<div class="od-action-icon">⚡</div>' +
+            '<div class="od-action-title">生成作战包</div>' +
+            '<div class="od-action-desc">为该客户生成电话版或面谈版作战包，生成后将同步创建商机待办 🟣</div>' +
+          '</div>'
+      ) +
     '</div>' +
     '<div class="od-bottom-actions">' +
       '<button class="od-bottom-btn" onclick="showToast(\'已标记为已跟进\');closeOppDetail()">标记为已跟进</button>' +
@@ -5857,6 +6761,41 @@ function openOppDetail(oppId) {
 
 function closeOppDetail() {
   document.getElementById('oppDetailOverlay').classList.remove('open');
+}
+
+// ===== 查看已有作战包 =====
+function viewExistingBp(bpId) {
+  if (!bpId) return;
+  showToast('正在加载作战包...');
+  closeOppDetail();
+  closeW3Page();
+  
+  var apiBase = window.API_BASE || 'http://localhost:8008';
+  fetch(apiBase + '/api/battle-packages/' + bpId)
+    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      if (!r || r.code !== 0 || !r.data) {
+        showToast('作战包加载失败');
+        return;
+      }
+      var d = r.data;
+      window._apiBpResult = {
+        bp_data: {
+          customer_overview: d.customer_overview || {},
+          agenda: d.agenda || null,
+          clues: d.clues || [],
+          risk_warnings: d.risk_warnings || [],
+          post_visit_actions: d.post_visit_actions || []
+        },
+        cust_name: d.cust_name || '',
+        generate_status: 'completed'
+      };
+      window._apiBpMode = (d.mode === '电话版') ? 'phone' : 'face';
+      openP1Page(window._apiBpMode);
+    })
+    .catch(function(e) {
+      showToast('作战包加载失败: ' + e.message);
+    });
 }
 
 // ===== 作战包模式选择 =====
@@ -5881,20 +6820,218 @@ function selectBpMode(mode) {
 function confirmBpMode() {
   if (!selectedBpMode) return;
   var opp = findOppById(currentOppDetailId);
-  var oppName = opp ? opp.name : '客户';
+  if (!opp) { showToast('未找到商机信息'); return; }
+
+  var oppName = opp.name || '客户';
   var modeLabel = selectedBpMode === 'phone' ? '电话版' : '面谈版';
+  var apiMode = selectedBpMode === 'phone' ? '电话版' : '面谈版';
+
+  // 解析 cust_id
+  var custId = parseInt(opp.meta) || 1;
+
+  // 构建商机信息
+  var oppInfo = {
+    type: opp.source ? opp.source.split('·').pop() : '',
+    title: oppName,
+    reasoning: opp.reason || opp.assets || '',
+    estimated_value: opp.estimate ? parseFloat(opp.estimate) * 10000 : 0,
+    confidence: opp.confidence ? opp.confidence / 100 : 0
+  };
 
   closeBpMode();
-  showToast('⚡ ' + modeLabel + '作战包生成中...');
 
-  setTimeout(function() {
-    closeOppDetail();
-    closeW3Page();
-    showToast(oppName + ' · ' + modeLabel + '作战包已生成，已同步创建商机待办 🟣');
+  // 打开生成浮层
+  openBpGenModal(oppName, modeLabel);
+
+  // 调用 API
+  fetch((window.API_BASE || 'http://localhost:8008') + '/api/ai/battle-package/generate/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      cust_id: custId,
+      mode: apiMode,
+      opp_id: currentOppDetailId,
+      opportunity_info: oppInfo
+    }),
+    signal: AbortSignal.timeout(600000),
+  }).then(function(response) {
+    if (!response.ok) {
+      closeBpGenModal();
+      showToast('作战包生成失败（HTTP ' + response.status + '），请检查 API 服务');
+      return;
+    }
+
+    var reader = response.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var genResult = null;
+
+    function readStream() {
+      reader.read().then(function(result) {
+        if (result.done) {
+          // 流结束，处理剩余 buffer 中的最后一个事件
+          if (buffer.trim()) {
+            var lastEvent = parseSSEEvent(buffer);
+            if (lastEvent) {
+              handleBpGenEvent(lastEvent.type, lastEvent.data);
+              if (lastEvent.type === 'done') genResult = lastEvent.data;
+            }
+          }
+          finishBpGen(genResult, oppName, modeLabel);
+          return;
+        }
+
+        buffer += decoder.decode(result.value, { stream: true });
+
+        // SSE 事件以双换行 "\n\n" 分隔，按完整事件块解析
+        var blocks = buffer.split('\n\n');
+        // 最后一个块可能不完整，保留在 buffer 中
+        buffer = blocks.pop() || '';
+
+        for (var i = 0; i < blocks.length; i++) {
+          var ev = parseSSEEvent(blocks[i]);
+          if (ev) {
+            handleBpGenEvent(ev.type, ev.data);
+            if (ev.type === 'done') genResult = ev.data;
+          }
+        }
+
+        readStream();
+      }).catch(function(e) {
+        console.error('[BPGen SSE] stream error:', e);
+        closeBpGenModal();
+        showToast('作战包生成连接中断: ' + e.message);
+      });
+    }
+
+    // 解析单个 SSE 事件块，返回 {type, data} 或 null
+    function parseSSEEvent(block) {
+      var eventType = '';
+      var dataStr = '';
+      var lines = block.split('\n');
+      for (var j = 0; j < lines.length; j++) {
+        var line = lines[j];
+        if (line.startsWith('event: ')) {
+          eventType = line.substring(7).trim();
+        } else if (line.startsWith('data: ')) {
+          dataStr = line.substring(6);
+        }
+      }
+      if (!dataStr) return null;
+      try {
+        return { type: eventType, data: JSON.parse(dataStr) };
+      } catch (e) {
+        console.warn('[BPGen SSE] parse error:', e);
+        return null;
+      }
+    }
+
+    readStream();
+  }).catch(function(e) {
+    closeBpGenModal();
+    showToast('作战包生成失败: ' + e.message);
+  });
+}
+
+// ===== 作战包生成浮层 =====
+function openBpGenModal(name, modeLabel) {
+  document.getElementById('bpgenSubtitle').textContent = '客户: ' + name + ' · 模式: ' + modeLabel;
+  document.getElementById('bpgenBody').innerHTML =
+    '<div class="bpgen-step active">' +
+      '<div class="step-dot"></div>' +
+      '<div class="step-info">' +
+        '<div class="step-label">加载客户数据</div>' +
+        '<div class="step-detail">获取客户画像、持仓、行为偏好...</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="bpgen-step">' +
+      '<div class="step-dot"></div>' +
+      '<div class="step-info">' +
+        '<div class="step-label">匹配产品</div>' +
+        '<div class="step-detail">根据客户画像从产品库中筛选...</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="bpgen-step">' +
+      '<div class="step-dot"></div>' +
+      '<div class="step-info">' +
+        '<div class="step-label">AI 生成作战包</div>' +
+        '<div class="step-detail">生成营销线索、切入话术、产品推荐...</div>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('bpgenFooter').style.display = 'none';
+  document.getElementById('bpgenOverlay').style.display = '';
+}
+
+var bpGenSteps = ['loading_data', 'matching_products', 'generating'];
+
+function handleBpGenEvent(eventType, data) {
+  if (eventType === 'phase') {
+    var phase = data.phase;
+    var stepIdx = bpGenSteps.indexOf(phase);
+    var steps = document.querySelectorAll('#bpgenBody .bpgen-step');
+
+    // 更新副标题
+    if (data.message) {
+      document.getElementById('bpgenSubtitle').textContent = data.message;
+    } else if (data.customer_name) {
+      document.getElementById('bpgenSubtitle').textContent = '客户: ' + data.customer_name + ' · 匹配产品中...';
+    }
+
+    // 更新步骤状态
+    steps.forEach(function(step, i) {
+      step.classList.remove('active', 'done');
+      if (i < stepIdx) step.classList.add('done');
+      else if (i === stepIdx) step.classList.add('active');
+    });
+  }
+}
+
+function finishBpGen(genResult, oppName, modeLabel) {
+  var footer = document.getElementById('bpgenFooter');
+  var summary = document.getElementById('bpgenResultSummary');
+  var detail = document.getElementById('bpgenResultDetail');
+
+  if (genResult && genResult.generate_status === 'completed') {
+    // 标记所有步骤完成
+    document.querySelectorAll('#bpgenBody .bpgen-step').forEach(function(s) {
+      s.classList.remove('active'); s.classList.add('done');
+    });
+    document.getElementById('bpgenSubtitle').textContent = '生成完成！即将打开作战包...';
+
+    summary.textContent = '✅ ' + oppName + ' · ' + modeLabel + '作战包已生成';
+    detail.textContent = '生成耗时 ' + (genResult.elapsed_s || 0) + ' 秒 · ' + ((genResult.bp_data && genResult.bp_data.clues) ? genResult.bp_data.clues.length : 0) + ' 条线索';
+    footer.style.display = '';
+
+    // 存储结果到全局变量
+    window._apiBpResult = genResult;
+    window._apiBpMode = modeLabel === '电话版' ? 'phone' : 'face';
+
+    // 更新当前商机的 bp_id，使下次打开详情时显示"查看作战包"
+    if (genResult.bp_id && currentOppDetailId) {
+      var opp = findOppById(currentOppDetailId);
+      if (opp && !opp.bp_id) { opp.bp_id = genResult.bp_id; }
+    }
+
+    // 延迟关闭浮层并打开 P1 页面
     setTimeout(function() {
-      openP1Page(selectedBpMode);
-    }, 600);
-  }, 2000);
+      closeBpGenModal();
+      closeOppDetail();
+      closeW3Page();
+      showToast(oppName + ' · ' + modeLabel + '作战包已生成，已同步创建商机待办 🟣');
+      setTimeout(function() {
+        openP1Page(window._apiBpMode);
+      }, 400);
+    }, 1500);
+  } else {
+    summary.textContent = '❌ 生成失败';
+    detail.textContent = (genResult && genResult.message) || '未知错误';
+    footer.style.display = '';
+    document.getElementById('bpgenSubtitle').textContent = '生成失败，请重试';
+  }
+}
+
+function closeBpGenModal() {
+  document.getElementById('bpgenOverlay').style.display = 'none';
 }
 
 function closeBpMode() {
@@ -5930,11 +7067,98 @@ function renderP1Content() {
   badge.textContent = isPhone ? '电话版' : '面谈版';
   badge.className = 'p1-badge ' + (isPhone ? 'p1-badge--phone' : 'p1-badge--face');
 
+  // 如果存在 API 生成的作战包数据，动态构建 bpData
+  var _bpData = bpData;  // 默认使用静态数据
+  var _custName = '王建国';
+  if (window._apiBpResult && window._apiBpResult.bp_data) {
+    var api = window._apiBpResult.bp_data;
+    var co = api.customer_overview || {};
+    _custName = co.name || window._apiBpResult.cust_name || '客户';
+
+    var clues = (api.clues || []).map(function(cl, i) {
+      var levelMap = { '高': 'red', '中': 'yellow', '常规': 'green' };
+      return {
+        id: 'c' + (i + 1),
+        level: levelMap[cl.priority] || 'green',
+        levelLabel: (cl.priority || '常规') + '优先级',
+        title: cl.title || '',
+        script: cl.opening_script || '',
+        products: (cl.products || []).map(function(p) {
+          return {
+            name: p.name || '',
+            risk: (p.risk || '') + ' ' + (p.type || ''),
+            yield: p.expected_return || '',
+            min: '',
+            highlights: (p.reason || '') + (p.script ? ' · ' + p.script : '')
+          };
+        }),
+        deviations: (cl.deviation_branches || []).map(function(d) {
+          return d.scenario || '';
+        })
+      };
+    });
+
+    var agenda = (api.agenda || []).map(function(a) {
+      return {
+        step: a.topic || '',
+        time: a.duration || '',
+        desc: (a.key_points || []).join('; ')
+      };
+    });
+
+    var risks = (api.risk_warnings || []).map(function(r) {
+      return { icon: '⚠️', text: r };
+    });
+
+    // 营销切入点：优先使用 Agent 生成的数据，回退到静态数据
+    var agentBe = api.benefit_entries;
+    var benefitEntries;
+    if (agentBe && (agentBe.all_benefits || agentBe.all_activities || agentBe.default_entry)) {
+      var de = agentBe.default_entry || {};
+      benefitEntries = {
+        defaultEntry: {
+          type: de.type || '',
+          id: de.id || '',
+          title: de.title || '',
+          description: de.description || '',
+          name: de.name || '',
+          hook: de.hook || ''
+        },
+        allBenefits: (agentBe.all_benefits || []).map(function(b) {
+          return { type: 'benefit', benType: b.ben_type || '', name: b.name || '', value: b.value || '', status: b.status || '', desc: '' };
+        }),
+        allActivities: (agentBe.all_activities || []).map(function(a) {
+          return { type: 'activity', actId: a.act_id || '', name: a.name || '', reward: a.reward || '', status: a.status || '', desc: '' };
+        }),
+        quickHooks: (agentBe.quick_hooks || []).map(function(h) {
+          return { name: h.name || '', hook: h.hook || '' };
+        })
+      };
+    } else {
+      benefitEntries = bpData.benefitEntries;
+    }
+
+    _bpData = {
+      customer: {
+        name: _custName,
+        meta: co.profile_summary || co.one_liner || '',
+        tags: []
+      },
+      clues: clues.length > 0 ? clues : bpData.clues,
+      agenda: agenda.length > 0 ? agenda : bpData.agenda,
+      risks: risks.length > 0 ? risks : bpData.risks,
+      benefitEntries: benefitEntries
+    };
+  }
+
   var body = document.getElementById('p1Body');
-  var cust = bpData.customer;
+  var cust = _bpData.customer;
+
+  // 更新标题
+  document.getElementById('p1Title').textContent = '作战包 · ' + _custName;
 
   // 1. 客户全景速览
-  var tagsHtml = cust.tags.map(function(t) {
+  var tagsHtml = (cust.tags || []).map(function(t) {
     return '<span class="co-tag ' + t.cls + '">' + t.text + '</span>';
   }).join('');
 
@@ -5963,14 +7187,14 @@ function renderP1Content() {
       '<span class="p1-sec-num">2</span>' +
       '<div class="p1-sec-info">' +
         '<div class="p1-sec-title">营销线索清单</div>' +
-        '<div class="p1-sec-sub">' + bpData.clues.length + '条线索</div>' +
+        '<div class="p1-sec-sub">' + _bpData.clues.length + '条线索</div>' +
       '</div>' +
       '<span class="p1-sec-arrow">▼</span>' +
     '</div>' +
     '<div class="p1-sec-body open">' +
       '<div class="p1-sec-inner">';
 
-  bpData.clues.forEach(function(clue, i) {
+  _bpData.clues.forEach(function(clue, i) {
     var levelLabel = i === 0 ? '🔴 ' : (i === 1 ? '🟡 ' : '🟢 ');
     var dotCls = 'clue-dot--' + clue.level;
     html += '<div class="clue-card">' +
@@ -6016,7 +7240,7 @@ function renderP1Content() {
       '<div class="p1-sec-inner">';
 
   // 电话版和面谈版使用不同的数据结构
-  var beData = isPhone ? bpPhoneData.benefitEntries : bpData.benefitEntries;
+  var beData = isPhone ? bpPhoneData.benefitEntries : _bpData.benefitEntries;
   if (beData) {
     // 优先切入点（AI推荐，高亮显示）
     html += '<div style="background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(51,102,255,0.05));border:1px solid rgba(108,92,231,0.25);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">';
@@ -6068,7 +7292,7 @@ function renderP1Content() {
 
   // 3. 面谈议程 (仅面谈版)
   if (!isPhone) {
-    var agendaSteps = bpData.agenda.map(function(a, i) {
+    var agendaSteps = _bpData.agenda.map(function(a, i) {
       return '<div class="agenda-step">' +
         '<span class="step-num">' + (i + 1) + '</span>' +
         '<div class="step-info">' +
@@ -6083,7 +7307,7 @@ function renderP1Content() {
         '<span class="p1-sec-num">3</span>' +
         '<div class="p1-sec-info">' +
           '<div class="p1-sec-title">面谈议程建议</div>' +
-          '<div class="p1-sec-sub">共' + bpData.agenda.length + '步 · 预计20-27分钟</div>' +
+          '<div class="p1-sec-sub">共' + _bpData.agenda.length + '步 · 预计20-27分钟</div>' +
         '</div>' +
         '<span class="p1-sec-arrow">▼</span>' +
       '</div>' +
@@ -6093,7 +7317,7 @@ function renderP1Content() {
     '</div>';
 
     // 4. 风险提示
-    var riskItems = bpData.risks.map(function(r) {
+    var riskItems = _bpData.risks.map(function(r) {
       return '<div class="risk-item"><span class="risk-icon">' + r.icon + '</span><span>' + r.text + '</span></div>';
     }).join('');
 
@@ -6102,7 +7326,7 @@ function renderP1Content() {
         '<span class="p1-sec-num">4</span>' +
         '<div class="p1-sec-info">' +
           '<div class="p1-sec-title">风险提示与注意事项</div>' +
-          '<div class="p1-sec-sub">' + bpData.risks.length + '条提醒</div>' +
+          '<div class="p1-sec-sub">' + _bpData.risks.length + '条提醒</div>' +
         '</div>' +
         '<span class="p1-sec-arrow">▼</span>' +
       '</div>' +
@@ -6114,17 +7338,18 @@ function renderP1Content() {
 
   body.innerHTML = html;
 
-  // Footer
+  // Footer（使用动态客户名）
   var footer = document.getElementById('p1Footer');
+  var custNameForFooter = _custName || '王建国';
   if (isPhone) {
     footer.innerHTML =
       '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page()">返回</button>' +
-      '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page();setTimeout(function(){openW8Detail(\'王建国\',\'p1\')},200)">查看画像</button>' +
-      '<button class="p1-btn p1-btn--phone" onclick="showToast(\'拨号给 王建国 → 通话结束后记录结果\')">📞 拨号联系</button>';
+      '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page();setTimeout(function(){openW8Detail(\'' + custNameForFooter + '\',\'p1\')},200)">查看画像</button>' +
+      '<button class="p1-btn p1-btn--phone" onclick="showToast(\'拨号给 ' + custNameForFooter + ' → 通话结束后记录结果\')">📞 拨号联系</button>';
   } else {
     footer.innerHTML =
       '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page()">返回</button>' +
-      '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page();setTimeout(function(){openW8Detail(\'王建国\',\'p1\')},200)">查看画像</button>' +
+      '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page();setTimeout(function(){openW8Detail(\'' + custNameForFooter + '\',\'p1\')},200)">查看画像</button>' +
       '<button class="p1-btn p1-btn--secondary" onclick="showToast(\'进入编辑模式 → 可调整线索/产品/话术\')">编辑</button>' +
       '<button class="p1-btn p1-btn--primary" onclick="showToast(\'开始面谈 → 跳转 P2 面谈主界面\')">开始面谈</button>';
   }
@@ -6148,7 +7373,23 @@ function toggleClueCard(header) {
 }
 
 function copyClueScript(clueId) {
-  var clue = bpData.clues.find(function(c) { return c.id === clueId; });
+  var clue = null;
+  // 优先查找 API 数据
+  if (window._apiBpResult && window._apiBpResult.bp_data && window._apiBpResult.bp_data.clues) {
+    var idx = parseInt(clueId.replace('c', '')) - 1;
+    var apiClues = window._apiBpResult.bp_data.clues;
+    if (idx >= 0 && idx < apiClues.length) {
+      var c = apiClues[idx];
+      clue = { title: c.title, script: c.opening_script };
+      // 复制话术到剪贴板
+      if (c.opening_script && navigator.clipboard) {
+        navigator.clipboard.writeText(c.opening_script).catch(function(){});
+      }
+    }
+  }
+  if (!clue) {
+    clue = bpData.clues.find(function(c) { return c.id === clueId; });
+  }
   if (clue) {
     showToast('已复制: ' + clue.title + ' 切入话术');
   }
@@ -6514,6 +7755,7 @@ function closeW7Detail() { document.getElementById('w7DetailOverlay').classList.
 var w8Data = {
   filters: ['全部','财富','金卡','普通'],
   riskFilters: ['全部风险','稳健型','成长型','进取型'],
+  insightFilters: ['客户洞察','变化信号','预警信号'],
   customers: [
     { name:'王建国', gender:'男', age:45, phone:'138****6789', level:'财富客户', aum:58.7, risk:'稳健型', products:['定存','理财','基金'], tags:[{t:'定存到期(3天后)',c:'#e74c3c'},{t:'基金偏好',c:'#e67e22'}], lastContact:'7月15日 · 面谈', lastContactDays:0 },
     { name:'张丽华', gender:'女', age:38, phone:'139****8901', level:'金卡客户', aum:42.3, risk:'成长型', products:['理财'], tags:[], lastContact:'7月15日 · 电话', lastContactDays:0 },
@@ -6631,6 +7873,7 @@ var w8Data = {
 };
 var w8Filter = '全部';
 var w8RiskFilter = '全部风险';
+var w8InsightFilter = '客户洞察';
 var w8Mode = 'list';
 var w8Search = '';
 var w8Sort = 'default'; // default | aum_desc | aum_asc | age_desc | age_asc | recent
@@ -6652,6 +7895,7 @@ function openW8(mode, source) {
   w8Mode = mode || 'list';
   w8Filter = '全部';
   w8RiskFilter = '全部风险';
+  w8InsightFilter = '客户洞察';
   w8Search = '';
   w8Sort = 'default';
   w8AiQueries = [];
@@ -6684,6 +7928,13 @@ function applyAllFilters(list) {
   // 风险筛选
   if (w8RiskFilter !== '全部风险') {
     filtered = filtered.filter(function(c) { return c.risk === w8RiskFilter; });
+  }
+
+  // 洞察筛选
+  if (w8InsightFilter === '变化信号') {
+    filtered = filtered.filter(function(c) { return c.hasChange === true; });
+  } else if (w8InsightFilter === '预警信号') {
+    filtered = filtered.filter(function(c) { return c.hasRisk === true; });
   }
 
   // AI 对话查询条件
@@ -6730,6 +7981,10 @@ function renderW8() {
   w8Data.riskFilters.forEach(function(f) {
     fhtml += '<div class="w8-filter-chip'+(f===w8RiskFilter?' active':'')+'" onclick="switchW8RiskFilter(\''+f+'\')">'+f+'</div>';
   });
+  fhtml += '<span style="color:var(--color-divider);margin:0 2px">|</span>';
+  w8Data.insightFilters.forEach(function(f) {
+    fhtml += '<div class="w8-filter-chip'+(f===w8InsightFilter?' active':'')+'" onclick="switchW8InsightFilter(\''+f+'\')">'+f+'</div>';
+  });
   fhtml += '</div>';
   filterRow.innerHTML = fhtml;
 
@@ -6770,6 +8025,14 @@ function renderW8() {
       }
       if (availCount > 0) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#DBEAFE;color:#1D4ED8">⭐ '+availCount+'权益待用</span> ';
       var allTagsHtml = (tagsHtml + ' ' + baBadges).trim();
+      // 洞察信号徽标
+      var insightMeta = '';
+      if (c.hasInsight) {
+        var sigParts = [];
+        if (c.hasChange && c.changeCount > 0) sigParts.push('<span style="color:#e67e22">📊'+c.changeCount+'变</span>');
+        if (c.hasRisk) sigParts.push('<span style="color:#e74c3c">⚠️风险</span>');
+        insightMeta = sigParts.join(' ');
+      }
       html +=
         '<div class="w8-cust-card" onclick="openW8Detail(\''+c.name+'\')">' +
           '<div class="w8-cust-avatar">●</div>' +
@@ -6778,6 +8041,10 @@ function renderW8() {
             '<div class="w8-cust-meta">'+c.level+' · AUM '+c.aum+'万 · '+c.risk+'</div>' +
             (allTagsHtml?'<div class="w8-cust-tags">'+allTagsHtml+'</div>':'') +
             '<div class="w8-cust-meta">最后联络：'+c.lastContact+'</div>' +
+            (c.hasInsight
+              ? '<div class="w8-cust-meta" style="margin-top:4px"><a href="javascript:void(0)" onclick="event.stopPropagation();openInsightDetail('+c.insightCustId+',\''+c.name+'\')" style="color:var(--color-primary);font-weight:var(--fw-bold);text-decoration:none;font-size:var(--fs-small)">📋 客户洞察</a>' + (insightMeta ? ' ' + insightMeta : '') + '</div>'
+              : ''
+            ) +
           '</div>' +
           '<span class="w8-cust-cta">详情&gt;</span>' +
         '</div>';
@@ -6817,10 +8084,140 @@ function renderW8NewMode() {
 
 function switchW8Filter(f) { w8Filter = f; renderW8(); }
 function switchW8RiskFilter(f) { w8RiskFilter = f; renderW8(); }
+function switchW8InsightFilter(f) { w8InsightFilter = f; renderW8(); }
 function switchW8Sort(s) { w8Sort = s; renderW8(); }
 function onW8Search(val) { w8Search = val; renderW8(); }
 function claimCustomer(name) { showToast('已认领：'+name); }
 function ignoreNewCustomer(btn) { btn.closest('.w8-new-cust-card').style.display='none'; }
+
+// ===== 查看客户洞察快照 =====
+function openInsightDetail(custId, custName) {
+  if (!custId) { showToast('暂无可用的洞察数据'); return; }
+  showToast('正在加载客户洞察...');
+
+  var apiBase = window.API_BASE || 'http://localhost:8008';
+  fetch(apiBase + '/api/customer-insights/' + custId)
+    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      if (!r || r.code !== 0 || !r.data) {
+        showToast('该客户暂无洞察快照，请先生成');
+        return;
+      }
+      var d = r.data;
+      document.getElementById('w8DetailOverlay').classList.add('open');
+      document.getElementById('w8DetailBody').innerHTML = buildInsightDetailHTML(custName, d);
+    })
+    .catch(function(e) {
+      showToast('洞察加载失败: ' + e.message);
+    });
+}
+
+function buildInsightDetailHTML(custName, d) {
+  var ov = d.overview || {};
+  var basic = ov.basic || {};
+  var family = ov.family_lifecycle || {};
+  var asset = ov.asset_structure || {};
+  var income = ov.income_pattern || {};
+  var riskP = ov.risk_profile || {};
+  var engage = ov.engagement || {};
+  var net = ov.relationship_network || {};
+  var opps = ov.existing_opportunities || {};
+  var changeSignals = d.change_signals || [];
+  var riskSignals = d.risk_signals || [];
+  var riskLevel = d.risk_level || 'green';
+
+  var riskColor = {green:'#27ae60', yellow:'#f39c12', orange:'#e67e22', red:'#e74c3c'};
+  var riskLabel = {green:'低风险', yellow:'关注', orange:'预警', red:'高风险'};
+
+  var html = '';
+
+  // 风险等级横幅
+  html += '<div style="background:' + (riskColor[riskLevel] || '#ccc') + '15;border-left:4px solid ' + (riskColor[riskLevel] || '#ccc') + ';padding:10px var(--sp-sm);margin-bottom:var(--sp-md);border-radius:0 var(--radius-sm) var(--radius-sm) 0;display:flex;justify-content:space-between;align-items:center">';
+  html += '<span style="font-weight:var(--fw-bold)">' + custName + ' · 洞察快照</span>';
+  html += '<span style="font-size:var(--fs-small);color:' + (riskColor[riskLevel] || '#ccc') + ';font-weight:var(--fw-bold)">' + (riskLabel[riskLevel] || riskLevel) + '</span>';
+  html += '</div>';
+
+  // 生成时间
+  if (d.generated_at) {
+    html += '<div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:var(--sp-md)">生成时间：' + d.generated_at.substring(0, 10) + '</div>';
+  }
+
+  // 客户速览
+  html += '<div class="od-section"><div class="od-section-title">📋 客户速览</div>';
+  html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-bottom:8px">' + (basic.summary || '') + '</div>';
+
+  // 基本信息
+  html += '<table style="width:100%;font-size:var(--fs-small);border-collapse:collapse">';
+  html += '<tr><td style="color:var(--color-text-tertiary);padding:3px 0;width:35%">年龄/性别</td><td>' + (basic.age || '--') + '岁 · ' + (basic.gender || '--') + '</td></tr>';
+  html += '<tr><td style="color:var(--color-text-tertiary);padding:3px 0">职业</td><td>' + (basic.occupation || '--') + '</td></tr>';
+  html += '<tr><td style="color:var(--color-text-tertiary);padding:3px 0">等级</td><td>' + (basic.tier || '--') + '</td></tr>';
+  html += '<tr><td style="color:var(--color-text-tertiary);padding:3px 0">总资产</td><td>' + ((basic.total_aum || 0)/10000).toFixed(1) + '万</td></tr>';
+  html += '</table>';
+  html += '</div>';
+
+  // 家庭生命周期
+  html += '<div class="od-section"><div class="od-section-title">👨‍👩‍👧 家庭生命周期</div>';
+  html += '<div style="font-size:var(--fs-small)">阶段：' + (family.lifecycle_tag || '--') + '</div>';
+  if (family.financial_needs && family.financial_needs.length > 0) {
+    html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-top:4px">财务需求：' + family.financial_needs.join('、') + '</div>';
+  }
+  html += '</div>';
+
+  // 资产结构
+  html += '<div class="od-section"><div class="od-section-title">💰 资产结构</div>';
+  html += '<div style="font-size:var(--fs-small)">风格：' + (asset.style_tag || '--') + '</div>';
+  html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary)">总持仓：' + ((asset.total_holdings || 0)/10000).toFixed(1) + '万</div>';
+  html += '</div>';
+
+  // 收入模式
+  html += '<div class="od-section"><div class="od-section-title">📊 收入模式</div>';
+  html += '<div style="font-size:var(--fs-small)">月均入账：' + ((income.monthly_avg_in || 0)/10000).toFixed(1) + '万 · 模式：' + (income.pattern_tag || '--') + '</div>';
+  html += '</div>';
+
+  // 互动情况
+  html += '<div class="od-section"><div class="od-section-title">📱 互动情况</div>';
+  html += '<div style="font-size:var(--fs-small)">近30天登录：' + (engage.recent_30d_logins || 0) + '次 · ' + (engage.engagement_tag || '--') + '</div>';
+  html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary)">上次联络：' + (engage.last_contact_days != null ? engage.last_contact_days + '天前' : '--') + '</div>';
+  html += '</div>';
+
+  // 变化信号
+  html += '<div class="od-section"><div class="od-section-title">🔔 变化信号 (' + changeSignals.length + ')</div>';
+  if (changeSignals.length === 0) {
+    html += '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary)">暂无变化信号</div>';
+  } else {
+    changeSignals.forEach(function(s) {
+      var sevColor = s.severity === '高' ? '#e74c3c' : (s.severity === '中' ? '#e67e22' : '#f39c12');
+      html += '<div style="background:#f8f9fb;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:6px;border-left:3px solid ' + sevColor + '">';
+      html += '<div style="font-size:var(--fs-small);font-weight:var(--fw-bold)">' + s.title + '</div>';
+      html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-top:2px">' + s.detail + '</div>';
+      if (s.suggested_action) {
+        html += '<div style="font-size:10px;color:var(--color-primary);margin-top:4px">💡 ' + s.suggested_action + '</div>';
+      }
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 风险信号
+  html += '<div class="od-section"><div class="od-section-title">⚠️ 风险信号 (' + riskSignals.length + ')</div>';
+  if (riskSignals.length === 0) {
+    html += '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary)">暂无风险信号</div>';
+  } else {
+    riskSignals.forEach(function(s) {
+      var lvlColor = s.level === 'high' ? '#e74c3c' : (s.level === 'medium' ? '#e67e22' : '#f39c12');
+      html += '<div style="background:#f8f9fb;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:6px;border-left:3px solid ' + lvlColor + '">';
+      html += '<div style="font-size:var(--fs-small);font-weight:var(--fw-bold)">' + s.title + '</div>';
+      html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-top:2px">' + s.detail + '</div>';
+      if (s.suggested_action) {
+        html += '<div style="font-size:10px;color:var(--color-primary);margin-top:4px">💡 ' + s.suggested_action + '</div>';
+      }
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  return html;
+}
 
 // ---- API 画像缓存标记 (确保 apiGetProfile 写入时携带) ----
 // 注意: apiGetProfile 在 API 加载器 IIFE 中定义, 通过 window.apiGetProfile 暴露
@@ -7753,32 +9150,98 @@ var w8AiQueries = [];
 var prodAiQueries = [];
 
 // ========================================
-//   W9 日程管理
+//   W9 日程管理（API 数据驱动）
 // ========================================
 var w9View = '月';
-var w9Date = new Date(2026, 6, 16); // July 16, 2026
-var w9SelectedDay = 16;
+var w9Date = new Date(2026, 6, 18);
+var w9SelectedDay = 18;
 
-var w9DayData = {
-  morning: [
-    { time:'09:00-10:30', name:'产品到期', desc:'3位客户 · 约1.5h' },
-    { time:'10:30-11:00', name:'大额异动', desc:'1位客户 · 约0.5h' }
-  ],
-  afternoon: [
-    { time:'14:00-14:30', name:'贷款逾期', desc:'1位客户 · 约0.5h' },
-    { time:'14:30-15:00', name:'生日提醒', desc:'2位客户 · 约0.5h' },
-    { time:'15:00-16:00', name:'联络超期', desc:'5位客户 · 约1h' }
-  ]
-};
-var w9EventDays = {15:['normal'],16:['normal','opp'],17:['normal'],18:['normal'],19:['normal']};
+// 日程数据缓存
+var w9DayData = { morning: [], afternoon: [], total_minutes: 0 };
+var w9EventDays = {};  // {day: ["normal","opp","report","meeting"]}
+var w9ScheduleLoaded = false;
 
 function openW9() {
   w9View = '月';
-  w9SelectedDay = 16;
-  renderW9();
+  w9SelectedDay = w9Date.getDate();
   document.getElementById('w9Overlay').classList.add('open');
+  loadW9Schedule(w9Date);
 }
 function closeW9() { document.getElementById('w9Overlay').classList.remove('open'); }
+
+function loadW9Schedule(dateObj) {
+  var apiBase = window.API_BASE || 'http://localhost:8008';
+  var dateStr = dateObj.getFullYear() + '-' + String(dateObj.getMonth()+1).padStart(2,'0') + '-' + String(dateObj.getDate()).padStart(2,'0');
+  var y = dateObj.getFullYear(), m = dateObj.getMonth() + 1;
+
+  // 并行加载：日排程 + 月事件
+  var scheduleUrl = apiBase + '/api/schedule/' + dateStr + '?manager_id=' + (window.currentManagerId || 'M001');
+  var eventsUrl = apiBase + '/api/schedule/' + y + '/' + m + '/events?manager_id=' + (window.currentManagerId || 'M001');
+
+  Promise.all([
+    fetch(scheduleUrl).then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(eventsUrl).then(function(r){return r.json();}).catch(function(){return null;})
+  ]).then(function(results) {
+    var schedResp = results[0];
+    var eventsResp = results[1];
+
+    if (schedResp && schedResp.code === 0 && schedResp.data) {
+      var sd = schedResp.data;
+      w9DayData = {
+        morning: formatW9Tasks(sd.morning || [], 'morning'),
+        afternoon: formatW9Tasks(sd.afternoon || [], 'afternoon'),
+        total_minutes: sd.total_minutes || 0
+      };
+      w9ScheduleLoaded = true;
+    } else {
+      // API 不可用时保留静态兜底
+      if (!w9ScheduleLoaded) {
+        w9DayData = {
+          morning: [{time:'09:00-10:30', name:'产品到期', desc:'加载中...'},{time:'10:30-11:00', name:'大额异动', desc:'加载中...'}],
+          afternoon: [{time:'14:00-14:30', name:'贷款逾期', desc:'加载中...'},{time:'14:30-15:00', name:'生日提醒', desc:'加载中...'}],
+          total_minutes: 180
+        };
+      }
+    }
+
+    if (eventsResp && eventsResp.code === 0 && eventsResp.data && eventsResp.data.events) {
+      w9EventDays = eventsResp.data.events;
+    }
+
+    renderW9();
+  });
+}
+
+function formatW9Tasks(tasks, slot) {
+  // 将 ScheduleTask 列表格式化为 W9 视图需要的格式
+  var startTimes = {morning:'09:00', afternoon:'14:00'};
+  var currentMin = slot === 'morning' ? 9*60 : 14*60;
+
+  function minToStr(m) {
+    var h = Math.floor(m/60), mm = m%60;
+    return String(h).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  }
+
+  return tasks.map(function(t) {
+    var duration = t.estimated_duration_min || 15;
+    var endMin = currentMin + duration;
+    var timeStr = minToStr(currentMin) + '-' + minToStr(endMin);
+    var custCount = t.cust_count || 1;
+    var desc = custCount + '位客户 · 约' + (duration >= 60 ? Math.round(duration/60) + 'h' : duration + 'min');
+    currentMin = endMin + 5;  // 5min buffer between tasks
+
+    return {
+      time: timeStr,
+      name: t.type_name || '',
+      desc: desc,
+      task_id: t.task_id || '',
+      type_code: t.type_code || '',
+      cust_id: t.cust_id || 0,
+      cust_name: t.cust_name || '',
+      duration_min: duration
+    };
+  });
+}
 
 function renderW9() {
   var viewTabs = document.getElementById('w9ViewTabs');
@@ -7809,7 +9272,7 @@ function renderW9Month() {
   var y = w9Date.getFullYear(), m = w9Date.getMonth();
   var firstDay = new Date(y, m, 1).getDay();
   var daysInMonth = new Date(y, m+1, 0).getDate();
-  var today = 16;
+  var today = new Date().getDate();
 
   var html = '<div class="w9-calendar"><div class="w9-weekdays">' + ['日','一','二','三','四','五','六'].map(function(d){return '<span>'+d+'</span>';}).join('') + '</div>';
   html += '<div class="w9-days">';
@@ -7821,9 +9284,14 @@ function renderW9Month() {
     if (d === today) cls += ' today';
     if (d > 25) cls += ' other-month';
 
+    // 从 API 事件数据渲染小圆点
     var dots = '';
-    if (w9EventDays[d]) {
-      dots = '<div class="dot-row">' + w9EventDays[d].map(function(t){return '<span class="dot '+(t==='opp'?'opp':'normal')+'"></span>';}).join('') + '</div>';
+    var dayEvents = w9EventDays[d] || w9EventDays[String(d)] || [];
+    if (dayEvents.length > 0) {
+      dots = '<div class="dot-row">' + dayEvents.map(function(et) {
+        var dotClass = et === 'opp' ? 'opp' : (et === 'report' ? 'report' : (et === 'meeting' ? 'meeting' : 'normal'));
+        return '<span class="dot '+dotClass+'"></span>';
+      }).join('') + '</div>';
     }
 
     html += '<div class="'+cls+'" onclick="selectW9Day('+d+')"><span>'+d+'</span>'+dots+'</div>';
@@ -7834,28 +9302,54 @@ function renderW9Month() {
 }
 
 function renderW9DayList() {
+  var monthLabel = w9Date.getMonth()+1;
+  var taskCount = w9DayData.morning.length + w9DayData.afternoon.length;
+  var todayLabel = (w9SelectedDay === new Date().getDate()) ? '（今天）' : '';
   var html = '<div class="w9-day-list">';
-  html += '<div class="w9-day-title">7月'+w9SelectedDay+'日（今天）· 5 项待办</div>';
+  html += '<div class="w9-day-title">'+monthLabel+'月'+w9SelectedDay+'日'+todayLabel+' · '+taskCount+' 项待办</div>';
 
-  html += '<div class="w9-period-label">☀️ 上午</div>';
-  w9DayData.morning.forEach(function(t) {
-    html += '<div class="w9-task-card" onclick="showToast(\''+t.name+' → 打开处理面板\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name">📋 '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
-  });
+  if (w9DayData.morning.length > 0) {
+    html += '<div class="w9-period-label">☀️ 上午</div>';
+    w9DayData.morning.forEach(function(t) {
+      html += '<div class="w9-task-card" onclick="openW9TaskDetail(\''+t.task_id+'\', \''+t.type_code+'\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name">📋 '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
+    });
+  }
 
-  html += '<div class="w9-period-label">🌤 下午</div>';
-  w9DayData.afternoon.forEach(function(t) {
-    html += '<div class="w9-task-card" onclick="showToast(\''+t.name+' → 打开处理面板\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name">📋 '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
-  });
+  if (w9DayData.afternoon.length > 0) {
+    html += '<div class="w9-period-label">🌤 下午</div>';
+    w9DayData.afternoon.forEach(function(t) {
+      html += '<div class="w9-task-card" onclick="openW9TaskDetail(\''+t.task_id+'\', \''+t.type_code+'\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name">📋 '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
+    });
+  }
 
   html += '<button class="w9-add-btn" onclick="showToast(\'打开添加日程表单\')">＋ 添加日程</button>';
   html += '</div>';
   return html;
 }
 
+function openW9TaskDetail(taskId, typeCode) {
+  showToast(typeCode + ' → 打开处理面板');
+}
+
 function switchW9View(v) { w9View = v; renderW9(); }
-function selectW9Day(d) { w9SelectedDay = d; showToast('查看 7月'+d+'日待办'); }
-function w9PrevMonth() { w9Date.setMonth(w9Date.getMonth()-1); renderW9(); }
-function w9NextMonth() { w9Date.setMonth(w9Date.getMonth()+1); renderW9(); }
+
+function selectW9Day(d) {
+  w9SelectedDay = d;
+  w9Date.setDate(d);
+  loadW9Schedule(w9Date);
+}
+
+function w9PrevMonth() {
+  w9Date.setMonth(w9Date.getMonth()-1);
+  w9SelectedDay = 1;
+  loadW9Schedule(w9Date);
+}
+
+function w9NextMonth() {
+  w9Date.setMonth(w9Date.getMonth()+1);
+  w9SelectedDay = 1;
+  loadW9Schedule(w9Date);
+}
 
 // ========================================
 //   消息通知
@@ -7913,70 +9407,8 @@ function readAllMsg() {
 // ========================================
 //   产品搜索页
 // ========================================
-var prodSearchData = [
-  // ==== 理财类 ====
-  { id:'lc01', type:'理财', name:'XX悦享周期理财', icon:'📊', risk:'R2', riskLabel:'中低风险', min:1, minUnit:'万', term:'90天', termType:'封闭式',
-    benchmark:'业绩比较基准 3.8%-4.2%', histYield:'近1年 4.0%', manager:'XX资管团队', scale:'58亿',
-    investScope:'主要投资于国债、金融债、高等级信用债等固定收益类资产，少量配置货币市场工具。',
-    redeem:'到期自动赎回，T+2到账', fee:'管理费0.3%/年，无申购赎回费',
-    highlights:'成立3年历史业绩稳定 · 每月可赎回 · 波动率低', aiFit:5, aiReason:'3位客户定存即将到期，适合稳健承接' },
-  { id:'lc02', type:'理财', name:'ZZ稳健增长A', icon:'📊', risk:'R2', riskLabel:'中低风险', min:1, minUnit:'万', term:'180天', termType:'定期开放',
-    benchmark:'业绩比较基准 3.5%-3.9%', histYield:'近1年 3.6%', manager:'ZZ固收团队', scale:'32亿',
-    investScope:'以利率债和同业存单为主，辅以少量ABS和中期票据，追求稳健增值。',
-    redeem:'每半年开放赎回，开放期5个工作日', fee:'管理费0.25%/年',
-    highlights:'评级AAA · 回撤控制优秀 · 适合保守型客户', aiFit:4, aiReason:'匹配王建国风险偏好，可作为定存升级选择' },
-  { id:'lc03', type:'理财', name:'YY现金管理', icon:'📊', risk:'R1', riskLabel:'低风险', min:1, minUnit:'元', term:'活期', termType:'开放式',
-    benchmark:'七日年化 2.1%-2.7%', histYield:'七日年化 2.4%', manager:'YY流动性团队', scale:'120亿',
-    investScope:'主要投资于短期货币市场工具，包括同业存单、短期国债、央行票据等。',
-    redeem:'T+0到账，单日快速赎回上限1万元', fee:'无申购赎回费',
-    highlights:'随存随取 · T+0极速到账 · 闲钱管理首选', aiFit:5, aiReason:'适合所有客户作为活期替代方案' },
-
-  // ==== 基金类 ====
-  { id:'jj01', type:'基金', name:'XX科技混合', icon:'📈', risk:'R4', riskLabel:'中高风险', min:1000, minUnit:'元', term:'开放式', termType:'开放式',
-    benchmark:'近1年 +18.6%', histYield:'成立以来 +62.3%（3年）', manager:'张华（5年经验）', scale:'18亿',
-    investScope:'主要投资于A股科技板块，覆盖半导体、AI、新能源等领域，股票仓位60%-95%。',
-    redeem:'T+3到账', fee:'申购费1.2%，管理费1.5%/年',
-    highlights:'聚焦科技赛道 · 基金经理5年经验 · 支持定投', aiFit:3, aiReason:'适合进取型客户陈晓燕配置卫星仓位' },
-  { id:'jj02', type:'基金', name:'YY消费精选', icon:'📈', risk:'R3', riskLabel:'中风险', min:1000, minUnit:'元', term:'开放式', termType:'开放式',
-    benchmark:'近1年 +12.3%', histYield:'成立以来 +35.8%（2年）', manager:'李明（8年经验）', scale:'42亿',
-    investScope:'投资于消费升级主题相关的上市公司，包括食品饮料、家电、新零售等领域。',
-    redeem:'T+3到账', fee:'申购费1.0%，管理费1.2%/年',
-    highlights:'消费升级主题 · 持仓分散 · 季度分红', aiFit:4, aiReason:'适合孙丽等稳健偏成长的客户' },
-  { id:'jj03', type:'基金', name:'ZZ债券基金A', icon:'📈', risk:'R2', riskLabel:'中低风险', min:100, minUnit:'元', term:'开放式', termType:'开放式',
-    benchmark:'近1年 +5.2%', histYield:'成立以来 +18.6%（3年）', manager:'王芳（6年经验）', scale:'65亿',
-    investScope:'80%以上投资于国债、金融债、高等级信用债，剩余配置可转债增强收益。',
-    redeem:'T+2到账', fee:'申购费0.6%，管理费0.8%/年',
-    highlights:'纯债策略 · 波动极低 · 理财替代首选', aiFit:5, aiReason:'适合风险偏好低的财富客户配置底仓' },
-
-  // ==== 存款类 ====
-  { id:'ck01', type:'存款', name:'定期存款·1年期', icon:'🏦', risk:'R1', riskLabel:'保本', min:50, minUnit:'元', term:'1年', termType:'固定期限',
-    benchmark:'年利率 1.80%', histYield:'1.80%（固定）', manager:'-', scale:'-',
-    investScope:'银行存款，受存款保险条例保护，本息50万以内全额保障。',
-    redeem:'到期自动转存，提前支取按活期0.2%计息', fee:'无',
-    highlights:'保本保息 · 存款保险保障 · 适合保守型客户', aiFit:8, aiReason:'基础配置，几乎所有客户都持有' },
-  { id:'ck02', type:'存款', name:'定期存款·3年期', icon:'🏦', risk:'R1', riskLabel:'保本', min:50, minUnit:'元', term:'3年', termType:'固定期限',
-    benchmark:'年利率 2.60%', histYield:'2.60%（固定）', manager:'-', scale:'-',
-    investScope:'银行存款，受存款保险条例保护，本息50万以内全额保障。',
-    redeem:'到期自动转存，提前支取按活期0.2%计息', fee:'无',
-    highlights:'利率更高 · 锁定长期收益 · 存款保险保障', aiFit:6, aiReason:'适合中老年客户锁定长期收益' },
-  { id:'ck03', type:'存款', name:'大额存单·3年期', icon:'🏦', risk:'R1', riskLabel:'保本', min:20, minUnit:'万', term:'3年', termType:'固定期限',
-    benchmark:'年利率 3.10%', histYield:'3.10%（固定）', manager:'-', scale:'-',
-    investScope:'银行大额存单，受存款保险条例保护，可转让。',
-    redeem:'支持提前支取（靠档计息），可转让给他人', fee:'无',
-    highlights:'大额高息 · 可转让 · 存款保险保障', aiFit:7, aiReason:'适合AUM>50万客户作为压舱石配置' },
-
-  // ==== 保险类 ====
-  { id:'bx01', type:'保险', name:'XX教育年金', icon:'🛡️', risk:'R1', riskLabel:'低风险', min:1, minUnit:'万/年', term:'至18岁', termType:'年金',
-    benchmark:'保证收益 3.2%', histYield:'3.2%（保证）', manager:'XX人寿', scale:'-',
-    investScope:'年金保险，专款专用，被保人18岁时开始领取教育金。',
-    redeem:'缴费期满后退保按现金价值表，建议持有至满期', fee:'无显性费用',
-    highlights:'专款专用 · 18岁领取 · 免税优惠', aiFit:4, aiReason:'适合王建国有子女教育需求的客户' },
-  { id:'bx02', type:'保险', name:'YY增额终身寿', icon:'🛡️', risk:'R1', riskLabel:'低风险', min:5, minUnit:'万/年', term:'终身', termType:'寿险',
-    benchmark:'保额年增 3.5%', histYield:'现金价值年增~3.5%', manager:'YY人寿', scale:'-',
-    investScope:'增额终身寿险，保额和现金价值逐年增长，兼具保障和储蓄功能。',
-    redeem:'可减保取现，建议持有5年以上', fee:'无显性费用',
-    highlights:'保额复利增长 · 灵活减保 · 财富传承', aiFit:3, aiReason:'适合高净值客户孙丽做财富传承规划' }
-];
+// 产品搜索数据 — API 加载（静态数据仅兜底）
+var prodSearchData = [];
 
 function openProdSearch() {
   prodState = { typeFilter:'全部', riskFilter:'全部', sortBy:'aiFit', selectedIds:[] };
@@ -8331,9 +9763,10 @@ function clearGsSearch() {
 }
 
 // ============================================================
-// 数据源说明: 默认从 http://localhost:8000 API 获取实时数据
+// 数据源说明: 默认从 http://localhost:8008 API 获取实时数据
 // 关闭 API: 在浏览器控制台设置 USE_API = false 后刷新页面
 // ============================================================
 </script>
+
 </body>
 </html>

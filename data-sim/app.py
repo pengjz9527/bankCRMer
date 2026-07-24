@@ -6,8 +6,15 @@ import json, random, sqlite3, os, sys
 from datetime import date, timedelta, datetime
 from pathlib import Path
 
-# 添加当前目录到 path 以导入 templates
+# 添加当前目录到 path 以导入 templates 和 agentos
 sys.path.insert(0, str(Path(__file__).parent))
+
+# AgentOS 导入
+from agentos.agents.opportunity_mining import create_opp_mining_agent
+from agentos.agents.battle_package import create_battle_pkg_agent
+from agentos.harness import AgentContext
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(levelname)s: %(message)s')
 
 # ============================================================
 # 配置
@@ -60,7 +67,8 @@ CREATE TABLE IF NOT EXISTS family_info (
     child_education TEXT,
     study_abroad_intent TEXT DEFAULT '无',
     study_abroad_target_country TEXT,
-    spouse_has_income INTEGER
+    spouse_has_income INTEGER,
+    updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS business_info (
@@ -95,7 +103,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     cust_id INTEGER REFERENCES customers(id),
     txn_date TEXT NOT NULL, txn_type TEXT NOT NULL CHECK(txn_type IN ('in','out')),
-    amount REAL NOT NULL, counterparty TEXT, summary TEXT, channel TEXT
+    amount REAL NOT NULL, counterparty TEXT, summary TEXT, channel TEXT,
+    counterparty_cust_id INTEGER REFERENCES customers(id)
 );
 
 CREATE TABLE IF NOT EXISTS loans (
@@ -130,6 +139,20 @@ CREATE TABLE IF NOT EXISTS customer_relations (
     relation_type TEXT NOT NULL, evidence TEXT, evidence_field TEXT
 );
 
+-- 管户关系：客户经理与客户的归属关系
+CREATE TABLE IF NOT EXISTS cust_manager_rel (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER NOT NULL REFERENCES customers(id),
+    manager_id TEXT NOT NULL,
+    manager_name TEXT NOT NULL,
+    assigned_date TEXT NOT NULL DEFAULT (date('now')),
+    is_primary INTEGER DEFAULT 1,
+    UNIQUE(cust_id, manager_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cmr_cust ON cust_manager_rel(cust_id);
+CREATE INDEX IF NOT EXISTS idx_cmr_mgr ON cust_manager_rel(manager_id);
+
 CREATE TABLE IF NOT EXISTS communications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     cust_id INTEGER REFERENCES customers(id),
@@ -143,6 +166,15 @@ CREATE TABLE IF NOT EXISTS risk_assessments (
     cust_id INTEGER UNIQUE REFERENCES customers(id),
     test_result TEXT NOT NULL, valid_until TEXT, tested_date TEXT NOT NULL,
     wealth_score INTEGER, score_time TEXT,
+    dimension_asset REAL, dimension_income REAL, dimension_social REAL
+);
+
+CREATE TABLE IF NOT EXISTS risk_assessment_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER REFERENCES customers(id),
+    test_result TEXT NOT NULL,
+    tested_date TEXT NOT NULL,
+    wealth_score INTEGER,
     dimension_asset REAL, dimension_income REAL, dimension_social REAL
 );
 
@@ -197,6 +229,29 @@ CREATE TABLE IF NOT EXISTS battle_package_clues (
     opening_script TEXT NOT NULL, products TEXT NOT NULL DEFAULT '[]',
     deviation_branches TEXT
 );
+
+CREATE TABLE IF NOT EXISTS opportunities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    opp_id TEXT NOT NULL UNIQUE,
+    cust_id INTEGER REFERENCES customers(id),
+    cust_name TEXT NOT NULL,
+    opportunity_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    confidence REAL NOT NULL DEFAULT 0,
+    estimated_value REAL NOT NULL DEFAULT 0,
+    reasoning TEXT NOT NULL,
+    suggested_action TEXT,
+    priority TEXT DEFAULT '常规',
+    source TEXT NOT NULL DEFAULT 'AI-opp_mining',
+    source_method TEXT,
+    trigger_signals TEXT,
+    status TEXT DEFAULT '待跟进',
+    generated_at TEXT NOT NULL,
+    manager_id TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_opp_cust ON opportunities(cust_id);
+CREATE INDEX IF NOT EXISTS idx_opp_gen ON opportunities(generated_at);
 
 CREATE INDEX IF NOT EXISTS idx_cust_tier ON customers(tier);
 CREATE INDEX IF NOT EXISTS idx_h_cust ON holdings(cust_id);
@@ -278,8 +333,8 @@ def gen_all(db):
                 study_i = "已留学" if child_edu == "留学中" else ("有" if random.random() < fam.get("study_abroad_intent_prob", 0.1) else "无")
                 country = random.choice(["美国","英国","澳大利亚","加拿大","新加坡"]) if study_i in ("有","已留学") else None
             spouse_inc = random.random() < fam.get("spouse_has_income_prob", 0.5) if married else None
-            cur.execute("INSERT INTO family_info VALUES (?,?,?,?,?,?,?,?,?,?)",
-                        (cust_id, cust_id, int(married), int(children), child_count, child_age, child_edu, study_i, country, int(spouse_inc) if spouse_inc is not None else None))
+            cur.execute("INSERT INTO family_info VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (cust_id, cust_id, int(married), int(children), child_count, child_age, child_edu, study_i, country, int(spouse_inc) if spouse_inc is not None else None, TODAY.isoformat()))
 
             # business_info
             if random.random() < tmpl.get("has_business_info_probt", 0):
@@ -328,6 +383,11 @@ def gen_all(db):
                     pur = (TODAY - timedelta(days=random.randint(30,365))).isoformat()
                     cur.execute("INSERT INTO holdings VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                                 (None, cust_id, ptype, pn, pc, amt, yld, risk, mat, pur, "持有中"))
+            # 活期存款: 剩余AUM中至少有活期余额
+            current_amt = max(0, int(remaining * random.uniform(0.5, 1.0)))
+            if current_amt > 0:
+                cur.execute("INSERT INTO holdings VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (None, cust_id, "存款", "活期存款", "CURRENT001", current_amt, 0.35, "R1", None, (TODAY - timedelta(days=random.randint(90,730))).isoformat(), "持有中"))
 
             # loans
             if random.random() < tmpl.get("loan_prob", 0.1):
@@ -375,37 +435,37 @@ def gen_all(db):
                     amt = round(random.uniform(100, aum * 0.02) if is_in else random.uniform(50, aum * 0.03), 2)
                     cp = random.choice(["支付宝","微信","他行账户","本行账户","公司","个人"])
                     s = random.choice(["工资","奖金","报销","退款","转账","理财赎回"]) if is_in else random.choice(["消费","转账","取现","还款","缴费","理财购买"])
-                    cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)",
-                                (None, cust_id, d.isoformat(), "in" if is_in else "out", amt, cp, s, random.choice(["手机银行","网银","柜台","ATM"])))
+                    cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
+                                (None, cust_id, d.isoformat(), "in" if is_in else "out", amt, cp, s, random.choice(["手机银行","网银","柜台","ATM"]), None))
                 d += timedelta(days=1)
 
             # signal injection
             if random.random() < 0.08:
-                cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)",
+                cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
                             (None, cust_id, (TODAY-timedelta(days=1)).isoformat(), "out",
-                             round(random.uniform(50000,300000),2), "他行账户", "大额转出", "手机银行"))
+                             round(random.uniform(50000,300000),2), "他行账户", "大额转出", "手机银行", None))
             if tmpl.get("salary_disbursement", False):
                 for off in range(1, 8):
                     if random.random() < 0.5:
-                        cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)",
+                        cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
                                     (None, cust_id, (TODAY-timedelta(days=off)).isoformat(), "in",
-                                     round(random.uniform(3000,20000),2), "公司", "工资", "手机银行"))
+                                     round(random.uniform(3000,20000),2), "公司", "工资", "手机银行", None))
             if emp_status in ("无业","待业"):
                 for m in range(1, 7):
                     if random.random() < 0.5:
-                        cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)",
+                        cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
                                     (None, cust_id, (TODAY-timedelta(days=30*m)).isoformat(), "in",
-                                     round(random.uniform(1500,3500),2), "社保局", "失业金", "手机银行"))
+                                     round(random.uniform(1500,3500),2), "社保局", "失业金", "手机银行", None))
             if tmpl.get("type_name") == "F·小微企业主":
                 for m in range(1, 4):
-                    cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)",
+                    cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
                                 (None, cust_id, (TODAY-timedelta(days=15*m)).isoformat(), "in",
                                  round(random.uniform(5000,80000),2), "企业账户",
-                                 random.choice(["货款","采购款","结算款","预付款","服务费"]), "网银"))
+                                 random.choice(["货款","采购款","结算款","预付款","服务费"]), "网银", None))
             if tmpl.get("other_bank_transfer_prob", 0) > 0 and random.random() < tmpl["other_bank_transfer_prob"]:
-                cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)",
+                cur.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
                             (None, cust_id, (TODAY-timedelta(days=random.randint(1,30))).isoformat(), "out",
-                             round(random.uniform(10000,200000),2), "他行账户", "他行转账", "手机银行"))
+                             round(random.uniform(10000,200000),2), "他行账户", "他行转账", "手机银行", None))
 
             cust_id += 1
 
@@ -443,12 +503,36 @@ def gen_all(db):
     # risk_assessments
     for cid in all_custs:
         if random.random() < 0.65:
+            # 生成 1-3 条历史快照
+            hist_count = random.randint(1, 3)
+            for h in range(hist_count):
+                hist_date = (TODAY - timedelta(days=random.randint(365, 1095))).isoformat()
+                cur.execute("INSERT INTO risk_assessment_history VALUES (?,?,?,?,?,?,?,?)",
+                            (None, cid,
+                             random.choice(RISK_RESULTS[:3]),
+                             hist_date,
+                             int(random.uniform(20, 95)),
+                             round(random.uniform(10, 40), 2),
+                             round(random.uniform(10, 35), 2),
+                             round(random.uniform(5, 25), 2)))
+            # 当前风测结果
+            tested = (TODAY - timedelta(days=random.randint(30, 365))).isoformat()
             cur.execute("INSERT INTO risk_assessments VALUES (?,?,?,?,?,?,?,?,?,?)",
                         (None, cid, random.choice(RISK_RESULTS[:3]),
                          (TODAY+timedelta(days=365)).isoformat(),
-                         (TODAY-timedelta(days=random.randint(30,365))).isoformat(),
+                         tested,
                          int(random.uniform(20,95)), TODAY.isoformat(),
                          round(random.uniform(10,40),2), round(random.uniform(10,35),2), round(random.uniform(5,25),2)))
+
+    # counterparty_cust_id 后处理: 为 counterparty="本行账户" 的流水随机匹配行内客户
+    other_custs = all_custs.copy()
+    txn_rows = cur.execute("SELECT id, cust_id FROM transactions WHERE counterparty = '本行账户'").fetchall()
+    for tid, from_cust in txn_rows:
+        # 从其他客户中随机选一个(排除自己)
+        pool = [c for c in other_custs if c != from_cust]
+        if pool:
+            cur.execute("UPDATE transactions SET counterparty_cust_id = ? WHERE id = ?",
+                        (random.choice(pool), tid))
 
     # benefits
     bp = [("机场贵宾厅","出行","每年6次免费使用","财富","稀有"),
@@ -499,6 +583,45 @@ def gen_all(db):
                 cur.execute("INSERT INTO customer_activity_participation VALUES (?,?,?,?,?,?)",
                             (None, cid, act[0], pd, random.choice(["已参与","已完成"]), random.choice(["客户反馈积极","","待跟进"])))
 
+    # === 管户关系分配 ===
+    # 定义 3 位客户经理
+    managers = [
+        ("M001", "李建国"),
+        ("M002", "王芳"),
+        ("M003", "张伟"),
+    ]
+    for mid, mname in managers:
+        cur.execute("INSERT OR IGNORE INTO cust_manager_rel (cust_id, manager_id, manager_name, assigned_date, is_primary) VALUES (?,?,?,?,?)",
+                    (0, mid, mname, TODAY.isoformat(), 1))  # dummy row to init
+    # 按客户 tier 分配管户（高价值客户优先分配给资深经理 M001）
+    tier_order = ["私行", "高净值", "财富", "优质", "万元户", "千元户", "千元以下"]
+    cust_rows = cur.execute("SELECT id, tier, total_aum FROM customers ORDER BY total_aum DESC").fetchall()
+    primary_done = set()
+    for cid, tier, aum in cust_rows:
+        # 主客户经理：高价值 → M001, 中等 → M002, 低价值 → M003
+        if aum and aum >= 200000:
+            primary_mgr = "M001"
+        elif aum and aum >= 50000:
+            primary_mgr = "M002"
+        else:
+            primary_mgr = "M003"
+        primary_name = dict(managers)[primary_mgr]
+        cur.execute("INSERT OR IGNORE INTO cust_manager_rel (cust_id, manager_id, manager_name, assigned_date, is_primary) VALUES (?,?,?,?,?)",
+                    (cid, primary_mgr, primary_name, (TODAY - timedelta(days=random.randint(30,365))).isoformat(), 1))
+        primary_done.add(cid)
+
+    # 部分高价值客户增加协办经理
+    for cid in primary_done:
+        c = cur.execute("SELECT total_aum FROM customers WHERE id=?", (cid,)).fetchone()
+        if c and (c[0] or 0) >= 50000 and random.random() < 0.3:
+            # 选一个不同于主经理的协办经理
+            other_mgrs = [m for m in managers if m[0] != primary_mgr]
+            co_mgr = random.choice(other_mgrs)
+            cur.execute("INSERT OR IGNORE INTO cust_manager_rel (cust_id, manager_id, manager_name, assigned_date, is_primary) VALUES (?,?,?,?,?)",
+                        (cid, co_mgr[0], co_mgr[1], (TODAY - timedelta(days=random.randint(7,90))).isoformat(), 0))
+
+    print(f"  管户关系: {len(primary_done)} 客户分配完成")
+
     # battle_packages
     opp_types = ["产品到期承接","代发到账配置","流失预警挽回","基金挖掘","教育金规划","经营贷续贷"]
     candidates = random.sample(all_custs, min(15, len(all_custs)))
@@ -540,6 +663,7 @@ def gen_all(db):
     # stats
     tables = ["customers","family_info","business_info","employment_status","holdings","transactions","loans",
               "loan_rejections","behavior_logs","customer_relations","communications","risk_assessments",
+              "risk_assessment_history",
               "product_catalog","customer_benefits","available_activities","customer_activity_participation",
               "battle_packages","battle_package_clues"]
     for t in tables:
@@ -570,6 +694,7 @@ def main():
     import uvicorn
     from fastapi import FastAPI, Query, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import StreamingResponse
     import asyncio
     from concurrent.futures import ThreadPoolExecutor
 
@@ -827,6 +952,27 @@ def main():
         manual_pool = await aq("SELECT c.id,c.name,c.total_aum FROM customers c WHERE c.total_aum>100000 ORDER BY RANDOM() LIMIT 3")
         for r in (manual_pool or []):
             opps.append({"opp_id":f"OPP_MAN_{r['id']}","source":"手动创建","cust_id":r["id"],"cust_name":r["name"],"type":"大额配置建议","estimated_value":float(r["total_aum"])*0.3,"confidence":0.5,"reasoning":f"客户AUM{float(r['total_aum'])/10000:.0f}万, 资产以存款为主, 建议引导理财配置","status":"待跟进"})
+
+        # AI 智能挖掘: 从 opportunities 表读取已入库的 AI 商机
+        ai_opps = await aq(
+            "SELECT * FROM opportunities WHERE source='AI-opp_mining' AND status='待跟进' ORDER BY confidence DESC, generated_at DESC LIMIT 10"
+        )
+        for r in (ai_opps or []):
+            opps.append({
+                "opp_id": r["opp_id"],
+                "source": "AI挖掘",
+                "cust_id": r["cust_id"],
+                "cust_name": r["cust_name"],
+                "type": r["opportunity_type"],
+                "estimated_value": r["estimated_value"],
+                "confidence": r["confidence"],
+                "reasoning": r["reasoning"],
+                "status": r["status"],
+                "suggested_action": r.get("suggested_action", ""),
+                "source_method": r.get("source_method", ""),
+                "generated_at": r.get("generated_at", ""),
+            })
+
         return ok({"opportunities":opps,"summary":{"total_count":len(opps),"total_value":sum(o["estimated_value"] for o in opps),"rule_based_count":sum(1 for o in opps if o["source"]=="规则匹配"),"ai_mined_count":sum(1 for o in opps if o["source"]=="AI挖掘"),"manual_count":sum(1 for o in opps if o["source"]=="手动创建")}})
 
     @app.get("/api/battle-packages")
@@ -880,6 +1026,372 @@ def main():
         await ae("INSERT INTO battle_package_clues (clue_id,bp_id,priority,title,discovery_basis,strategy,opening_script,products) VALUES (?,?,?,?,?,?,?,?)",
                   (f"CL{bpid}01",bpid,"中","商机跟进","系统生成","以商机为切入",f"{cust['name']}您好……",'[{"name":"XX稳健理财","type":"理财","risk":"R2","yield":3.5}]'))
         return ok({"bp_id":bpid,"mode":"面谈版","generated_at":datetime.now().isoformat(),"expires_at":(TODAY+timedelta(days=7)).isoformat()})
+
+    # ================================================================
+    # AI Agent API
+    # ================================================================
+
+    # 初始化 OppMiningAgent
+    opp_mining_agent = create_opp_mining_agent()
+    print(f"AI Agent loaded: {opp_mining_agent.meta.name} (model={opp_mining_agent.adapter.config.model_name})")
+
+    # 初始化 BattlePkgAgent
+    battle_pkg_agent = create_battle_pkg_agent()
+    print(f"AI Agent loaded: {battle_pkg_agent.meta.name} (model={battle_pkg_agent.adapter.config.model_name})")
+
+    @app.post("/api/ai/opportunity/mining")
+    async def ai_opportunity_mining(body: dict):
+        """
+        手动触发商机挖掘（客户经理在 APP 点击"AI 挖掘"）
+
+        Request:
+          { "manager_id": "M001" }
+
+        Response:
+          { "status": "completed"|"no_new_data", "signals": N, "highlights": [...], "message": "..." }
+        """
+        manager_id = body.get("manager_id", "default")
+        ctx = AgentContext(manager_id=manager_id, scope="on_demand")
+
+        # 异步执行挖掘
+        result = await opp_mining_agent.mine_on_demand(ctx, manager_id=manager_id)
+
+        # 入库商机信号
+        if result.get("all_signals"):
+            now = datetime.now().isoformat()
+            ts = int(datetime.now().timestamp())
+            for i, s in enumerate(result["all_signals"]):
+                opp_id = f"OPP_AI_{s['customer_id']}_{ts}_{i}"
+                await ae(
+                    """INSERT OR IGNORE INTO opportunities
+                       (opp_id, cust_id, cust_name, opportunity_type, title, confidence,
+                        estimated_value, reasoning, suggested_action, priority, source,
+                        source_method, trigger_signals, generated_at, manager_id)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (opp_id, s["customer_id"], s["customer_name"], s["opportunity_type"],
+                     s["title"], s["confidence"], s["estimated_value"], s["reasoning"],
+                     s.get("suggested_action", ""), s["priority"], s["source"],
+                     s.get("source_method", ""), json.dumps(s.get("trigger_signals", []), ensure_ascii=False),
+                     now, manager_id),
+                )
+
+            return ok({
+                "status": result["status"],
+                "total_customers": result["total_customers"],
+                "skipped": result.get("skipped", 0),
+                "signals": result["signals"],
+                "high_confidence": result.get("high_confidence", 0),
+                "highlights": result.get("highlights", []),
+            })
+        else:
+            return ok({
+                "status": result["status"],
+                "message": result.get("message", "未发现新商机"),
+                "signals": 0,
+            })
+
+    @app.post("/api/ai/opportunity/mining/stream")
+    async def ai_opportunity_mining_stream(body: dict):
+        """
+        SSE 流式商机挖掘：实时推送进度事件
+
+        Request: { "manager_id": "M001" }
+        SSE Events:
+          event: phase      → {"phase":"start",...}
+          event: batch_progress → {"batch":1,"customers":[...],"batch_signals":3,...}
+          event: done       → {"status":"completed"|"no_new_data",...}
+          event: error      → {"message":"..."}
+        """
+        manager_id = body.get("manager_id", "default")
+        ctx = AgentContext(manager_id=manager_id, scope="on_demand")
+        start_ts = int(datetime.now().timestamp())
+
+        async def event_stream():
+            queue = asyncio.Queue()
+
+            async def push_event(event_type: str, data: dict):
+                await queue.put((event_type, data))
+
+            async def run_mining():
+                try:
+                    result = await opp_mining_agent.mine_on_demand(
+                        ctx, manager_id=manager_id,
+                        progress_callback=push_event,
+                    )
+                    # 入库商机信号
+                    if result.get("all_signals"):
+                        now = datetime.now().isoformat()
+                        for i, s in enumerate(result["all_signals"]):
+                            opp_id = f"OPP_AI_{s['customer_id']}_{start_ts}_{i}"
+                            await ae(
+                                """INSERT OR IGNORE INTO opportunities
+                                   (opp_id, cust_id, cust_name, opportunity_type, title, confidence,
+                                    estimated_value, reasoning, suggested_action, priority, source,
+                                    source_method, trigger_signals, generated_at, manager_id)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                (opp_id, s["customer_id"], s["customer_name"], s["opportunity_type"],
+                                 s["title"], s["confidence"], s["estimated_value"], s["reasoning"],
+                                 s.get("suggested_action", ""), s["priority"], s["source"],
+                                 s.get("source_method", ""), json.dumps(s.get("trigger_signals", []), ensure_ascii=False),
+                                 now, manager_id),
+                            )
+                except Exception as e:
+                    log.error(f"SSE mining error: {e}")
+                    await queue.put(("error", {"message": f"挖掘异常: {str(e)}"}))
+
+            # 启动后台挖掘任务
+            asyncio.create_task(run_mining())
+
+            # 主循环：从队列读取并推送 SSE
+            while True:
+                try:
+                    event_type, data = await asyncio.wait_for(queue.get(), timeout=300)
+                    payload = json.dumps(data, ensure_ascii=False)
+                    yield f"event: {event_type}\ndata: {payload}\n\n"
+                    if event_type in ("done", "error"):
+                        break
+                except asyncio.TimeoutError:
+                    yield f"event: error\ndata: {{\"message\":\"挖掘超时，请重试\"}}\n\n"
+                    break
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            }
+        )
+
+    @app.get("/api/ai/opportunity/list")
+    async def ai_opportunity_list(
+        manager_id: str = Query(None),
+        cust_id: int = Query(None),
+        status: str = Query(None),
+        limit: int = Query(50),
+    ):
+        """
+        查询已生成的商机列表
+        """
+        w, p = ["1=1"], []
+        if manager_id: w.append("manager_id=?"); p.append(manager_id)
+        if cust_id: w.append("cust_id=?"); p.append(cust_id)
+        if status: w.append("status=?"); p.append(status)
+        p.append(limit)
+        rows = await aq(
+            f"SELECT * FROM opportunities WHERE {' AND '.join(w)} ORDER BY confidence DESC, generated_at DESC LIMIT ?", p
+        )
+        items = []
+        for r in (rows or []):
+            ts = json.loads(r["trigger_signals"]) if r["trigger_signals"] and isinstance(r["trigger_signals"], str) else r["trigger_signals"]
+            items.append({
+                "opp_id": r["opp_id"], "cust_id": r["cust_id"], "cust_name": r["cust_name"],
+                "opportunity_type": r["opportunity_type"], "title": r["title"],
+                "confidence": r["confidence"], "estimated_value": r["estimated_value"],
+                "reasoning": r["reasoning"], "suggested_action": r["suggested_action"],
+                "priority": r["priority"], "source": r["source"], "source_method": r["source_method"],
+                "trigger_signals": ts, "status": r["status"], "generated_at": r["generated_at"],
+            })
+        return ok({"opportunities": items, "total": len(items)})
+
+    @app.get("/api/ai/agent/health")
+    async def ai_agent_health():
+        """Agent 健康检查"""
+        from agentos.harness import harness
+        agents = harness.registry.list_agents()
+        return ok({
+            "status": "healthy",
+            "model": opp_mining_agent.adapter.config.model_name,
+            "provider": opp_mining_agent.adapter.config.provider,
+            "agents": agents,
+        })
+
+    # ================================================================
+    # 作战包生成 API
+    # ================================================================
+
+    @app.post("/api/ai/battle-package/generate")
+    async def ai_battle_package_generate(body: dict):
+        """
+        生成作战包（同步）
+
+        Request:
+          {
+            "cust_id": 1,
+            "mode": "面谈版",           // 电话版 | 面谈版
+            "opportunity_info": {        // 可选：关联的商机信息
+              "type": "产品到期承接",
+              "title": "定存到期",
+              "reasoning": "30天内50万定存到期",
+              "estimated_value": 250000,
+              "confidence": 0.85
+            }
+          }
+
+        Response:
+          {
+            "code": 0,
+            "data": {
+              "bp_id": "BP_AI_...",
+              "cust_id": 1,
+              "cust_name": "王建国",
+              "mode": "面谈版",
+              "status": "未使用",
+              "bp_data": { ... },
+              "generated_at": "...",
+              "expires_at": "..."
+            }
+          }
+        """
+        cust_id = body.get("cust_id")
+        mode = body.get("mode", "电话版")
+        opportunity_info = body.get("opportunity_info")
+
+        if not cust_id:
+            raise HTTPException(400, "缺少 cust_id")
+        if mode not in ("电话版", "面谈版"):
+            raise HTTPException(400, "mode 必须为'电话版'或'面谈版'")
+
+        ctx = AgentContext(scope="on_demand")
+
+        # 生成作战包
+        bp_result = await battle_pkg_agent.generate_battle_package(
+            ctx, cust_id=cust_id, mode=mode, opportunity_info=opportunity_info
+        )
+
+        if bp_result.get("status") == "failed":
+            return {"code": 500, "data": None, "message": bp_result.get("error", "生成失败")}
+
+        # 保存到数据库
+        saved = battle_pkg_agent.save_battle_package(bp_result, get_db())
+
+        return ok({
+            **saved,
+            "bp_data": bp_result.get("bp_data"),
+            "elapsed_s": bp_result.get("elapsed_s"),
+        })
+
+    @app.post("/api/ai/battle-package/generate/stream")
+    async def ai_battle_package_generate_stream(body: dict):
+        """
+        SSE 流式生成作战包：实时推送进度事件
+
+        Request: { "cust_id": 1, "mode": "面谈版", "opportunity_info": {...} }
+        SSE Events:
+          event: phase       → {"phase":"loading_data","message":"..."}
+          event: phase       → {"phase":"matching_products","customer_name":"..."}
+          event: phase       → {"phase":"generating","message":"..."}
+          event: done        → {"status":"completed",...}
+          event: error       → {"message":"..."}
+        """
+        cust_id = body.get("cust_id")
+        mode = body.get("mode", "电话版")
+        opportunity_info = body.get("opportunity_info")
+
+        if not cust_id:
+            raise HTTPException(400, "缺少 cust_id")
+        if mode not in ("电话版", "面谈版"):
+            raise HTTPException(400, "mode 必须为'电话版'或'面谈版'")
+
+        ctx = AgentContext(scope="on_demand")
+
+        async def event_stream():
+            queue = asyncio.Queue()
+
+            async def push_event(event_type: str, data: dict):
+                await queue.put((event_type, data))
+
+            async def run_generation():
+                try:
+                    result = await battle_pkg_agent.generate_battle_package(
+                        ctx, cust_id=cust_id, mode=mode,
+                        opportunity_info=opportunity_info,
+                        progress_callback=push_event,
+                    )
+
+                    if result.get("status") == "completed":
+                        # 保存到数据库
+                        saved = battle_pkg_agent.save_battle_package(result, get_db())
+                        await queue.put(("done", {
+                            **saved,
+                            "generate_status": "completed",
+                            "bp_data": result.get("bp_data"),
+                            "elapsed_s": result.get("elapsed_s"),
+                        }))
+                    else:
+                        await queue.put(("error", {
+                            "message": result.get("error", "生成失败"),
+                        }))
+                except Exception as e:
+                    log.error(f"SSE battle_package error: {e}")
+                    await queue.put(("error", {"message": f"生成异常: {str(e)}"}))
+
+            asyncio.create_task(run_generation())
+
+            while True:
+                try:
+                    event_type, data = await asyncio.wait_for(queue.get(), timeout=300)
+                    payload = json.dumps(data, ensure_ascii=False)
+                    yield f"event: {event_type}\ndata: {payload}\n\n"
+                    if event_type in ("done", "error"):
+                        break
+                except asyncio.TimeoutError:
+                    yield f"event: error\ndata: {{\"message\":\"生成超时，请重试\"}}\n\n"
+                    break
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            }
+        )
+
+    # ================================================================
+    # 定时任务：每日凌晨 2:00 全量商机挖掘
+    # ================================================================
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+    scheduler = AsyncIOScheduler()
+
+    async def scheduled_opp_mining():
+        """定时批量商机挖掘"""
+        print(f"\n[Scheduler] 定时商机挖掘启动 @ {datetime.now().isoformat()}")
+        ctx = AgentContext(scope="scheduled")
+        try:
+            signals = await opp_mining_agent.batch_mine_all(ctx)
+            # 入库
+            now = datetime.now().isoformat()
+            count = 0
+            for s in signals:
+                opp_id = f"OPP_SCH_{s.customer_id}_{int(datetime.now().timestamp())}_{count}"
+                await ae(
+                    """INSERT OR IGNORE INTO opportunities
+                       (opp_id, cust_id, cust_name, opportunity_type, title, confidence,
+                        estimated_value, reasoning, suggested_action, priority, source,
+                        source_method, trigger_signals, generated_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (opp_id, s.customer_id, s.customer_name, s.opportunity_type,
+                     s.title, s.confidence, s.estimated_value, s.reasoning,
+                     s.suggested_action, s.priority, s.source,
+                     s.source_method, json.dumps(s.trigger_signals, ensure_ascii=False), now),
+                )
+                count += 1
+            high = sum(1 for s in signals if s.confidence >= 0.7)
+            print(f"[Scheduler] 定时商机挖掘完成: {len(signals)} 个信号, 入库 {count} 条, 高置信度 {high} 个")
+        except Exception as e:
+            import traceback
+            print(f"[Scheduler] 定时商机挖掘失败: {e}")
+            traceback.print_exc()
+
+    @app.on_event("startup")
+    async def start_scheduler():
+        scheduler.add_job(scheduled_opp_mining, "cron", hour=2, minute=0, id="daily_opp_mining")
+        scheduler.start()
+        print(f"Scheduler started: daily opp mining @ 02:00")
 
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
 

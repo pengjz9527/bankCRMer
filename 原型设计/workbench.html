@@ -13,46 +13,62 @@
    ========================================== */
 
 :root {
-  --color-primary: #3366FF;
-  --color-primary-dark: #2555DD;
-  --color-primary-light: #EEF3FF;
-  --color-success: #00B86B;
+  /* === 品牌红体系（源自设计规范.xlsx） === */
+  --color-primary: #ab2029;
+  --color-primary-dark: #8B1A22;
+  --color-primary-light: #FDF0F1;
+  --color-primary-gradient: linear-gradient(135deg, #ab2029, #D66765);
+
+  /* === 功能色 === */
+  --color-highlight: #F6434F;  /* 金额/收益率强调（源自xlsx警示红） */
+  --color-success: #10B981;
   --color-success-light: #EDFAF3;
   --color-warning: #F59E0B;
   --color-warning-light: #FFFAED;
-  --color-danger: #F04444;
+  --color-danger: #EF4444;
   --color-danger-light: #FFF0F0;
+
+  /* === AI 专属色（独立于品牌红体系） === */
   --color-ai: #6C5CE7;
   --color-ai-light: #F3F0FF;
 
-  --color-bg: #E2E5EB;
+  /* === 中性色 === */
+  --color-bg: #f5f5f5;
   --color-card: #FFFFFF;
-  --color-divider: #E4E6EC;
-  --color-border: #CED2D9;
+  --color-divider: #e5e5e5;
+  --color-border: #d5d5d5;
 
-  --color-text-primary: #0F1117;
-  --color-text-secondary: #5F6570;
-  --color-text-tertiary: #959BA5;
+  /* === 文字色 === */
+  --color-text-primary: #333333;
+  --color-text-secondary: #999999;
+  --color-text-tertiary: #bbbbbb;
 
+  /* === 字体 === */
   --font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
   --font-number: "DIN Alternate", "SF Mono", "Menlo", monospace;
 
-  --fs-h1: 22px; --fs-h2: 17px; --fs-h3: 15px;
+  /* === 字号阶梯（对齐xlsx文字层级） === */
+  --fs-h1: 24px; --fs-h2: 16px; --fs-h3: 15px;
   --fs-body: 14px; --fs-caption: 12px; --fs-small: 11px;
-  --fs-num-lg: 28px; --fs-num-md: 22px; --fs-num-sm: 17px;
+  --fs-num-lg: 28px; --fs-num-md: 24px; --fs-num-sm: 18px;
 
-  --fw-bold: 600; --fw-medium: 500; --fw-regular: 400;
+  /* === 字重 === */
+  --fw-bold: 700; --fw-medium: 500; --fw-regular: 400;
 
+  /* === 间距（xlsx: 全局15px/模块10px） === */
   --sp-xxs: 4px; --sp-xs: 8px; --sp-sm: 12px; --sp-md: 16px; --sp-lg: 20px; --sp-xl: 24px;
 
-  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-full: 999px;
+  /* === 圆角 === */
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 16px; --radius-full: 999px;
 
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.5);
-  --shadow-elevated: 0 4px 20px rgba(0,0,0,0.6);
-  --shadow-ai: 0 0 20px rgba(139, 148, 248, 0.12);
+  /* === 阴影 === */
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-ai: 0 0 20px rgba(108, 92, 231, 0.12);
 
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration-fast: 150ms; --duration-normal: 250ms;
+  /* === 动效（对齐xlsx: 0.3s ease） === */
+  --ease-default: ease;
+  --duration-fast: 150ms; --duration-normal: 250ms; --duration-slow: 300ms;
 
   --page-width: 375px; --tab-height: 56px;
 }
@@ -61,7 +77,7 @@
 
 body {
   font-family: var(--font-family); font-size: var(--fs-body);
-  color: var(--color-text-primary); background: #D1D5DC;
+  color: var(--color-text-primary); background: #C0C4CC;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -73,19 +89,22 @@ body {
 .phone-frame {
   width: var(--page-width); height: 812px; max-height: 95vh;
   background: var(--color-bg); border-radius: 24px; overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 2px #C8CCD4;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 2px #B0B4BC;
   position: relative; display: flex; flex-direction: column;
 }
+
+/* ---------- 工作区 ---------- */
+.workspace { flex: 1; position: relative; overflow: hidden; }
 
 /* ---------- Header ---------- */
 .app-header {
   background: var(--color-card); flex-shrink: 0;
-  padding: 10px var(--sp-md) var(--sp-sm);
+  padding: 10px 15px 12px;
   display: flex; justify-content: space-between; align-items: center;
   box-shadow: 0 1px 0 var(--color-divider);
-  position: relative; z-index: 10;
+  position: relative; z-index: 300;
 }
-.app-header .greeting { font-size: 18px; font-weight: var(--fw-bold); color: var(--color-text-primary); }
+.app-header .greeting { font-size: var(--fs-h2); font-weight: var(--fw-bold); color: var(--color-text-primary); }
 .app-header .header-actions { display: flex; gap: var(--sp-sm); align-items: center; }
 .app-header .icon-btn {
   width: 36px; height: 36px; border-radius: 50%;
@@ -107,9 +126,10 @@ body {
 
 /* ---------- Scroll Content ---------- */
 .scroll-content {
-  flex: 1; overflow-y: auto;
-  padding: var(--sp-sm) var(--sp-md);
-  display: flex; flex-direction: column; gap: var(--sp-lg);
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  padding: 10px 15px 16px 15px;
+  display: flex; flex-direction: column; gap: 10px;
   -webkit-overflow-scrolling: touch;
 }
 .scroll-content::-webkit-scrollbar { display: none; }
@@ -127,29 +147,43 @@ body {
    AI 智能摘要条
    ======================================== */
 .ai-summary-banner {
-  background: var(--color-ai-light);
+  background: var(--color-card);
   border-radius: var(--radius-md);
-  padding: var(--sp-sm) var(--sp-md);
-  display: flex; gap: var(--sp-sm);
-  box-shadow: var(--shadow-ai);
-  border-left: 3px solid var(--color-ai);
+  padding: 12px var(--sp-md);
+  display: flex; flex-direction: column; gap: 6px;
+  border: 1px solid var(--color-divider);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.ai-summary-banner .ai-avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: linear-gradient(135deg, #7C6FF0, #6C5CE7);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0; color: #fff;
+.ai-summary-banner .ai-main-row {
+  display: flex; align-items: center; justify-content: space-between;
 }
-.ai-summary-banner .ai-text { flex: 1; }
 .ai-summary-banner .ai-main {
   font-size: var(--fs-body); font-weight: var(--fw-medium);
   color: var(--color-text-primary); line-height: 1.5;
 }
-.ai-summary-banner .ai-meta {
-  font-size: var(--fs-caption); color: var(--color-text-secondary);
-  margin-top: 2px;
+.ai-summary-banner .ai-main strong {
+  font-weight: var(--fw-bold); color: var(--color-primary);
 }
-.ai-summary-banner .ai-meta strong { color: var(--color-ai); }
+.ai-summary-banner .ai-sub-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.ai-summary-banner .ai-sub-tag {
+  font-size: var(--fs-caption); padding: 2px 8px;
+  border-radius: var(--radius-sm); display: inline-flex;
+  align-items: center; gap: 4px;
+}
+.ai-summary-banner .ai-sub-tag--am {
+  background: #FFF0F0; color: #C0392B;
+}
+.ai-summary-banner .ai-sub-tag--pm {
+  background: #F0F4FF; color: #3B5998;
+}
+.ai-summary-banner .ai-review-btn {
+  font-size: var(--fs-caption); color: var(--color-primary);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-weight: var(--fw-bold);
+}
 
 /* ========================================
    BLOCK 2: 今日日程安排
@@ -160,36 +194,44 @@ body {
   background: var(--color-card); border-radius: var(--radius-md);
   box-shadow: var(--shadow-card); overflow: hidden;
 }
-.schedule-block .sched-inner { padding: var(--sp-md); }
 
-/* 统一轮播容器 */
+/* 水平轮播 */
 .sched-carousel {
-  position: relative; overflow: hidden;
-  border-radius: var(--radius-sm);
-  touch-action: pan-y;
+  position: relative;
+  overflow: hidden;
 }
 .sched-carousel .carousel-track {
-  display: flex;
-  transition: transform 0.35s var(--ease-default);
-  will-change: transform;
+  display: flex; flex-direction: row;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sched-carousel .carousel-track .task-card {
+  flex: 0 0 100%;
+  box-sizing: border-box;
 }
 
-/* 轮播圆点 */
-.sched-carousel + .carousel-dots {
+/* 数字页码指示器 */
+.sched-pager {
   display: flex; justify-content: center; gap: 8px;
-  padding: var(--sp-sm) 0 0;
+  padding: 12px 0 4px;
 }
-.sched-carousel + .carousel-dots .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--color-border);
-  transition: all 0.25s var(--ease-default);
+.pager-num {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: var(--fw-medium);
+  color: var(--color-text-tertiary);
+  border-radius: 50%;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: all var(--duration-fast);
 }
-.sched-carousel + .carousel-dots .dot.active {
-  width: 20px; border-radius: 3px;
+.pager-num.active {
+  color: #fff;
   background: var(--color-primary);
+  font-weight: var(--fw-bold);
 }
+
+.schedule-block .sched-inner { padding: var(--sp-md); }
+
 
 /* 时间分隔标签（卡内） */
 .task-card .time-seg {
@@ -198,18 +240,19 @@ body {
   font-size: var(--fs-caption); font-weight: var(--fw-bold);
   margin-bottom: var(--sp-xs);
 }
-.time-seg--am { background: #FFF4E5; color: #C0760A; }
-.time-seg--pm { background: #EEF3FF; color: var(--color-primary); }
+.time-seg--am { background: #FFF0F0; color: #C0392B; }
+.time-seg--pm { background: #F0F4FF; color: #3B5998; }
 
 /* 任务卡片 */
 .task-card {
-  width: 100%; flex-shrink: 0;
+  width: 100%;
   background: var(--color-card); border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   cursor: pointer;
   transition: box-shadow var(--duration-fast);
   -webkit-tap-highlight-color: transparent;
   display: flex; flex-direction: column;
+  padding: var(--sp-sm) var(--sp-md);
 }
 
 /* 卡片头部：编号 + 类型标签 */
@@ -424,7 +467,7 @@ body {
 }
 .opp-board-card .progress-bar .fill {
   height: 100%; border-radius: 4px;
-  background: linear-gradient(90deg, var(--color-primary), #5B8AF7);
+  background: linear-gradient(90deg, #3B82F6, #60A5FA);
   transition: width 800ms var(--ease-default);
 }
 
@@ -470,7 +513,7 @@ body {
 }
 .metrics-popover .mp-bar .mp-fill {
   height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, var(--color-primary), #5B8AF7);
+  background: linear-gradient(90deg, var(--color-primary), #D66765);
 }
 
 /* 页签栏 */
@@ -666,7 +709,7 @@ body {
   display: flex; flex-wrap: wrap; gap: 4px;
 }
 .mining-step .step-detail .cust-tag {
-  padding: 1px 6px; background: #e8f4ff; color: #3891ff;
+  padding: 1px 6px; background: var(--color-primary-light); color: var(--color-primary);
   border-radius: 8px; font-size: 11px; white-space: nowrap;
 }
 .mining-step .step-detail .signal-tag {
@@ -822,7 +865,7 @@ body {
 
 /* ---------- Floating AI Button ---------- */
 .fab-ai {
-  position: absolute; bottom: calc(var(--tab-height) - 18px); right: 16px; z-index: 100;
+  position: absolute; bottom: 12px; right: 16px; z-index: 150;
   width: 48px; height: 48px; border-radius: 50%;
   background: linear-gradient(135deg, var(--color-ai), #7C6FF0);
   box-shadow: 0 4px 16px rgba(108, 92, 231, 0.45), 0 0 0 3px var(--color-card);
@@ -833,6 +876,14 @@ body {
 }
 .fab-ai:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(108, 92, 231, 0.35), 0 0 0 3px var(--color-card); }
 .fab-ai-icon { font-size: 20px; line-height: 1; pointer-events: none; }
+
+/* ---------- SVG Icon ---------- */
+.ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex-shrink: 0; }
+.ico--sm { font-size: 14px; }
+.ico--md { font-size: 18px; }
+.ico--lg { font-size: 24px; }
+.ico--xl { font-size: 32px; }
+
 @keyframes fab-pulse {
   0%, 100% { box-shadow: 0 4px 16px rgba(108, 92, 231, 0.45), 0 0 0 3px var(--color-card); }
   50% { box-shadow: 0 4px 24px rgba(108, 92, 231, 0.65), 0 0 0 5px rgba(108, 92, 231, 0.12); }
@@ -844,6 +895,7 @@ body {
   display: flex; align-items: center; flex-shrink: 0;
   border-top: 1px solid var(--color-divider);
   padding-bottom: env(safe-area-inset-bottom, 0);
+  position: relative; z-index: 300;
 }
 .tab-item {
   flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -851,7 +903,7 @@ body {
   transition: color var(--duration-fast); position: relative;
   -webkit-tap-highlight-color: transparent;
 }
-.tab-item .tab-icon { font-size: 22px; } .tab-item .tab-label { font-size: 10px; font-weight: var(--fw-medium); }
+.tab-item .tab-icon { font-size: 22px; } .tab-item .tab-label { font-size: 9px; font-weight: var(--fw-medium); }
 .tab-item--active { color: var(--color-primary); }
 .tab-item--active::after {
   content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
@@ -1244,7 +1296,7 @@ body {
   opacity: 0.45; pointer-events: none; position: relative;
 }
 .task-card.completed::after {
-  content: '✓ 已完成';
+  content: '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> 已完成';
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
   font-size: 32px; font-weight: 900; color: var(--color-success);
   opacity: 0.85; pointer-events: none; white-space: nowrap;
@@ -1614,7 +1666,7 @@ body {
   font-size: var(--fs-small); padding: 2px 6px; border-radius: var(--radius-sm);
   font-weight: var(--fw-medium);
 }
-.w3-opp-tag--system { background: #EEF3FF; color: var(--color-primary); }
+.w3-opp-tag--system { background: var(--color-primary-light); color: var(--color-primary); }
 .w3-opp-tag--ai { background: #F0E6FF; color: var(--color-ai); }
 .w3-opp-tag--manual { background: #FFF3E0; color: #E67E00; }
 
@@ -1723,7 +1775,7 @@ body {
 }
 
 .opp-detail-sheet .od-action-card {
-  background: linear-gradient(135deg, #EEF3FF, #F0E6FF);
+  background: linear-gradient(135deg, var(--color-primary-light), #F3F0FF);
   border-radius: var(--radius-md); padding: var(--sp-md);
   text-align: center; cursor: pointer;
   border: 1.5px dashed var(--color-primary);
@@ -1898,7 +1950,7 @@ body {
   background: var(--color-success) !important;
 }
 .task-card.done .btn-action::after {
-  content: ' ✓';
+  content: ' <svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg>';
 }
 
 /* ========================================
@@ -1923,7 +1975,7 @@ body {
   font-size: var(--fs-small); padding: 2px 8px; border-radius: var(--radius-full);
   font-weight: var(--fw-bold); margin-right: var(--sp-sm);
 }
-.p1-badge--phone { background: #EEF3FF; color: var(--color-primary); }
+.p1-badge--phone { background: var(--color-primary-light); color: var(--color-primary); }
 .p1-badge--face { background: #F0E6FF; color: var(--color-ai); }
 .p1-edit-btn {
   font-size: var(--fs-caption); color: var(--color-primary); cursor: pointer;
@@ -2220,9 +2272,27 @@ body {
 .w4-metric-fill.blue { background: var(--color-primary); }
 .w4-metric-fill.orange { background: #e67e22; }
 .w4-metric-fill.red { background: #e74c3c; }
+.w4-metric-fill.danger { background: #e74c3c; }
+.w4-metric-fill.warn { background: #e67e22; }
 .w4-metric-compare { font-size: 11px; color: var(--color-text-tertiary); display: flex; gap: 12px; }
 .w4-metric-compare .up { color: #27ae60; }
 .w4-metric-compare .down { color: #e74c3c; }
+
+/* KPI 综合得分栏 */
+.w4-score-bar {
+  display: flex; align-items: baseline; gap: 8px;
+  background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+  border-radius: var(--radius-md); padding: 14px var(--sp-md); margin-bottom: 12px;
+}
+.w4-score-num { font-size: 32px; font-weight: var(--fw-bold); color: var(--color-primary); line-height: 1; }
+.w4-score-unit { font-size: var(--fs-small); color: var(--color-text-tertiary); margin-right: auto; }
+.w4-score-rank { font-size: var(--fs-small); color: var(--color-text-secondary); font-weight: var(--fw-medium); }
+
+/* KPI 动态网格 */
+.w4-kpi-grid { display: grid; gap: 10px; margin-bottom: 12px; }
+.w4-kpi-grid.w4-grid--3col { grid-template-columns: repeat(3, 1fr); }
+.w4-kpi-grid.w4-grid--4col { grid-template-columns: repeat(2, 1fr); }
+.w4-kpi-grid .w4-metric-card { margin-bottom: 0; }
 
 .w4-funnel { margin-top: 4px; display: flex; align-items: center; gap: 6px; font-size: var(--fs-small); }
 .w4-funnel-step {
@@ -2337,14 +2407,21 @@ body {
 .w8-search-bar input::placeholder { color: var(--color-text-tertiary); }
 
 .w8-filter-row {
-  display: flex; gap: 6px; margin-bottom: var(--sp-sm); overflow-x: auto;
+  display: flex; gap: 8px; margin-bottom: var(--sp-sm);
 }
-.w8-filter-chip {
-  padding: 4px 10px; border-radius: var(--radius-full); font-size: var(--fs-small);
-  background: #f0f2f5; color: var(--color-text-secondary); white-space: nowrap; cursor: pointer;
-  border: 1px solid transparent;
+.w8-filter-select {
+  flex: 1; min-width: 0; height: 34px;
+  padding: 0 26px 0 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background: #fff; font-size: var(--fs-small);
+  color: var(--color-text-primary);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  background-size: 12px 12px;
+  cursor: pointer; outline: none; transition: border-color 0.2s;
 }
-.w8-filter-chip.active { background: #f0f4ff; color: var(--color-primary); border-color: var(--color-primary); font-weight: var(--fw-bold); }
+.w8-filter-select:focus { border-color: var(--color-primary); }
 
 .w8-cust-card {
   display: flex; align-items: center; padding: var(--sp-sm); background: #fff;
@@ -2406,14 +2483,21 @@ body {
 
 /* 排序栏 */
 .w8-sort-row {
-  display: flex; gap: 6px; margin-bottom: 8px; overflow-x: auto;
+  display: flex; margin-bottom: 8px;
 }
-.w8-sort-chip {
-  padding: 3px 8px; border-radius: var(--radius-full); font-size: 11px;
-  background: #fff; color: var(--color-text-tertiary); white-space: nowrap; cursor: pointer;
+.w8-sort-select {
+  width: 100%; height: 32px;
+  padding: 0 26px 0 10px; border-radius: var(--radius-sm);
   border: 1px solid var(--color-divider);
+  background: #fff; font-size: 11px;
+  color: var(--color-text-secondary);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23bbb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  background-size: 10px 10px;
+  cursor: pointer; outline: none; transition: border-color 0.2s;
 }
-.w8-sort-chip.active { background: #f0f4ff; color: var(--color-primary); border-color: var(--color-primary); font-weight: var(--fw-bold); }
+.w8-sort-select:focus { border-color: var(--color-primary); }
 
 /* 结果计数 */
 .w8-result-summary {
@@ -2660,29 +2744,34 @@ body {
    ======================================== */
 /* ---- 筛选区 ---- */
 .prod-filter-row {
-  display: flex; gap: 6px; margin-bottom: 6px; overflow-x: auto; flex-wrap: nowrap;
+  display: flex; gap: 8px; margin-bottom: 6px;
 }
-.prod-filter-chip {
-  padding: 4px 12px; border-radius: var(--radius-full); font-size: var(--fs-small);
-  background: #f0f2f5; color: var(--color-text-secondary); white-space: nowrap; cursor: pointer;
-  border: 1px solid transparent; flex-shrink: 0;
+.prod-filter-select {
+  flex: 1; min-width: 0; height: 34px;
+  padding: 0 26px 0 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background: #fff; font-size: var(--fs-small);
+  color: var(--color-text-primary);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  background-size: 12px 12px;
+  cursor: pointer; outline: none; transition: border-color 0.2s;
 }
-.prod-filter-chip.active { background: #f0f4ff; color: var(--color-primary); border-color: var(--color-primary); font-weight: var(--fw-bold); }
-.prod-filter-sort { margin-left: auto; display: flex; gap: 4px; }
-.prod-filter-sort .sort-chip {
-  padding: 4px 8px; border-radius: var(--radius-full); font-size: 10px; background: #eef2ff; color: #666; cursor: pointer; white-space: nowrap;
-}
-.prod-filter-sort .sort-chip.active { background: var(--color-primary); color: #fff; font-weight: var(--fw-bold); }
+.prod-filter-select:focus { border-color: var(--color-primary); }
 
-/* ---- 风险筛选行 ---- */
-.prod-risk-row {
-  display: flex; gap: 6px; margin-bottom: var(--sp-sm); overflow-x: auto;
+.prod-filter-sort { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.prod-sort-select {
+  height: 28px; padding: 0 22px 0 8px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-divider);
+  background: #fff; font-size: 10px;
+  color: var(--color-text-secondary);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23bbb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 6px center;
+  background-size: 10px 10px;
+  cursor: pointer; outline: none;
 }
-.prod-risk-chip {
-  padding: 2px 10px; border-radius: var(--radius-full); font-size: 10px;
-  background: #fff; color: var(--color-text-secondary); cursor: pointer; border: 1px solid #e0e3e8; white-space: nowrap;
-}
-.prod-risk-chip.active { background: #f0f4ff; color: var(--color-primary); border-color: var(--color-primary); }
 
 /* ---- 产品结果计数 ---- */
 .prod-result-bar {
@@ -2882,6 +2971,36 @@ body {
 .me-menu-item .mi-text { flex: 1; font-size: var(--fs-body); }
 .me-menu-item .mi-arrow { color: var(--color-text-tertiary); }
 
+/* 图标主题选择弹窗 */
+.theme-picker-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999; background: transparent;
+}
+.theme-picker-popover {
+  position: fixed; z-index: 10000;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  min-width: 180px; overflow: hidden;
+  animation: tpFadeIn 0.15s ease;
+}
+@keyframes tpFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.theme-picker-popover .tp-title {
+  font-size: 12px; color: var(--color-text-tertiary);
+  padding: 10px 14px 4px; font-weight: var(--fw-bold);
+}
+.theme-picker-popover .tp-option {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; cursor: pointer; font-size: var(--fs-body);
+  transition: background 0.12s;
+}
+.theme-picker-popover .tp-option:hover { background: #f5f6f8; }
+.theme-picker-popover .tp-option .tp-check {
+  color: var(--color-primary); font-weight: var(--fw-bold);
+  font-size: 12px; display: none;
+}
+.theme-picker-popover .tp-option.tp-active .tp-check { display: block; }
+.theme-picker-popover .tp-option.tp-active { color: var(--color-primary); font-weight: var(--fw-medium); }
+
 /* ========================================
    全局搜索页
    ======================================== */
@@ -3039,10 +3158,18 @@ body {
 </head>
 <body>
 
+<!-- ===== Icon Sprite (dynamic) ===== -->
+<svg xmlns="http://www.w3.org/2000/svg" id="iconSprite" viewBox="0 0 24 24" style="display:none"><defs></defs></svg>
+<script src="icons/icons-classic.js"></script>
+<script src="icons/icons-modern.js"></script>
+<script src="icons/icons.js"></script>
+
+
+
 <div class="phone-frame" id="app">
 
   <!-- ===== 开发调试面板 ===== -->
-  <button class="debug-toggle" onclick="toggleDebugPanel()" title="状态调试">⚙</button>
+  <button class="debug-toggle" onclick="toggleDebugPanel()" title="状态调试"><svg class="ico ico--sm" ><use href="#ico-settings"/></svg></button>
   <div class="debug-panel" id="debugPanel">
     <div class="debug-title">开发调试 · 状态切换</div>
 
@@ -3108,12 +3235,15 @@ body {
       <option value="M003">👤 张伟</option>
     </select>
     <div class="header-actions">
-      <button class="icon-btn" onclick="openGs()">🔍</button>
+      <button class="icon-btn" onclick="openGs()"><svg class="ico ico--md" ><use href="#ico-search"/></svg></button>
       <button class="icon-btn" id="btnNotify" onclick="openMsgOverlay()">
-        🔔<span class="badge" id="notifyBadge">3</span>
+        <svg class="ico ico--md" ><use href="#ico-bell"/></svg><span class="badge" id="notifyBadge">3</span>
       </button>
     </div>
   </div>
+
+  <!-- ===== 工作区 ===== -->
+  <div class="workspace" id="workspace">
 
   <!-- ===== Scroll Content ===== -->
   <div class="scroll-content" id="scrollContent">
@@ -3122,11 +3252,13 @@ body {
          AI 智能摘要
          ================================================ -->
     <div class="ai-summary-banner" onclick="openAiSchedule()" style="cursor:pointer">
-      <div class="ai-avatar">🤖</div>
-      <div class="ai-text">
-        <div class="ai-main">今日<strong>8项</strong>待办，AI已根据紧急程度和预计耗时完成智能排程。</div>
-        <div class="ai-meta">上午优先处理<strong>高价值到期客户</strong>，下午集中<strong>联络超期客户</strong> · 预计总耗时 <strong>3.5小时</strong></div>
-        <div class="ai-meta" style="margin-top:4px;color:var(--color-primary);cursor:pointer" onclick="event.stopPropagation();openW6()">📋 昨日回顾 &gt;</div>
+      <div class="ai-main-row">
+        <div class="ai-main">今日<strong>8项</strong>待办，预计总耗时 <strong>3.5小时</strong></div>
+        <span class="ai-review-btn" onclick="event.stopPropagation();openW6()"><svg class="ico ico--sm" ><use href="#ico-refresh"/></svg> 昨日回顾 &gt;</span>
+      </div>
+      <div class="ai-sub-row">
+        <span class="ai-sub-tag ai-sub-tag--am"><svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午优先处理 高价值到期客户</span>
+        <span class="ai-sub-tag ai-sub-tag--pm"><svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午集中 联络超期客户</span>
       </div>
     </div>
 
@@ -3135,7 +3267,7 @@ body {
          ================================================ -->
     <div>
       <div class="section-header">
-        <span class="title">📋 今日日程安排</span>
+        <span class="title"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 今日日程安排</span>
         <div class="header-actions-group">
           <span class="header-action" onclick="openAllTasks()">全部待办 &gt;</span>
           <span class="header-action" onclick="toggleEditMode()">调整日程</span>
@@ -3148,89 +3280,89 @@ body {
             <div class="carousel-track" id="schedTrack">
 
             <!-- #1 产品到期 · 上午 -->
-            <div class="task-card" id="taskCard1" onclick="openProcessPanel('card1')">
+            <div class="task-card" id="taskCard1" data-period="am" onclick="openProcessPanel('card1')">
               <div class="card-top">
-                <span class="time-seg time-seg--am">☀️ 上午</span>
+                <span class="time-seg time-seg--am"><svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午</span>
                 <span class="task-num">#1</span><span class="task-type-tag tag-danger">产品到期</span>
               </div>
               <div class="card-body">
                 <div class="task-summary">3位客户产品到期，金额合计<strong>80万</strong>，建议优先联系续投</div>
               </div>
               <div class="task-time">
-                🕐 <span class="time-range">09:00-10:30</span><span class="time-dur">约1.5h</span>
+                <svg class="ico ico--sm" ><use href="#ico-clock"/></svg> <span class="time-range">09:00-10:30</span><span class="time-dur">约1.5h</span>
               </div>
               <div class="card-foot">
                 <span class="count-badge">3人</span>
                 <button class="btn-action" onclick="event.stopPropagation();openProcessPanel('card1')">开始处理</button>
               </div>
               <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand1','arrow1')">
-                展开详情 <span class="arrow" id="arrow1">▼</span>
+                展开详情 <span class="arrow" id="arrow1"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>
               </div>
               <div class="card-expand" id="expand1"></div>
             </div>
 
             <!-- #2 大额异动 · 上午 -->
-            <div class="task-card" id="taskCard2" onclick="openProcessPanel('card2')">
+            <div class="task-card" id="taskCard2" data-period="am" onclick="openProcessPanel('card2')">
               <div class="card-top">
-                <span class="time-seg time-seg--am">☀️ 上午</span>
+                <span class="time-seg time-seg--am"><svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午</span>
                 <span class="task-num">#2</span><span class="task-type-tag tag-warning">大额异动</span>
               </div>
               <div class="card-body">
                 <div class="task-summary">1位客户昨日发生大额资金转出<strong>30万</strong>，需及时关注挽留</div>
               </div>
               <div class="task-time">
-                🕐 <span class="time-range">10:30-11:00</span><span class="time-dur">约0.5h</span>
+                <svg class="ico ico--sm" ><use href="#ico-clock"/></svg> <span class="time-range">10:30-11:00</span><span class="time-dur">约0.5h</span>
               </div>
               <div class="card-foot">
                 <span class="count-badge">1人</span>
                 <button class="btn-action" onclick="event.stopPropagation();openProcessPanel('card2')">开始处理</button>
               </div>
               <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand2','arrow2')">
-                展开详情 <span class="arrow" id="arrow2">▼</span>
+                展开详情 <span class="arrow" id="arrow2"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>
               </div>
               <div class="card-expand" id="expand2"></div>
             </div>
 
             <!-- #3 贷款逾期 · 下午 -->
-            <div class="task-card" id="taskCard3" onclick="openProcessPanel('card3')">
+            <div class="task-card" id="taskCard3" data-period="pm" onclick="openProcessPanel('card3')">
               <div class="card-top">
-                <span class="time-seg time-seg--pm">🌤 下午</span>
+                <span class="time-seg time-seg--pm"><svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午</span>
                 <span class="task-num">#3</span><span class="task-type-tag tag-warning">贷款逾期</span>
               </div>
               <div class="card-body">
                 <div class="task-summary">1位客户房贷逾期<strong>15天</strong>，需电话跟进还款计划</div>
               </div>
               <div class="task-time">
-                🕐 <span class="time-range">14:00-14:30</span><span class="time-dur">约0.5h</span>
+                <svg class="ico ico--sm" ><use href="#ico-clock"/></svg> <span class="time-range">14:00-14:30</span><span class="time-dur">约0.5h</span>
               </div>
               <div class="card-foot">
                 <span class="count-badge">1人</span>
                 <button class="btn-action" onclick="event.stopPropagation();openProcessPanel('card3')">开始处理</button>
               </div>
               <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand3','arrow3')">
-                展开详情 <span class="arrow" id="arrow3">▼</span>
+                展开详情 <span class="arrow" id="arrow3"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>
               </div>
               <div class="card-expand" id="expand3"></div>
             </div>
 
             <!-- #4 生日提醒 · 下午 -->
-            <div class="task-card" id="taskCard4" onclick="openProcessPanel('card4')">
+            <div class="task-card" id="taskCard4" data-period="pm" onclick="openProcessPanel('card4')">
               <div class="card-top">
-                <span class="time-seg time-seg--pm">🌤 下午</span>
+                <span class="time-seg time-seg--pm"><svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午</span>
                 <span class="task-num">#4</span><span class="task-type-tag tag-success">生日提醒</span>
               </div>
               <div class="card-body">
                 <div class="task-summary">2位客户今日生日，建议电话或微信送上祝福</div>
               </div>
               <div class="task-time">
-                🕐 <span class="time-range">14:30-15:00</span><span class="time-dur">约0.5h</span>
+                <svg class="ico ico--sm" ><use href="#ico-clock"/></svg> <span class="time-range">14:30-15:00</span><span class="time-dur">约0.5h</span>
               </div>
               <div class="card-foot">
                 <span class="count-badge">2人</span>
                 <button class="btn-action" onclick="event.stopPropagation();openProcessPanel('card4')">开始处理</button>
               </div>
               <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand4','arrow4')">
-                展开详情 <span class="arrow" id="arrow4">▼</span>
+                展开详情 <span class="arrow" id="arrow4"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>
               </div>
               <div class="card-expand" id="expand4">
                 <div class="sub-item" onclick="showToast('查看陈晓燕画像')">
@@ -3249,23 +3381,23 @@ body {
             </div>
 
             <!-- #5 联络超期 · 下午 -->
-            <div class="task-card" id="taskCard5" onclick="openProcessPanel('card5')">
+            <div class="task-card" id="taskCard5" data-period="pm" onclick="openProcessPanel('card5')">
               <div class="card-top">
-                <span class="time-seg time-seg--pm">🌤 下午</span>
+                <span class="time-seg time-seg--pm"><svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午</span>
                 <span class="task-num">#5</span><span class="task-type-tag tag-muted">联络超期</span>
               </div>
               <div class="card-body">
                 <div class="task-summary">5位客户超期未联络，建议下午集中电话跟进</div>
               </div>
               <div class="task-time">
-                🕐 <span class="time-range">15:00-16:00</span><span class="time-dur">约1h</span>
+                <svg class="ico ico--sm" ><use href="#ico-clock"/></svg> <span class="time-range">15:00-16:00</span><span class="time-dur">约1h</span>
               </div>
               <div class="card-foot">
                 <span class="count-badge">5人</span>
                 <button class="btn-action btn-outline" onclick="event.stopPropagation();showToast('查看联络超期名单')">查看名单</button>
               </div>
               <div class="expand-toggle" onclick="event.stopPropagation();toggleExpand('expand5','arrow5')">
-                展开详情 <span class="arrow" id="arrow5">▼</span>
+                展开详情 <span class="arrow" id="arrow5"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>
               </div>
               <div class="card-expand" id="expand5">
                 <div class="sub-item" onclick="showToast('查看详情')"><div class="sub-info"><div class="sub-name">张XX</div><div class="sub-detail">超期8天 · 最后联络 7月7日</div></div></div>
@@ -3277,17 +3409,17 @@ body {
             </div>
 
             <!-- #6 商机待办 · 上午 -->
-            <div class="task-card task-card--opportunity" id="taskCard6" onclick="openP1Page('face')">
+            <div class="task-card task-card--opportunity" id="taskCard6" data-period="am" onclick="openP1Page('face')">
               <div class="card-top">
-                <span class="time-seg time-seg--am">☀️ 上午</span>
-                <span class="task-num">#6</span><span class="task-type-tag tag-opportunity">🟣 商机待办</span>
-                <span class="opp-badge">📋 作战包</span>
+                <span class="time-seg time-seg--am"><svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午</span>
+                <span class="task-num">#6</span><span class="task-type-tag tag-opportunity"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-ai);vertical-align:middle;margin-right:2px"></span> 商机待办</span>
+                <span class="opp-badge"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 作战包</span>
               </div>
               <div class="card-body">
                 <div class="task-summary">拜访客户<strong>王建国</strong>· 定存到期承接 · 预估贡献<strong>25万</strong></div>
               </div>
               <div class="task-time">
-                🕐 <span class="time-range">11:00-11:30</span><span class="time-dur">约0.5h</span>
+                <svg class="ico ico--sm" ><use href="#ico-clock"/></svg> <span class="time-range">11:00-11:30</span><span class="time-dur">约0.5h</span>
               </div>
               <div class="card-foot">
                 <span class="count-badge">1人</span>
@@ -3297,18 +3429,19 @@ body {
 
             </div><!-- /carousel-track -->
           </div><!-- /sched-carousel -->
-          <div class="carousel-dots" id="schedDots">
-            <span class="dot active" data-idx="0"></span>
-            <span class="dot" data-idx="1"></span>
-            <span class="dot" data-idx="2"></span>
-            <span class="dot" data-idx="3"></span>
-            <span class="dot" data-idx="4"></span>
-            <span class="dot" data-idx="5"></span>
+          <!-- 数字页码指示器 -->
+          <div class="sched-pager" id="schedPager">
+            <span class="pager-num active" data-idx="0">1</span>
+            <span class="pager-num" data-idx="1">2</span>
+            <span class="pager-num" data-idx="2">3</span>
+            <span class="pager-num" data-idx="3">4</span>
+            <span class="pager-num" data-idx="4">5</span>
+            <span class="pager-num" data-idx="5">6</span>
           </div>
 
           <!-- 全部完成庆祝视图 -->
           <div class="carousel-all-done" id="allDoneView">
-            <div class="done-icon">🎉</div>
+            <div class="done-icon"><svg class="ico ico--xl" ><use href="#ico-party"/></svg></div>
             <div class="done-title">今日待办已全部完成</div>
             <div class="done-sub">AI 已生成明日工作计划建议</div>
             <div class="done-btn" onclick="showToast('查看明日计划（跳转工作台明日视图）')">查看明日计划</div>
@@ -3322,7 +3455,7 @@ body {
          ================================================ -->
     <div>
       <div class="section-header">
-        <span class="title">💡 商机看板</span>
+        <span class="title"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 商机看板</span>
         <span style="font-size:12px;color:var(--color-primary);cursor:pointer" onclick="openW3WithTab('daifa')">详情 ›</span>
       </div>
 
@@ -3346,7 +3479,7 @@ body {
             <span>完成 64%</span><span>剩余 <strong>72万</strong></span>
           </div>
           <div class="conversion-row">
-            <span>📐 转化率 <span style="color:var(--color-primary);cursor:pointer;text-decoration:underline dotted" onclick="showConvExplain(event)">15%</span></span>
+            <span><svg class="ico ico--sm" ><use href="#ico-ruler"/></svg> 转化率 <span style="color:var(--color-primary);cursor:pointer;text-decoration:underline dotted" onclick="showConvExplain(event)">15%</span></span>
             <span class="conv-formula">→</span>
             <span>需获取</span>
             <span class="conv-warn">12个商机</span>
@@ -3377,7 +3510,7 @@ body {
           </div>
 
           <div class="opp-item-row" onclick="openW3WithTab('daifa')" style="cursor:pointer">
-            <span class="opp-icon">📥</span>
+            <span class="opp-icon"><svg class="ico ico--md" ><use href="#ico-inbox"/></svg></span>
             <div class="opp-info">
               <div class="opp-name">代发即将到账 <span class="opp-source-tag opp-source-tag--system">系统推送</span></div>
               <div class="opp-meta">2位客户 · 近6月月均代发3.2万</div>
@@ -3386,7 +3519,7 @@ body {
             <span class="opp-action" onclick="event.stopPropagation();openW3WithTab('daifa')">跟进 ›</span>
           </div>
           <div class="opp-item-row" onclick="openW3WithTab('liushi')" style="cursor:pointer">
-            <span class="opp-icon">⚠️</span>
+            <span class="opp-icon"><svg class="ico ico--md" ><use href="#ico-warning"/></svg></span>
             <div class="opp-info">
               <div class="opp-name">流失预警挽回 <span class="opp-source-tag opp-source-tag--system">系统推送</span></div>
               <div class="opp-meta">3位客户 · AI识别流失概率&gt;60%</div>
@@ -3395,7 +3528,7 @@ body {
             <span class="opp-action" style="color:var(--color-danger)" onclick="event.stopPropagation();openW3WithTab('liushi')">紧急 ›</span>
           </div>
           <div class="opp-item-row" onclick="openW3WithTab('ai')" style="cursor:pointer">
-            <span class="opp-icon">🤖</span>
+            <span class="opp-icon"><svg class="ico ico--md" ><use href="#ico-ai"/></svg></span>
             <div class="opp-info">
               <div class="opp-name">AI 智能挖掘 <span class="opp-source-tag opp-source-tag--ai">AI挖掘</span></div>
               <div class="opp-meta">2位客户 · 置信度 78% · 基金购买意向</div>
@@ -3404,7 +3537,7 @@ body {
             <span class="opp-action" onclick="event.stopPropagation();openW3WithTab('ai')">跟进 ›</span>
           </div>
           <div class="opp-item-row" onclick="openW3WithTab('mine')" style="cursor:pointer">
-            <span class="opp-icon">✏️</span>
+            <span class="opp-icon"><svg class="ico ico--md" ><use href="#ico-pencil"/></svg></span>
             <div class="opp-info">
               <div class="opp-name">我的商机 <span class="opp-source-tag opp-source-tag--manual">手动创建</span></div>
               <div class="opp-meta">1位客户 · 7月15日创建 · 理财配置意向</div>
@@ -3431,7 +3564,7 @@ body {
             <span>合计可挖掘</span>
             <span style="color:var(--color-ai)">--</span>
           </div>
-          <button class="btn-mining" id="btnMining" onclick="triggerAiMining()">⚡ 一键AI挖掘</button>
+          <button class="btn-mining" id="btnMining" onclick="triggerAiMining()"><svg class="ico ico--sm" ><use href="#ico-lightning"/></svg> 一键AI挖掘</button>
         </div>
       </div>
 
@@ -3439,17 +3572,19 @@ body {
          BLOCK 4: 新客拓展推荐
          ================================================ -->
       <div class="new-customer-card" id="block4">
-        <div class="nc-title">💡 新客拓展推荐</div>
-        <div class="nc-warn-tag" style="display:none">⚠️ 商机缺口较大，建议尽快拓展新客源</div>
+        <div class="nc-title"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 新客拓展推荐</div>
+        <div class="nc-warn-tag" style="display:none"><svg class="ico ico--md" ><use href="#ico-warning"/></svg> 商机缺口较大，建议尽快拓展新客源</div>
         <div class="nc-desc">
           当前管户238位客户中，可挖掘商机已近上限。如需持续完成季度目标，建议<strong>拓展新客源</strong>。AI推荐新增50户目标客群。
         </div>
-        <button class="btn-nc" onclick="openW8('new','b4')">📋 获取AI推荐新客名单</button>
-        <div class="b4-toggle">
-          状态切换：
-          <label class="active" onclick="setBlock4State('normal', this)">正常</label>
-          <label onclick="setBlock4State('warn', this)">警告</label>
-          <label onclick="setBlock4State('hidden', this)">隐藏</label>
+        <button class="btn-nc" onclick="openW8('new','b4')"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 获取AI推荐新客名单</button>
+        <div class="b4-toggle" style="display:flex;align-items:center;gap:8px;font-size:var(--fs-caption);color:var(--color-text-tertiary)">
+          状态：
+          <select class="prod-sort-select" style="width:auto;min-width:80px" onchange="setBlock4State(this.value)">
+            <option value="normal">正常</option>
+            <option value="warn">警告</option>
+            <option value="hidden">隐藏</option>
+          </select>
         </div>
       </div>
     </div>
@@ -3460,15 +3595,7 @@ body {
 
   <!-- ===== Floating AI Button ===== -->
   <div class="fab-ai" onclick="openAiChat('home')">
-    <span class="fab-ai-icon">✨</span>
-  </div>
-
-  <!-- ===== Tab Bar ===== -->
-  <div class="tab-bar">
-    <div class="tab-item tab-item--active"><span class="tab-icon">🏠</span><span class="tab-label">工作台</span></div>
-    <div class="tab-item" onclick="openW8('list','tab')"><span class="tab-icon">👥</span><span class="tab-label">客户</span></div>
-    <div class="tab-item" onclick="openProdSearch()"><span class="tab-icon">📦</span><span class="tab-label">产品</span></div>
-    <div class="tab-item" onclick="openMe()"><span class="tab-icon">👤</span><span class="tab-label">我的</span></div>
+    <span class="fab-ai-icon"><svg class="ico ico--md" ><use href="#ico-sparkles"/></svg></span>
   </div>
 
   <!-- ===== AI 排程详细建议浮层 ===== -->
@@ -3476,52 +3603,52 @@ body {
     <div class="ai-backdrop" onclick="closeAiSchedule()"></div>
     <div class="ai-sheet">
       <div class="ai-sheet-header">
-        <span class="ai-sheet-title">🤖 AI 排程说明</span>
-        <button class="ai-sheet-close" onclick="closeAiSchedule()">✕</button>
+        <span class="ai-sheet-title"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI 排程说明</span>
+        <button class="ai-sheet-close" onclick="closeAiSchedule()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></button>
       </div>
       <div class="ai-sheet-body">
         <div class="ai-period">
-          <div class="ai-period-title">☀️ 上午（09:00-12:00）</div>
+          <div class="ai-period-title"><svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午（09:00-12:00）</div>
           <div class="ai-sched-item">
             <div class="sched-item-head">
               <span>#1 产品到期</span>
               <span class="sched-item-time">09:00-10:30</span>
             </div>
-            <div class="sched-item-reason">💡 3位高价值客户到期，建议尽早联系，客户上午接听率较高</div>
+            <div class="sched-item-reason"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 3位高价值客户到期，建议尽早联系，客户上午接听率较高</div>
           </div>
           <div class="ai-sched-item">
             <div class="sched-item-head">
               <span>#2 大额异动</span>
               <span class="sched-item-time">10:30-11:00</span>
             </div>
-            <div class="sched-item-reason">💡 资金转出需当日跟进，避免客户流失，安排在到期处理后</div>
+            <div class="sched-item-reason"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 资金转出需当日跟进，避免客户流失，安排在到期处理后</div>
           </div>
         </div>
         <div class="ai-period">
-          <div class="ai-period-title">🌤 下午（14:00-16:00）</div>
+          <div class="ai-period-title"><svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午（14:00-16:00）</div>
           <div class="ai-sched-item">
             <div class="sched-item-head">
               <span>#3 贷款逾期</span>
               <span class="sched-item-time">14:00-14:30</span>
             </div>
-            <div class="sched-item-reason">💡 逾期15天需及时跟进，下午时段客户方便沟通还款计划</div>
+            <div class="sched-item-reason"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 逾期15天需及时跟进，下午时段客户方便沟通还款计划</div>
           </div>
           <div class="ai-sched-item">
             <div class="sched-item-head">
               <span>#4 生日提醒</span>
               <span class="sched-item-time">14:30-15:00</span>
             </div>
-            <div class="sched-item-reason">💡 2位客户今日生日，祝福电话有助于维护客户关系</div>
+            <div class="sched-item-reason"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 2位客户今日生日，祝福电话有助于维护客户关系</div>
           </div>
           <div class="ai-sched-item">
             <div class="sched-item-head">
               <span>#5 联络超期</span>
               <span class="sched-item-time">15:00-16:00</span>
             </div>
-            <div class="sched-item-reason">💡 下午客户接听率较高，适合集中联络超期客户</div>
+            <div class="sched-item-reason"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 下午客户接听率较高，适合集中联络超期客户</div>
           </div>
         </div>
-        <div class="ai-total-time">⏱ 预计总耗时：3.5 小时（含缓冲 0.5 小时）</div>
+        <div class="ai-total-time"><svg class="ico ico--sm" ><use href="#ico-stopwatch"/></svg> 预计总耗时：3.5 小时（含缓冲 0.5 小时）</div>
       </div>
       <div class="ai-sheet-footer">
         <button class="btn-close-sheet" onclick="closeAiSchedule()">关闭</button>
@@ -3539,7 +3666,7 @@ body {
           <div class="ps-task-type" id="psTaskType"></div>
           <div class="ps-task-desc" id="psTaskDesc"></div>
         </div>
-        <button class="ps-close" onclick="closeProcessPanel()">✕</button>
+        <button class="ps-close" onclick="closeProcessPanel()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></button>
       </div>
       <div class="ps-body" id="psBody"></div>
       <div class="ps-footer">
@@ -3558,8 +3685,8 @@ body {
     <div class="pd-backdrop" onclick="closePhoneDialog()"></div>
     <div class="pd-sheet">
       <div class="pd-header">
-        <div class="pd-title">📞 电话联系</div>
-        <button class="pd-close" onclick="closePhoneDialog()">✕</button>
+        <div class="pd-title"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg> 电话联系</div>
+        <button class="pd-close" onclick="closePhoneDialog()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></button>
       </div>
       <div class="pd-body">
         <div class="pd-cust-section">
@@ -3571,7 +3698,7 @@ body {
           <span class="pd-task-detail" id="pdTaskDetail"></span>
         </div>
         <div class="pd-phone-row">
-          <span class="pd-phone-label">📱</span>
+          <span class="pd-phone-label"><svg class="ico ico--sm" ><use href="#ico-mobile"/></svg></span>
           <span class="pd-phone-num" id="pdPhoneNum">加载中...</span>
           <button class="pd-copy-btn" onclick="copyPhone()">复制</button>
         </div>
@@ -3591,8 +3718,8 @@ body {
     <div class="pd-backdrop" onclick="closeWechatDialog()"></div>
     <div class="pd-sheet">
       <div class="pd-header">
-        <div class="pd-title">💬 微信联系</div>
-        <button class="pd-close" onclick="closeWechatDialog()">✕</button>
+        <div class="pd-title"><svg class="ico ico--sm" ><use href="#ico-message"/></svg> 微信联系</div>
+        <button class="pd-close" onclick="closeWechatDialog()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></button>
       </div>
       <div class="pd-body">
         <div class="pd-cust-section">
@@ -3609,7 +3736,7 @@ body {
       </div>
       <div class="pd-footer">
         <button class="pd-btn-skip" onclick="closeWechatDialog()">取消</button>
-        <button class="pd-btn-confirm" onclick="confirmWechatMsg()">✓ 确认完成</button>
+        <button class="pd-btn-confirm" onclick="confirmWechatMsg()"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> 确认完成</button>
       </div>
     </div>
   </div>
@@ -3634,7 +3761,7 @@ body {
     <div class="w3-header">
       <span class="w3-back" onclick="closeW3Page()">←</span>
       <span class="w3-title">商机管理</span>
-      <span class="w3-filter" onclick="showToast('筛选：按预估价值排序')">筛选 ▼</span>
+      <span class="w3-filter" onclick="showToast('筛选：按预估价值排序')">筛选 <svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>
     </div>
     <div class="w3-tabs" id="w3Tabs">
       <div class="w3-tab active" data-w3tab="daifa" onclick="switchW3Tab('daifa')">代发到账<span class="w3-tab-badge">2</span></div>
@@ -3652,7 +3779,7 @@ body {
     <div class="opp-detail-sheet">
       <div class="od-header">
         <span class="od-title" id="odTitle">商机详情</span>
-        <span class="od-close" onclick="closeOppDetail()">✕</span>
+        <span class="od-close" onclick="closeOppDetail()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></span>
       </div>
       <div class="od-body" id="odBody">
       </div>
@@ -3665,14 +3792,14 @@ body {
     <div class="bp-mode-panel">
       <div class="bm-title">选择作战包模式</div>
       <div class="bm-option" id="bmOptPhone" onclick="selectBpMode('phone')">
-        <span class="bm-opt-icon">📞</span>
+        <span class="bm-opt-icon"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg></span>
         <div class="bm-opt-info">
           <div class="bm-opt-name">电话版（轻量）</div>
           <div class="bm-opt-desc">话术清单 + 产品要点 + 常见异议应对</div>
         </div>
       </div>
       <div class="bm-option" id="bmOptFace" onclick="selectBpMode('face')">
-        <span class="bm-opt-icon">🤝</span>
+        <span class="bm-opt-icon"><svg class="ico ico--md" ><use href="#ico-handshake"/></svg></span>
         <div class="bm-opt-info">
           <div class="bm-opt-name">面谈版（全功能）</div>
           <div class="bm-opt-desc">剧本线路 + 产品对比 + 签约指引</div>
@@ -3702,7 +3829,7 @@ body {
   <div class="prod-popover" id="prodPopover">
     <div class="pp-name" id="ppName"></div>
     <div class="pp-risk" id="ppRisk"></div>
-    <div class="pp-chart">📈 近半年走势图（示意）</div>
+    <div class="pp-chart"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 近半年走势图（示意）</div>
     <div class="pp-stats" id="ppStats"></div>
     <button class="pp-close" onclick="closeProdPopover()">关闭</button>
   </div>
@@ -3734,7 +3861,7 @@ body {
     <div class="w-page-header">
       <span class="w-page-back" onclick="closeW5()">←</span>
       <span class="w-page-title">每日资讯</span>
-      <span class="w-page-extra" onclick="showToast('资讯搜索')">🔍</span>
+      <span class="w-page-extra" onclick="showToast('资讯搜索')"><svg class="ico ico--md" ><use href="#ico-search"/></svg></span>
     </div>
     <div class="w-page-body" id="w5Body"></div>
   </div>
@@ -3776,7 +3903,7 @@ body {
     <div class="w-page-header" id="w8Header">
       <span class="w-page-back" onclick="closeW8()">←</span>
       <span class="w-page-title" id="w8Title">我的客户 (7)</span>
-      <span class="w-page-extra" onclick="openAiChat('w8')" style="font-size:18px;margin-right:10px;cursor:pointer">🤖</span>
+      <span class="w-page-extra" onclick="openAiChat('w8')" style="font-size:18px;margin-right:10px;cursor:pointer"><svg class="ico ico--md" ><use href="#ico-ai"/></svg></span>
       <span class="w-page-extra" onclick="openW8('new','tab')">＋新增</span>
     </div>
     <div class="w-page-body" id="w8Body" style="padding:0 var(--sp-md)">
@@ -3811,14 +3938,14 @@ body {
       </div>
       <div class="ai-chat-header">
         <div class="ai-chat-h-title" id="aiChatTitle">
-          <span>🤖</span><span id="aiChatChanName">AI 助手</span>
+          <span><svg class="ico ico--md" ><use href="#ico-ai"/></svg></span><span id="aiChatChanName">AI 助手</span>
           <span class="ai-chat-h-badge">在线</span>
         </div>
-        <button class="ai-chat-close" onclick="closeAiChat()">✕</button>
+        <button class="ai-chat-close" onclick="closeAiChat()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></button>
       </div>
       <div class="ai-chat-body" id="aiChatBody">
         <div class="ai-chat-welcome" id="aiChatWelcome">
-          <div class="ai-chat-welcome-icon">🤖</div>
+          <div class="ai-chat-welcome-icon"><svg class="ico ico--md" ><use href="#ico-ai"/></svg></div>
           <div class="ai-chat-welcome-title" id="aiChatWelTitle">你好，我是 AI 助手</div>
           <div class="ai-chat-welcome-sub" id="aiChatWelSub">试试下面的快捷提问</div>
           <div class="ai-chat-quick-chips" id="aiChatQuickChips"></div>
@@ -3826,7 +3953,7 @@ body {
       </div>
       <div class="ai-chat-footer">
         <input id="aiChatInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendAiMsg()">
-        <button class="ai-chat-send-btn" onclick="sendAiMsg()">➤</button>
+        <button class="ai-chat-send-btn" onclick="sendAiMsg()"><svg class="ico ico--sm" ><use href="#ico-chevron-right"/></svg></button>
       </div>
     </div>
   </div>
@@ -3860,7 +3987,7 @@ body {
     <div class="w-page-header">
       <span class="w-page-back" onclick="closeProdSearch()">←</span>
       <span class="w-page-title">产品大全</span>
-      <span class="w-page-extra" onclick="openAiChat('products')" style="font-size:18px;margin-right:10px;cursor:pointer">🤖</span>
+      <span class="w-page-extra" onclick="openAiChat('products')" style="font-size:18px;margin-right:10px;cursor:pointer"><svg class="ico ico--md" ><use href="#ico-ai"/></svg></span>
     </div>
     <div class="w-page-body" id="prodSearchBody" style="padding:0 var(--sp-md)">
       <!-- 搜索栏 -->
@@ -3928,7 +4055,7 @@ body {
       <span class="w-page-back" onclick="closeGs()">←</span>
       <div class="gs-search-box" style="flex:1;margin:0 8px">
         <input placeholder="搜索客户、产品、待办..." id="gsInput" oninput="onGsInput(this.value)">
-        <span class="gs-clear" id="gsClear" onclick="clearGsSearch()">✕</span>
+        <span class="gs-clear" id="gsClear" onclick="clearGsSearch()"><svg class="ico ico--sm" ><use href="#ico-close"/></svg></span>
       </div>
     </div>
     <div class="w-page-body" id="gsBody"></div>
@@ -3938,7 +4065,7 @@ body {
   <div class="mining-overlay" id="miningOverlay" style="display:none">
     <div class="mining-modal">
       <div class="mining-modal-header">
-        <div class="ai-icon">🤖</div>
+        <div class="ai-icon"><svg class="ico ico--md" ><use href="#ico-ai"/></svg></div>
         <div>
           <h3>AI 商机挖掘中</h3>
           <div class="sub" id="miningSubtitle">正在扫描客户数据...</div>
@@ -3956,7 +4083,7 @@ body {
   <div class="bpgen-overlay" id="bpgenOverlay" style="display:none">
     <div class="bpgen-modal">
       <div class="bpgen-modal-header">
-        <div class="ai-icon">📋</div>
+        <div class="ai-icon"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg></div>
         <div>
           <h3>AI 作战包生成中</h3>
           <div class="sub" id="bpgenSubtitle">正在分析客户数据...</div>
@@ -3968,6 +4095,16 @@ body {
         <div class="result-detail" id="bpgenResultDetail"></div>
       </div>
     </div>
+  </div>
+
+  </div><!-- /workspace -->
+
+  <!-- ===== Tab Bar ===== -->
+  <div class="tab-bar">
+    <div class="tab-item tab-item--active" onclick="goHome()"><span class="tab-icon"><svg class="ico ico--lg" ><use href="#ico-home"/></svg></span><span class="tab-label">工作台</span></div>
+    <div class="tab-item" onclick="openW8('list','tab')"><span class="tab-icon"><svg class="ico ico--lg" ><use href="#ico-people"/></svg></span><span class="tab-label">客户</span></div>
+    <div class="tab-item" onclick="openProdSearch()"><span class="tab-icon"><svg class="ico ico--lg" ><use href="#ico-package"/></svg></span><span class="tab-label">产品</span></div>
+    <div class="tab-item" onclick="openMe()"><span class="tab-icon"><svg class="ico ico--lg" ><use href="#ico-user"/></svg></span><span class="tab-label">我的</span></div>
   </div>
 
 </div>
@@ -3992,7 +4129,7 @@ function animateNum(id, from, to, dur) {
 let tt;
 function showToast(m) {
   const el = document.getElementById('toast');
-  el.textContent = m; el.classList.add('toast--show');
+  el.innerHTML = m; el.classList.add('toast--show');
   clearTimeout(tt); tt = setTimeout(() => el.classList.remove('toast--show'), 1800);
 }
 
@@ -4037,6 +4174,17 @@ function onManagerChange(mgrId) {
 // ============================================================
 // API 数据加载器 — 默认从后台 API 获取数据
 // ============================================================
+
+// ---- 卡片类型定义（全局，API 加载器 + UI 渲染共用）----
+var cardDefs = [
+  { type: '产品到期', seg: '<svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午', time: '09:00-10:30', dur: '约1.5h', tagCls: 'tag-danger', icon: '' },
+  { type: '大额异动', seg: '<svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午', time: '10:30-11:00', dur: '约0.5h', tagCls: 'tag-warning', icon: '' },
+  { type: '贷款逾期', seg: '<svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午', time: '14:00-14:30', dur: '约0.5h', tagCls: 'tag-warning', icon: '' },
+  { type: '联络超期', seg: '<svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午', time: '15:00-16:00', dur: '约1h', tagCls: 'tag-muted', icon: '' },
+  { type: '生日提醒', seg: '<svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午', time: '16:00-16:30', dur: '约0.5h', tagCls: 'tag-success', icon: '' },
+  { type: '商机待办', seg: '<svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午', time: '11:00-11:30', dur: '约0.5h', tagCls: 'tag-opportunity', icon: '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-ai);vertical-align:middle;margin-right:2px"></span> ' }
+];
+
 (function() {
   var API_BASE = 'http://localhost:8008';
   var USE_API = true;  // 关闭此项切换回静态数据
@@ -4078,14 +4226,6 @@ function onManagerChange(mgrId) {
   }
 
   // ---- taskData 映射 + DOM 刷新 ----
-  var cardDefs = [
-    { type: '产品到期', seg: '☀️ 上午', time: '09:00-10:30', dur: '约1.5h', tagCls: 'tag-danger', icon: '' },
-    { type: '大额异动', seg: '☀️ 上午', time: '10:30-11:00', dur: '约0.5h', tagCls: 'tag-warning', icon: '' },
-    { type: '贷款逾期', seg: '🌤 下午', time: '14:00-14:30', dur: '约0.5h', tagCls: 'tag-warning', icon: '' },
-    { type: '联络超期', seg: '🌤 下午', time: '15:00-16:00', dur: '约1h', tagCls: 'tag-muted', icon: '' },
-    { type: '生日提醒', seg: '🌤 下午', time: '16:00-16:30', dur: '约0.5h', tagCls: 'tag-success', icon: '' },
-    { type: '商机待办', seg: '☀️ 上午', time: '11:00-11:30', dur: '约0.5h', tagCls: 'tag-opportunity', icon: '🟣 ' }
-  ];
 
   function loadTasks() {
     var today = new Date().toISOString().slice(0, 10);
@@ -4135,6 +4275,7 @@ function onManagerChange(mgrId) {
       }
       console.log('[API] 待办加载完成: ' + slotIdx + ' 类');
       refreshTaskCardsDOM();
+      initCarousel();
     });
   }
 
@@ -4144,67 +4285,64 @@ function onManagerChange(mgrId) {
       document.getElementById('taskCard3'), document.getElementById('taskCard4'),
       document.getElementById('taskCard5'), document.getElementById('taskCard6')
     ];
-    var dots = document.querySelectorAll('#schedDots .dot');
     var visibleCount = 0;
 
     for (var i = 0; i < 6; i++) {
       var cardEl = cardEls[i];
       var cardId = 'card' + (i + 1);
       var data = taskData[cardId];
-      var dot = dots[i];
 
       if (!data) {
-        // 隐藏无数据的卡片和圆点
         if (cardEl) cardEl.style.display = 'none';
-        if (dot) dot.style.display = 'none';
         continue;
       }
       visibleCount++;
       if (cardEl) cardEl.style.display = '';
-      if (dot) dot.style.display = '';
 
       var def = data.cardDef;
-      // 更新卡片头
       var top = cardEl.querySelector('.card-top');
       if (top) {
         top.innerHTML = '<span class="time-seg time-seg--am">' + def.seg + '</span>' +
           '<span class="task-num">#' + (i + 1) + '</span>' +
           '<span class="task-type-tag ' + def.tagCls + '">' + def.icon + def.type + '</span>';
       }
-      // 更新摘要
       var summary = cardEl.querySelector('.task-summary');
       if (summary) summary.innerHTML = data.desc;
-      // 更新时间
       var timeRange = cardEl.querySelector('.time-range');
       if (timeRange) timeRange.textContent = def.time;
       var timeDur = cardEl.querySelector('.time-dur');
       if (timeDur) timeDur.textContent = def.dur;
-      // 更新人数
       var countBadge = cardEl.querySelector('.count-badge');
       if (countBadge) countBadge.textContent = data.customers.length + '人';
-      // 更新展开区 — 分类摘要（不再列客户清单）
       var expand = cardEl.querySelector('.card-expand');
       if (expand && data.customers.length > 0) {
         expand.innerHTML = generateCardSummary(cardId);
       }
     }
 
-    // 更新圆点索引
-    var newDots = document.querySelectorAll('#schedDots .dot');
-    var vi = 0;
-    newDots.forEach(function(d) {
-      if (d.style.display !== 'none') {
-        d.setAttribute('data-idx', vi);
-        vi++;
-      }
-    });
-
-    // 重新初始化轮播（card 数量可能变了）
-    if (visibleCount > 0 && window.schedCarousel) {
-      window.schedCarousel.goTo(0);
-    }
     if (visibleCount === 0) {
       showAllDoneView();
+    }
+
+    // 更新页码指示器
+    var pager = document.getElementById('schedPager');
+    if (pager) {
+      var pagerNums = pager.querySelectorAll('.pager-num');
+      for (var j = 0; j < pagerNums.length; j++) {
+        var pNum = pagerNums[j];
+        var pIdx = parseInt(pNum.getAttribute('data-idx'));
+        var pCardId = 'card' + (pIdx + 1);
+        if (!taskData[pCardId]) {
+          pNum.style.display = 'none';
+        } else {
+          pNum.style.display = '';
+          if (completedCards[pCardId]) {
+            pNum.classList.add('completed');
+          } else {
+            pNum.classList.remove('completed');
+          }
+        }
+      }
     }
   }
 
@@ -4246,7 +4384,7 @@ function onManagerChange(mgrId) {
       var totalCnt = counts.reduce(function(s,c){return s+c;}, 0);
 
       html += '<div class="cs-section">';
-      html += '<div class="cs-title">💰 金额分布</div>';
+      html += '<div class="cs-title"><svg class="ico ico--md" ><use href="#ico-money"/></svg> 金额分布</div>';
       if (ge50 > 0) html += bar('≥50万', ge50, total, 'high');
       html += bar('10-50万', ge10, total, 'mid');
       html += bar('<10万', lt10, total, 'low');
@@ -4256,7 +4394,7 @@ function onManagerChange(mgrId) {
       daysA.forEach(function(d) { if (d !== null && d <= 3) le3++; else if (d !== null) gt3++; });
       if (le3 + gt3 > 0) {
         html += '<div class="cs-section">';
-        html += '<div class="cs-title">⏰ 到期时效</div>';
+        html += '<div class="cs-title"><svg class="ico ico--md" ><use href="#ico-alarm"/></svg> 到期时效</div>';
         if (le3 > 0) html += bar('≤3天到期', le3, total, 'high', '紧急');
         if (gt3 > 0) html += bar('4-7天', gt3, total, 'mid');
         html += '</div>';
@@ -4272,7 +4410,7 @@ function onManagerChange(mgrId) {
       amounts.forEach(function(a) { if (a >= 20) big++; else mid++; });
 
       html += '<div class="cs-section">';
-      html += '<div class="cs-title">💸 转出金额</div>';
+      html += '<div class="cs-title"><svg class="ico ico--md" ><use href="#ico-money-fly"/></svg> 转出金额</div>';
       if (big > 0) html += bar('≥20万', big, total, 'high');
       if (mid > 0) html += bar('<20万', mid, total, 'mid');
       html += '</div>';
@@ -4285,7 +4423,7 @@ function onManagerChange(mgrId) {
       ods.forEach(function(o) { if (o >= 3) severe++; else normal++; });
 
       html += '<div class="cs-section">';
-      html += '<div class="cs-title">⚠️ 逾期期数</div>';
+      html += '<div class="cs-title"><svg class="ico ico--md" ><use href="#ico-warning"/></svg> 逾期期数</div>';
       if (severe > 0) html += bar('≥3期', severe, total, 'high', '严重');
       if (normal > 0) html += bar('1-2期', normal, total, 'mid');
       html += '</div>';
@@ -4302,7 +4440,7 @@ function onManagerChange(mgrId) {
       });
 
       html += '<div class="cs-section">';
-      html += '<div class="cs-title">📅 超期天数</div>';
+      html += '<div class="cs-title"><svg class="ico ico--md" ><use href="#ico-calendar"/></svg> 超期天数</div>';
       if (never > 0) html += bar('从未联络', never, total, 'high', '预警');
       if (long > 0) html += bar('≥7天', long, total, 'mid');
       if (short > 0) html += bar('4-6天', short, total, 'low');
@@ -4312,6 +4450,94 @@ function onManagerChange(mgrId) {
 
     html += '</div>';
     return html;
+  }
+
+  // ---- 轮播初始化 ----
+  function initCarousel() {
+    var track = document.getElementById('schedTrack');
+    var pager = document.getElementById('schedPager');
+    if (!track || !pager) return;
+
+    var cards = track.querySelectorAll('.task-card');
+    var total = cards.length;
+    var currentIdx = 0;
+    var startX = 0, diffX = 0, isDragging = false;
+
+    function updateTransform(animate) {
+      if (animate === false) {
+        track.style.transition = 'none';
+      } else {
+        track.style.transition = 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)';
+      }
+      track.style.transform = 'translateX(-' + (currentIdx * 100) + '%)';
+    }
+
+    function updateDots() {
+      var pagerNums = pager.querySelectorAll('.pager-num');
+      pagerNums.forEach(function(d, i) {
+        d.classList.toggle('active', i === currentIdx);
+      });
+    }
+
+    function goTo(idx) {
+      if (idx < 0 || idx >= total) return;
+      currentIdx = idx;
+      updateTransform(true);
+      updateDots();
+    }
+
+    function getCurrent() { return currentIdx; }
+    function getTotal() { return total; }
+
+    // 页码点击
+    pager.querySelectorAll('.pager-num').forEach(function(numEl) {
+      numEl.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-idx'));
+        goTo(idx);
+      });
+    });
+
+    // 触摸滑动
+    track.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+      track.style.transition = 'none';
+    }, { passive: true });
+
+    track.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      diffX = e.touches[0].clientX - startX;
+      var offset = -currentIdx * 100 + (diffX / track.offsetWidth) * 100;
+      track.style.transform = 'translateX(' + offset + '%)';
+    }, { passive: true });
+
+    track.addEventListener('touchend', function() {
+      if (!isDragging) return;
+      isDragging = false;
+      track.style.transition = 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)';
+
+      if (Math.abs(diffX) > 40) {
+        if (diffX < -40 && currentIdx < total - 1) {
+          currentIdx++;
+        } else if (diffX > 40 && currentIdx > 0) {
+          currentIdx--;
+        }
+      }
+      diffX = 0;
+      updateTransform(true);
+      updateDots();
+    });
+
+    // 对外接口
+    window.schedCarousel = {
+      goTo: goTo,
+      getCurrent: getCurrent,
+      getTotal: getTotal
+    };
+
+    // 初始状态
+    updateTransform(false);
+    updateDots();
   }
 
   // ---- w3OppData 映射 ----
@@ -4497,6 +4723,40 @@ function onManagerChange(mgrId) {
     });
   }
 
+  // ---- KPI 业绩数据 ----
+  window.w4KpiDefs = [];       // active KPI 定义列表
+  window.w4KpiSnapshots = [];   // KPI 快照数据（当前经理）
+  window.w4KpiTargets = [];     // KPI 目标数据
+  window.w4KpiRank = null;      // 个人排名
+  window.w4KpiLoaded = false;
+
+  function loadKpi() {
+    var mgrId = window.currentManagerId || 'M001';
+    var today = new Date().toISOString().slice(0, 7); // YYYY-MM
+    return Promise.all([
+      apiGet('/api/kpi/definitions'),
+      apiGet('/api/kpi/snapshot?manager_id=' + mgrId + '&period=month&date=' + today),
+      apiGet('/api/kpi/targets?manager_id=' + mgrId + '&year=2026'),
+      apiGet('/api/kpi/ranking?manager_id=' + mgrId + '&key=' + today)
+    ]).then(function(results) {
+      var defR = results[0], snapR = results[1], tgtR = results[2], rankR = results[3];
+      if (defR && defR.code === 0) {
+        window.w4KpiDefs = defR.data.definitions || [];
+      }
+      if (snapR && snapR.code === 0) {
+        window.w4KpiSnapshots = snapR.data.by_kpi || [];
+      }
+      if (tgtR && tgtR.code === 0) {
+        window.w4KpiTargets = tgtR.data.targets || [];
+      }
+      if (rankR && rankR.code === 0) {
+        window.w4KpiRank = rankR.data.my_rank;
+      }
+      window.w4KpiLoaded = true;
+      console.log('[API] KPI 业绩数据加载完成: ' + window.w4KpiDefs.length + ' 项指标, 排名 ' + window.w4KpiRank);
+    });
+  }
+
   // ---- 商机看板摘要刷新 ----
   function refreshOppSummary() {
     function parseEst(v) {
@@ -4565,11 +4825,11 @@ function onManagerChange(mgrId) {
     var typeMap = {};  // typeName -> { count, totalValue, icon, priority }
     var tabs = ['daifa', 'liushi', 'ai', 'mine'];
     var typeConfig = {
-      '代发到账配置': { icon: '📥', label: '代发工资客群', desc: '近7天有代发到账记录' },
-      '产品到期承接': { icon: '📅', label: '产品到期承接', desc: '30天内产品即将到期' },
-      '流失预警挽回': { icon: '⚠️', label: '流失预警挽回', desc: 'AUM持续走低需挽回' },
-      '基金购买意向': { icon: '📈', label: '基金/理财意向', desc: '浏览基金但无持仓' },
-      '大额配置建议': { icon: '💎', label: '大额资产配置', desc: '高AUM存款客户待转化' },
+      '代发到账配置': { icon: '<svg class="ico ico--md" ><use href="#ico-inbox"/></svg>', label: '代发工资客群', desc: '近7天有代发到账记录' },
+      '产品到期承接': { icon: '<svg class="ico ico--md" ><use href="#ico-calendar"/></svg>', label: '产品到期承接', desc: '30天内产品即将到期' },
+      '流失预警挽回': { icon: '<svg class="ico ico--md" ><use href="#ico-warning"/></svg>', label: '流失预警挽回', desc: 'AUM持续走低需挽回' },
+      '基金购买意向': { icon: '<svg class="ico ico--md" ><use href="#ico-chart"/></svg>', label: '基金/理财意向', desc: '浏览基金但无持仓' },
+      '大额配置建议': { icon: '<svg class="ico ico--md" ><use href="#ico-diamond"/></svg>', label: '大额资产配置', desc: '高AUM存款客户待转化' },
     };
 
     tabs.forEach(function(t) {
@@ -4577,7 +4837,7 @@ function onManagerChange(mgrId) {
       arr.forEach(function(o) {
         var typeKey = o.type || t;
         if (!typeMap[typeKey]) {
-          var cfg = typeConfig[typeKey] || { icon: '📌', label: typeKey, desc: '' };
+          var cfg = typeConfig[typeKey] || { icon: '<svg class="ico ico--sm" ><use href="#ico-pin"/></svg>', label: typeKey, desc: '' };
           typeMap[typeKey] = { count: 0, totalValue: 0, icon: cfg.icon, label: cfg.label, desc: cfg.desc };
         }
         typeMap[typeKey].count++;
@@ -4598,7 +4858,7 @@ function onManagerChange(mgrId) {
 
     // 更新 gap badge
     var badge = document.getElementById('miningGapBadge');
-    if (badge) badge.textContent = gap > 0 ? ('目标缺口 ' + gap + '个') : '目标已达成 ✓';
+    if (badge) badge.innerHTML = gap > 0 ? ('目标缺口 ' + gap + '个') : '目标已达成 <svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg>';
     var gapDesc = document.getElementById('miningGapDesc');
     if (gapDesc) gapDesc.textContent = gap > 0 ? ('完成目标还需' + gap + '个商机') : '商机已充足，持续跟进即可';
 
@@ -4896,7 +5156,8 @@ function onManagerChange(mgrId) {
         loadActivities(),
         loadBattlePackages(),
         loadSearchData(),
-        loadProducts()
+        loadProducts(),
+        loadKpi()
       ]);
     }).then(function() {
       console.log('[API] 全部数据加载完成 (manager=' + window.currentManagerId + ')');
@@ -4950,6 +5211,7 @@ function onManagerChange(mgrId) {
   window.apiPost = apiPost;
   window.loadOpps = loadOpps;
   window.loadProducts = loadProducts;
+  window.loadKpi = loadKpi;
   window.API_BASE = API_BASE;
   window.refreshMiningPanel = refreshMiningPanel;
 })();
@@ -4979,7 +5241,7 @@ var taskData = {
     { name: '陈XX', detail: '超期3天 · 最后联络 7月12日' }
   ]},
   card6: { type: '商机待办', desc: '拜访客户王建国 · 定存到期承接', customers: [
-    { name: '王建国', detail: '定存到期承接 · 预估贡献25万 · 📋 作战包' }
+    { name: '王建国', detail: '定存到期承接 · 预估贡献25万 · <svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 作战包' }
   ]}
 };
 let currentProcessCardId = null;
@@ -5013,14 +5275,14 @@ function openProcessPanel(cardId) {
     return '<div class="' + rowClass + '" id="psCust-' + i + '">' +
       '<div class="ps-cust-info">' +
         '<div class="ps-cust-name">' + c.name + '</div>' +
-        '<div class="ps-cust-detail">' + (st && st.action !== '跳过' ? '✓ ' + st.action + (st.notes ? ' · ' + st.notes.substring(0, 20) : '') : (c.detail || '')) + '</div>' +
+        '<div class="ps-cust-detail">' + (st && st.action !== '跳过' ? '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> ' + st.action + (st.notes ? ' · ' + st.notes.substring(0, 20) : '') : (c.detail || '')) + '</div>' +
       '</div>' +
       '<div class="ps-actions">' +
         (st && st.action !== '跳过' ? '' :
-          '<button class="ps-act-btn ps-btn-call" onclick="openPhoneDialog(' + i + ')" title="电话">📞</button>' +
-          '<button class="ps-act-btn ps-btn-wechat" onclick="openWechatDialog(' + i + ')" title="微信">✉️</button>' +
-          '<button class="ps-act-btn ps-btn-profile" onclick="viewProfileFromProcess(' + i + ')" title="画像">👤</button>' +
-          '<button class="ps-act-btn ps-btn-skip" onclick="skipProcessCustomer(' + i + ')" title="跳过">⏭</button>'
+          '<button class="ps-act-btn ps-btn-call" onclick="openPhoneDialog(' + i + ')" title="电话"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg></button>' +
+          '<button class="ps-act-btn ps-btn-wechat" onclick="openWechatDialog(' + i + ')" title="微信"><svg class="ico ico--sm"><use href="#ico-email"/></svg>️</button>' +
+          '<button class="ps-act-btn ps-btn-profile" onclick="viewProfileFromProcess(' + i + ')" title="画像"><svg class="ico ico--lg" ><use href="#ico-user"/></svg></button>' +
+          '<button class="ps-act-btn ps-btn-skip" onclick="skipProcessCustomer(' + i + ')" title="跳过"><svg class="ico ico--sm" ><use href="#ico-skip-fwd"/></svg></button>'
         ) +
       '</div>' +
     '</div>';
@@ -5053,7 +5315,7 @@ function updateProcessProgress() {
   var el = document.getElementById('psProgress');
   if (el) {
     if (doneCount === 0) el.textContent = total + '位客户待处理';
-    else if (doneCount === total) el.textContent = '✓ 全部已处理';
+    else if (doneCount === total) el.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> 全部已处理';
     else el.textContent = '已处理 ' + doneCount + '/' + total;
   }
 }
@@ -5245,14 +5507,14 @@ function sortProcessCustomers(criteria) {
     return '<div class="' + rowClass + '" id="psCust-' + i + '">' +
       '<div class="ps-cust-info">' +
         '<div class="ps-cust-name">' + c.name + '</div>' +
-        '<div class="ps-cust-detail">' + (st && st.action !== '跳过' ? '✓ ' + st.action + (st.notes ? ' · ' + st.notes.substring(0, 20) : '') : (c.detail || '')) + '</div>' +
+        '<div class="ps-cust-detail">' + (st && st.action !== '跳过' ? '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> ' + st.action + (st.notes ? ' · ' + st.notes.substring(0, 20) : '') : (c.detail || '')) + '</div>' +
       '</div>' +
       '<div class="ps-actions">' +
         (st && st.action !== '跳过' ? '' :
-          '<button class="ps-act-btn ps-btn-call" onclick="openPhoneDialog(' + i + ')" title="电话">📞</button>' +
-          '<button class="ps-act-btn ps-btn-wechat" onclick="openWechatDialog(' + i + ')" title="微信">✉️</button>' +
-          '<button class="ps-act-btn ps-btn-profile" onclick="viewProfileFromProcess(' + i + ')" title="画像">👤</button>' +
-          '<button class="ps-act-btn ps-btn-skip" onclick="skipProcessCustomer(' + i + ')" title="跳过">⏭</button>'
+          '<button class="ps-act-btn ps-btn-call" onclick="openPhoneDialog(' + i + ')" title="电话"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg></button>' +
+          '<button class="ps-act-btn ps-btn-wechat" onclick="openWechatDialog(' + i + ')" title="微信"><svg class="ico ico--sm"><use href="#ico-email"/></svg>️</button>' +
+          '<button class="ps-act-btn ps-btn-profile" onclick="viewProfileFromProcess(' + i + ')" title="画像"><svg class="ico ico--lg" ><use href="#ico-user"/></svg></button>' +
+          '<button class="ps-act-btn ps-btn-skip" onclick="skipProcessCustomer(' + i + ')" title="跳过"><svg class="ico ico--sm" ><use href="#ico-skip-fwd"/></svg></button>'
         ) +
       '</div>' +
     '</div>';
@@ -5277,14 +5539,14 @@ function saveRecordAndMarkDone(idx, action, notes) {
   if (row) {
     row.classList.add('done');
     var detailEl = row.querySelector('.ps-cust-detail');
-    if (detailEl) detailEl.textContent = '✓ ' + action + (notes ? ' · ' + notes.substring(0, 20) : '');
+    if (detailEl) detailEl.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> ' + action + (notes ? ' · ' + notes.substring(0, 20) : '');
     var actionsEl = row.querySelector('.ps-actions');
     if (actionsEl) actionsEl.innerHTML = '';
   }
 
   updateProcessProgress();
   updateCardBadge(cardId);
-  showToast('✓ ' + action + ' · ' + (c ? c.name : ''));
+  showToast('<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg> ' + action + ' · ' + (c ? c.name : ''));
 
   // 检查是否全部完成（含跳过）
   var total = data.customers.length;
@@ -5390,70 +5652,9 @@ function handleNotification() {
   document.getElementById('greeting').textContent = g + '，李经理';
 })();
 
-// ===== 卡片轮播 =====
-function initCarousel(carouselId, trackId, dotsId) {
-  const carousel = document.getElementById(carouselId);
-  const track = document.getElementById(trackId);
-  const dots = document.getElementById(dotsId).querySelectorAll('.dot');
-  if (!carousel || !track || !dots.length) return;
+// ===== 日程卡片显示（水平轮播） =====
 
-  let currentIdx = 0;
-  let startX = 0, dx = 0, tracking = false;
-
-  function goTo(idx) {
-    if (idx < 0 || idx >= dots.length) return;
-    currentIdx = idx;
-    track.style.transform = 'translateX(-' + (idx * 100) + '%)';
-    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-  }
-
-  // 触摸滑动
-  carousel.addEventListener('touchstart', function(e) {
-    startX = e.touches[0].clientX;
-    tracking = true;
-    track.style.transition = 'none';
-  }, { passive: true });
-
-  carousel.addEventListener('touchmove', function(e) {
-    if (!tracking) return;
-    dx = e.touches[0].clientX - startX;
-    const offset = -currentIdx * 100 + (dx / carousel.offsetWidth) * 100;
-    track.style.transform = 'translateX(' + offset + '%)';
-  }, { passive: true });
-
-  carousel.addEventListener('touchend', function() {
-    if (!tracking) return;
-    tracking = false;
-    track.style.transition = 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
-    if (Math.abs(dx) > 40) {
-      dx < 0 ? goTo(currentIdx + 1) : goTo(currentIdx - 1);
-    } else {
-      goTo(currentIdx); // 回弹
-    }
-  });
-
-  // 点击圆点
-  dots.forEach(function(dot) {
-    dot.addEventListener('click', function() {
-      goTo(parseInt(this.getAttribute('data-idx')));
-    });
-  });
-
-  // 初始位置
-  goTo(0);
-
-  // 暴露 goTo 供外部调用
-  window.schedCarousel = {
-    goTo: goTo,
-    getCurrentIdx: function() { return currentIdx; },
-    getTotal: function() { return dots.length; }
-  };
-}
-
-// 初始化统一日程轮播
-initCarousel('schedCarousel', 'schedTrack', 'schedDots');
-
-// ===== 完成动效与轮播衔接 =====
+// ===== 完成动效与列表衔接 =====
 function markCardComplete(cardId) {
   if (completedCards[cardId]) return;
   completedCards[cardId] = true;
@@ -5490,16 +5691,12 @@ function markCardComplete(cardId) {
 
 function advanceCarousel() {
   if (!window.schedCarousel) return;
-  var total = window.schedCarousel.getTotal();
-  var current = window.schedCarousel.getCurrentIdx();
-
   if (checkAllComplete()) return;
-
-  for (var i = 1; i < total; i++) {
-    var nextIdx = (current + i) % total;
-    var nextCardId = 'card' + (nextIdx + 1);
-    if (!completedCards[nextCardId]) {
-      window.schedCarousel.goTo(nextIdx);
+  var total = window.schedCarousel.getTotal();
+  for (var i = 0; i < total; i++) {
+    var cardId = 'card' + (i + 1);
+    if (!completedCards[cardId]) {
+      window.schedCarousel.goTo(i);
       return;
     }
   }
@@ -5517,12 +5714,12 @@ function checkAllComplete() {
 
 function showAllDoneView() {
   var carousel = document.getElementById('schedCarousel');
-  var dots = document.getElementById('schedDots');
+  var dots = document.getElementById('schedPager');
   if (carousel) carousel.style.display = 'none';
   if (dots) dots.style.display = 'none';
   var doneView = document.getElementById('allDoneView');
   if (doneView) doneView.classList.add('show');
-  showToast('🎉 今日待办已全部完成');
+  showToast('<svg class="ico ico--xl" ><use href="#ico-party"/></svg> 今日待办已全部完成');
 }
 
 function resetAllCards() {
@@ -5542,7 +5739,7 @@ function resetAllCards() {
     if (badge) badge.remove();
   });
   var carousel = document.getElementById('schedCarousel');
-  var dots = document.getElementById('schedDots');
+  var dots = document.getElementById('schedPager');
   var doneView = document.getElementById('allDoneView');
   if (carousel) carousel.style.display = '';
   if (dots) dots.style.display = '';
@@ -5807,11 +6004,7 @@ function closeSkipPicker() {
 }
 
 function updateDotsAfterSkip() {
-  const visibleCards = document.querySelectorAll('#schedTrack .task-card:not([style*="display: none"])');
-  // 更新圆点 active 状态
   if (window.schedCarousel) {
-    const currentIdx = window.schedCarousel.getCurrentIdx();
-    // 如果当前卡片被隐藏了，跳到下一个可见的
     const allCards = document.querySelectorAll('#schedTrack .task-card');
     const hiddenCount = Array.from(allCards).filter(function(c) {
       return c.style.display === 'none' || c.classList.contains('completed');
@@ -5872,50 +6065,46 @@ function cancelEditMode() {
   showToast('已取消调整，恢复原排程');
 }
 
-// ===== 全部待办分类列表 =====
-const allTaskGroups = [
-  { id: 'g1', name: '产品到期', dot: 'dot-red', icon: '🔴', customers: [
-    { name: '王建国', detail: 'XX定期存款 25万 · 7月18日到期(3天后)' },
-    { name: '张丽华', detail: 'YY悦享周期理财 10万 · 7月18日到期(3天后)' },
-    { name: '赵明辉', detail: 'ZZ大额存单 50万 · 7月25日到期(10天后)' }
-  ]},
-  { id: 'g2', name: '大额异动', dot: 'dot-yellow', icon: '🟡', customers: [
-    { name: '孙丽丽', detail: '昨日转出30万 · 活期余额仅剩5万' }
-  ]},
-  { id: 'g3', name: '贷款逾期', dot: 'dot-yellow', icon: '🟡', customers: [
-    { name: '周文博', detail: '房贷逾期15天 · 逾期金额2.8万' }
-  ]},
-  { id: 'g4', name: '生日提醒', dot: 'dot-green', icon: '🟢', customers: [
-    { name: '陈晓燕', detail: '财富客户 · AUM 185万 · 偏好稳健理财' },
-    { name: '刘建国', detail: '金卡客户 · AUM 42万 · 持有基金' }
-  ]},
-  { id: 'g5', name: '联络超期', dot: 'dot-gray', icon: '⚪', customers: [
-    { name: '张XX', detail: '超期8天 · 最后联络 7月7日' },
-    { name: '李XX', detail: '超期5天 · 最后联络 7月10日' },
-    { name: '王XX', detail: '超期5天 · 最后联络 7月10日' },
-    { name: '赵XX', detail: '超期4天 · 最后联络 7月11日' },
-    { name: '陈XX', detail: '超期3天 · 最后联络 7月12日' }
-  ]},
-  { id: 'g6', name: '信用卡待办', dot: 'dot-gray', icon: '⚪', customers: [] },
-  { id: 'g7', name: '商机待办', dot: 'dot-purple', icon: '🟣', customers: [
-    { name: '王建国', detail: '定存到期承接 · 预估贡献25万 · 📋 作战包' }
-  ], isOpportunity: true }
-];
+// ===== 全部待办分类列表（动态生成，数据源：API/taskData） =====
+function buildAllTaskGroups() {
+  var tagToDot = { 'tag-danger':'dot-red', 'tag-warning':'dot-yellow', 'tag-success':'dot-green', 'tag-muted':'dot-gray', 'tag-opportunity':'dot-purple' };
+  var tagToColor = { 'tag-danger':'var(--color-danger)', 'tag-warning':'var(--color-warning)', 'tag-success':'var(--color-success)', 'tag-muted':'var(--color-text-tertiary)', 'tag-opportunity':'var(--color-ai)' };
+  var groups = [];
+  for (var i = 0; i < cardDefs.length; i++) {
+    var cardId = 'card' + (i + 1);
+    var data = taskData[cardId];
+    var def = cardDefs[i];
+    var tagCls = def.tagCls;
+    var dot = tagToDot[tagCls] || 'dot-gray';
+    var color = tagToColor[tagCls] || 'var(--color-text-tertiary)';
+    var customers = data ? data.customers.map(function(c) { return { name: c.name, detail: c.detail || '' }; }) : [];
+    groups.push({
+      id: 'g' + (i + 1),
+      name: def.type,
+      dot: dot,
+      icon: '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + color + ';vertical-align:middle;margin-right:2px"></span>',
+      customers: customers,
+      isOpportunity: def.type === '商机待办'
+    });
+  }
+  return groups;
+}
 
 function openAllTasks() {
+  var groups = buildAllTaskGroups();
   const body = document.getElementById('atBody');
-  const totalCount = allTaskGroups.reduce(function(s, g) { return s + g.customers.length; }, 0);
+  const totalCount = groups.reduce(function(s, g) { return s + g.customers.length; }, 0);
   document.getElementById('atTotalCount').textContent = '(' + totalCount + ')';
 
-  body.innerHTML = allTaskGroups.map(function(g) {
+  body.innerHTML = groups.map(function(g) {
     const custCount = g.customers.length;
     const isOpportunity = g.isOpportunity || false;
     const custRows = g.customers.map(function(c, ci) {
       const btns = isOpportunity
-        ? '<button class="at-cust-btn btn-call" onclick="openP1Page(\'face\')">📋 作战包</button>'
-        : '<button class="at-cust-btn btn-call" onclick="processAtCustomer(\'' + g.id + '\',' + ci + ',\'电话\')">📞</button>' +
-          '<button class="at-cust-btn btn-wechat" onclick="processAtCustomer(\'' + g.id + '\',' + ci + ',\'微信\')">✉️</button>' +
-          '<button class="at-cust-btn btn-done-mark" onclick="processAtCustomer(\'' + g.id + '\',' + ci + ',\'标记\')">✓</button>';
+        ? '<button class="at-cust-btn btn-call" onclick="openP1Page(\'face\')"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 作战包</button>'
+        : '<button class="at-cust-btn btn-call" onclick="processAtCustomer(\'' + g.id + '\',' + ci + ',\'电话\')"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg></button>' +
+          '<button class="at-cust-btn btn-wechat" onclick="processAtCustomer(\'' + g.id + '\',' + ci + ',\'微信\')"><svg class="ico ico--sm"><use href="#ico-email"/></svg>️</button>' +
+          '<button class="at-cust-btn btn-done-mark" onclick="processAtCustomer(\'' + g.id + '\',' + ci + ',\'标记\')"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg></button>';
       return '<div class="at-customer" id="atCust-' + g.id + '-' + ci + '">' +
         '<div class="at-cust-info">' +
           '<div class="at-cust-name">' + c.name + '</div>' +
@@ -5933,10 +6122,10 @@ function openAllTasks() {
     return '<div class="at-group' + emptyClass + '" id="atGroup-' + g.id + '">' +
       '<div class="group-header" onclick="toggleAtGroup(\'' + g.id + '\')">' +
         '<span class="group-dot ' + g.dot + '"></span>' +
-        '<span class="group-check">✓</span>' +
+        '<span class="group-check"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg></span>' +
         '<span class="group-name">' + g.icon + ' ' + g.name + '</span>' +
         '<span class="group-count">' + custCount + '人</span>' +
-        '<span class="group-arrow" id="atArrow-' + g.id + '">▼</span>' +
+        '<span class="group-arrow" id="atArrow-' + g.id + '"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
       '</div>' +
       '<div class="group-body" id="atBody-' + g.id + '">' + custRows + procAllBtn + '</div>' +
     '</div>';
@@ -6032,7 +6221,7 @@ function triggerAiMining() {
 
   // 按钮进入加载态
   btn.classList.add('loading');
-  btn.textContent = '⏳ AI 正在分析客户数据...';
+  btn.innerHTML = '<svg class="ico ico--sm" ><use href="#ico-hourglass"/></svg> AI 正在分析客户数据...';
 
   // 收集 SSE 事件
   var miningResult = null;
@@ -6047,11 +6236,11 @@ function triggerAiMining() {
   }).then(function(response) {
     if (!response.ok) {
       btn.classList.remove('loading');
-      btn.textContent = '⚠️ 挖掘失败，请重试';
+      btn.innerHTML = '<svg class="ico ico--md" ><use href="#ico-warning"/></svg> 挖掘失败，请重试';
       btn.style.background = 'var(--color-danger)';
       closeMiningModal();
       showToast('AI 挖掘服务异常（HTTP ' + response.status + '）');
-      setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+      setTimeout(function() { btn.innerHTML = '<svg class="ico ico--sm" ><use href="#ico-lightning"/></svg> 一键AI挖掘'; btn.style.background = ''; }, 3000);
       return;
     }
 
@@ -6092,11 +6281,11 @@ function triggerAiMining() {
       }).catch(function(e) {
         console.error('[SSE] stream error:', e);
         btn.classList.remove('loading');
-        btn.textContent = '⚠️ 连接中断，请重试';
+        btn.innerHTML = '<svg class="ico ico--md" ><use href="#ico-warning"/></svg> 连接中断，请重试';
         btn.style.background = 'var(--color-danger)';
         closeMiningModal();
         showToast('AI 挖掘连接中断: ' + e.message);
-        setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+        setTimeout(function() { btn.innerHTML = '<svg class="ico ico--sm" ><use href="#ico-lightning"/></svg> 一键AI挖掘'; btn.style.background = ''; }, 3000);
       });
     }
 
@@ -6117,12 +6306,12 @@ function triggerAiMining() {
     readStream();
   }).catch(function(e) {
     btn.classList.remove('loading');
-    btn.textContent = '⚠️ 网络错误，请重试';
+    btn.innerHTML = '<svg class="ico ico--md" ><use href="#ico-warning"/></svg> 网络错误，请重试';
     btn.style.background = 'var(--color-danger)';
     closeMiningModal();
     console.error('[AI Mining SSE] error:', e);
     showToast('AI 挖掘请求失败，请检查后端服务');
-    setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+    setTimeout(function() { btn.innerHTML = '<svg class="ico ico--sm" ><use href="#ico-lightning"/></svg> 一键AI挖掘'; btn.style.background = ''; }, 3000);
   });
 }
 
@@ -6139,7 +6328,7 @@ function handleSSEEvent(eventType, data, steps) {
       '，分 ' + data.batch_count + ' 批分析';
 
     var html = '<div class="mining-step done"><div class="step-dot"></div>' +
-      '<div class="step-info"><div class="step-label">🔍 筛选目标客户</div>' +
+      '<div class="step-info"><div class="step-label"><svg class="ico ico--md" ><use href="#ico-search"/></svg> 筛选目标客户</div>' +
       '<div class="step-detail">全库 ' + data.total_customers + ' 人 → 按AUM取Top ' + data.selected +
       ' → 去重后 ' + data.fresh + ' 人待分析</div></div></div>';
     body.innerHTML = html;
@@ -6157,7 +6346,7 @@ function handleSSEEvent(eventType, data, steps) {
     var stepEl = document.createElement('div');
     stepEl.className = 'mining-step done';
     stepEl.innerHTML = '<div class="step-dot"></div>' +
-      '<div class="step-info"><div class="step-label">📊 第 ' + data.batch + '/' + data.total_batches + ' 批分析完成</div>' +
+      '<div class="step-info"><div class="step-label"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 第 ' + data.batch + '/' + data.total_batches + ' 批分析完成</div>' +
       '<div class="step-detail">' + tagHtml + signalHtml + '</div>' +
       '<div class="step-time">耗时 ' + data.elapsed_s + 's</div></div>';
     body.appendChild(stepEl);
@@ -6168,7 +6357,7 @@ function handleSSEEvent(eventType, data, steps) {
       activeEl.className = 'mining-step active';
       activeEl.id = 'miningActiveStep';
       activeEl.innerHTML = '<div class="step-dot"></div>' +
-        '<div class="step-info"><div class="step-label">🔄 第 ' + (data.batch + 1) + '/' + data.total_batches + ' 批分析中...</div>' +
+        '<div class="step-info"><div class="step-label"><svg class="ico ico--sm" ><use href="#ico-refresh"/></svg> 第 ' + (data.batch + 1) + '/' + data.total_batches + ' 批分析中...</div>' +
         '<div class="step-detail">正在调用 DeepSeek V4 Flash 分析客户数据</div></div>';
       body.appendChild(activeEl);
     }
@@ -6185,7 +6374,7 @@ function handleSSEEvent(eventType, data, steps) {
   } else if (eventType === 'error') {
     body.innerHTML = '<div class="mining-step done" style="color:var(--color-danger)">' +
       '<div class="step-dot" style="background:var(--color-danger)"></div>' +
-      '<div class="step-info"><div class="step-label">❌ 挖掘异常</div>' +
+      '<div class="step-info"><div class="step-label"><svg class="ico ico--sm" style="color:var(--color-danger)"><use href="#ico-x-circle"/></svg> 挖掘异常</div>' +
       '<div class="step-detail">' + (data.message || '未知错误') + '</div></div></div>';
   }
 }
@@ -6203,9 +6392,9 @@ function finishMining(btn, result, steps) {
 
   if (!result) {
     closeMiningModal();
-    btn.textContent = '⚠️ 挖掘失败，请重试';
+    btn.innerHTML = '<svg class="ico ico--md" ><use href="#ico-warning"/></svg> 挖掘失败，请重试';
     btn.style.background = 'var(--color-danger)';
-    setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 3000);
+    setTimeout(function() { btn.innerHTML = '<svg class="ico ico--sm" ><use href="#ico-lightning"/></svg> 一键AI挖掘'; btn.style.background = ''; }, 3000);
     return;
   }
 
@@ -6215,9 +6404,9 @@ function finishMining(btn, result, steps) {
   var detail = document.getElementById('miningResultDetail');
 
   if (result.status === 'no_new_data') {
-    summary.textContent = '✅ 数据无变化 · 暂无新商机';
+    summary.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 数据无变化 · 暂无新商机';
     detail.textContent = result.message || '';
-    btn.textContent = '✅ 无新商机';
+    btn.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 无新商机';
     btn.style.background = 'var(--color-text-tertiary)';
     showToast(result.message || '所有客户近24小时内已挖掘，数据无变化');
   } else {
@@ -6225,14 +6414,14 @@ function finishMining(btn, result, steps) {
     var highConf = result.high_confidence || 0;
     var highlights = result.highlights || [];
 
-    summary.textContent = '🎉 挖掘完成！发现 ' + signals + ' 个新商机（高置信度 ' + highConf + ' 个）';
+    summary.innerHTML = '<svg class="ico ico--xl" ><use href="#ico-party"/></svg> 挖掘完成！发现 ' + signals + ' 个新商机（高置信度 ' + highConf + ' 个）';
     if (highlights.length > 0) {
       detail.innerHTML = highlights.slice(0, 3).map(function(h) {
-        return '<span class="cust-tag">' + h.title + ' · ' + h.estimated_value + '万</span>';
+        return '<span class="cust-tag">' + h.title + ' · ' + ((h.estimated_value || 0) / 10000).toFixed(0) + '万</span>';
       }).join(' ');
     }
 
-    btn.textContent = '✅ 发现 ' + signals + ' 个新商机';
+    btn.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 发现 ' + signals + ' 个新商机';
     btn.style.background = 'var(--color-success)';
     showToast('AI 已发现 ' + signals + ' 个新商机（高置信度 ' + highConf + ' 个），请查看');
 
@@ -6245,7 +6434,7 @@ function finishMining(btn, result, steps) {
   var doneEl = document.createElement('div');
   doneEl.className = 'mining-step done';
   doneEl.innerHTML = '<div class="step-dot"></div>' +
-    '<div class="step-info"><div class="step-label">✅ 挖掘流程结束</div>' +
+    '<div class="step-info"><div class="step-label"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 挖掘流程结束</div>' +
     '<div class="step-detail">共经历 ' + steps.length + ' 个阶段，商机已入库</div></div>';
   body.appendChild(doneEl);
 
@@ -6253,7 +6442,7 @@ function finishMining(btn, result, steps) {
   setTimeout(function() {
     closeMiningModal();
     // 3秒后恢复按钮
-    setTimeout(function() { btn.textContent = '⚡ 一键AI挖掘'; btn.style.background = ''; }, 1000);
+    setTimeout(function() { btn.innerHTML = '<svg class="ico ico--sm" ><use href="#ico-lightning"/></svg> 一键AI挖掘'; btn.style.background = ''; }, 1000);
   }, 2000);
 }
 
@@ -6294,7 +6483,7 @@ function updateMiningSummary(data, total, skipped) {
   if (badge) {
     if (signals >= 3) {
       badge.className = 'mining-badge mining-badge--done';
-      badge.textContent = '目标达成 ✓';
+      badge.innerHTML = '目标达成 <svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg>';
     } else {
       badge.className = 'mining-badge mining-badge--gap';
       badge.textContent = '目标缺口 ' + Math.max(0, 3 - signals) + '个';
@@ -6361,12 +6550,9 @@ function renderOppSummary() {
 }
 
 // ===== Block 4 状态切换 =====
-function setBlock4State(state, el) {
+function setBlock4State(state) {
   const b4 = document.getElementById('block4');
   if (!b4) return;
-  const toggles = el.parentElement.querySelectorAll('label');
-  toggles.forEach(l => l.classList.remove('active'));
-  el.classList.add('active');
   const warnTag = b4.querySelector('.nc-warn-tag');
   b4.classList.remove('new-customer-card--warn', 'hidden');
   if (warnTag) warnTag.style.display = 'none';
@@ -6411,9 +6597,9 @@ function setB1State(state, el) {
     b1.classList.add('block-loading');
     b1.innerHTML = b1._origHTML;
   } else if (state === 'empty') {
-    b1.innerHTML = '<div class="ai-avatar">🤖</div><div class="ai-text"><div class="ai-main" style="color:var(--color-text-tertiary)">今日暂无待办，享受轻松的一天！</div></div>';
+    b1.innerHTML = '<div class="ai-main-row"><div class="ai-main" style="color:var(--color-text-tertiary)">今日暂无待办，享受轻松的一天！</div></div>';
   } else if (state === 'error') {
-    b1.innerHTML = '<div class="ai-avatar">🤖</div><div class="ai-text"><div class="ai-main" style="color:var(--color-danger)">AI 摘要暂时无法生成</div><div class="ai-meta" style="color:var(--color-danger)">请稍后重试</div></div>';
+    b1.innerHTML = '<div class="ai-main-row"><div class="ai-main" style="color:var(--color-danger)">AI 摘要暂时无法生成</div></div>';
   } else {
     b1.innerHTML = b1._origHTML || b1.innerHTML;
   }
@@ -6428,7 +6614,7 @@ function setB2State(state, el) {
   // 先重置所有状态
   b2.classList.remove('block-loading', 'edit-mode');
   const carousel = document.getElementById('schedCarousel');
-  const dots = document.getElementById('schedDots');
+  const dots = document.getElementById('schedPager');
   const doneView = document.getElementById('allDoneView');
   const emptyMsg = document.getElementById('b2EmptyMsg');
   if (emptyMsg) emptyMsg.remove();
@@ -6445,7 +6631,7 @@ function setB2State(state, el) {
     const div = document.createElement('div');
     div.id = 'b2EmptyMsg';
     div.style.cssText = 'text-align:center;padding:24px;color:var(--color-text-tertiary);font-size:var(--fs-caption)';
-    div.textContent = '今日待办已全部完成 ✓';
+    div.innerHTML = '今日待办已全部完成 <svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg>';
     b2.querySelector('.sched-inner').appendChild(div);
   } else if (state === 'partial') {
     cards.forEach(function(c, i) { c.classList.toggle('completed', i < 2); });
@@ -6553,9 +6739,9 @@ var bpData = {
     { step:'总结收尾', time:'2分钟', desc:'确认后续行动 + 约定下次' }
   ],
   risks: [
-    { icon:'⚠️', text:'合规红线：不得承诺保本保收益，不得夸大产品收益' },
-    { icon:'📌', text:'该客户有50万大额存单在ZZ银行，面谈中可适时对比我行优势' },
-    { icon:'📌', text:'客户最近一笔转账指向券商，可能已有炒股行为，注意话术分寸' }
+    { icon:'<svg class="ico ico--md" ><use href="#ico-warning"/></svg>', text:'合规红线：不得承诺保本保收益，不得夸大产品收益' },
+    { icon:'<svg class="ico ico--sm" ><use href="#ico-pin"/></svg>', text:'该客户有50万大额存单在ZZ银行，面谈中可适时对比我行优势' },
+    { icon:'<svg class="ico ico--sm" ><use href="#ico-pin"/></svg>', text:'客户最近一笔转账指向券商，可能已有炒股行为，注意话术分寸' }
   ],
   // 营销切入点 — 权益与活动
   benefitEntries: {
@@ -6572,63 +6758,44 @@ var bpData = {
   }
 };
 
-var bpPhoneData = {
-  clue: { title:'定存到期承接',
-    script:'王先生您好，您在我们行的25万定期存款7月18日到期。我帮您看了几款稳健产品：XX稳健增长年化3.8%、YY悦享周期4.1%、还有灵活的现金管理2.5%。您方便的话我微信发给您了解下？',
-    products: [
-      { name:'XX稳健增长A', risk:'R2', yield:'3.8%', min:'1万' },
-      { name:'YY悦享周期', risk:'R3', yield:'4.1%', min:'5万' },
-      { name:'ZZ现金管理', risk:'R1', yield:'2.5%', min:'1元' }
-    ]
-  },
-  // 营销切入点 — 权益与活动（电话版，精简）
-  benefitEntries: {
-    defaultEntry: { type:'activity', name:'财富客户专享活动', hook:'另外王先生，我们本月财富客户专享活动正在进行中，您还可以领一份定制礼盒和加息券，我微信把活动详情发您？' },
-    quickHooks: [
-      { name:'生日专属理财券', hook:'对了，您这个月的生日专属理财券还没领取，买理财能额外加成0.3%，要不要我帮您操作一下？' },
-      { name:'稳健投资达标礼', hook:'您之前参与的稳健投资活动奖励已达标，保温杯和京东卡可以到网点领取了。' }
-    ]
-  }
-};
-
 // ===== W3 商机管理页 =====
 var w3OppData = {
   daifa: [
-    { id:'d1', name:'赵明辉', meta:'男 · 52岁 · 制造业', tag:'系统推送', tagClass:'w3-opp-tag--system',
+    { id:'d1', name:'赵明辉', meta:'男 · 52岁 · 制造业', type:'代发到账配置', tag:'系统推送', tagClass:'w3-opp-tag--system',
       fields:[{ label:'近6月月均代发', val:'32,000元' },{ label:'最近代发日期', val:'2026-07-15' },{ label:'预计下次到账', val:'2026-07-17（2天后）' }],
       estimate:'≈8万', img:false, source:'系统推送·代发到账',
       assets:'总资产58.7万 | 财富客户 | 理财32万·基金18万·存款3.5万 | 风险偏好：稳健型' },
-    { id:'d2', name:'钱伟民', meta:'男 · 38岁 · IT行业', tag:'系统推送', tagClass:'w3-opp-tag--system',
+    { id:'d2', name:'钱伟民', meta:'男 · 38岁 · IT行业', type:'代发到账配置', tag:'系统推送', tagClass:'w3-opp-tag--system',
       fields:[{ label:'近6月月均代发', val:'28,500元' },{ label:'最近代发日期', val:'2026-07-12' },{ label:'预计下次到账', val:'2026-07-16（明天）' }],
       estimate:'≈6万', img:false, source:'系统推送·代发到账',
       assets:'总资产42.3万 | 金卡客户 | 存款28万·理财14万 | 风险偏好：保守型' }
   ],
   liushi: [
-    { id:'l1', name:'吴大伟', meta:'男 · 56岁 · 餐饮业', tag:'系统推送', tagClass:'w3-opp-tag--system',
+    { id:'l1', name:'吴大伟', meta:'男 · 56岁 · 餐饮业', type:'流失预警挽回', tag:'系统推送', tagClass:'w3-opp-tag--system',
       fields:[{ label:'资产总额', val:'210万' },{ label:'流失概率', val:'72% · 高' },{ label:'流失原因', val:'近期大额转出3笔，合计65万 · 疑似转投他行' }],
       estimate:'≈18万', img:false, source:'系统推送·流失预警', danger:true,
       assets:'总资产210万 | 私行客户 | 理财95万·基金68万·存款47万 | 风险偏好：平衡型' },
-    { id:'l2', name:'郑美玲', meta:'女 · 42岁 · 医疗行业', tag:'系统推送', tagClass:'w3-opp-tag--system',
+    { id:'l2', name:'郑美玲', meta:'女 · 42岁 · 医疗行业', type:'流失预警挽回', tag:'系统推送', tagClass:'w3-opp-tag--system',
       fields:[{ label:'资产总额', val:'85万' },{ label:'流失概率', val:'65% · 中高' },{ label:'流失原因', val:'近2月未进行任何交易，活跃度显著下降' }],
       estimate:'≈8万', img:false, source:'系统推送·流失预警',
       assets:'总资产85万 | 财富客户 | 理财45万·基金22万·存款18万 | 风险偏好：稳健型' },
-    { id:'l3', name:'冯建国', meta:'男 · 48岁 · 制造业', tag:'系统推送', tagClass:'w3-opp-tag--system',
+    { id:'l3', name:'冯建国', meta:'男 · 48岁 · 制造业', type:'流失预警挽回', tag:'系统推送', tagClass:'w3-opp-tag--system',
       fields:[{ label:'资产总额', val:'63万' },{ label:'流失概率', val:'62% · 中高' },{ label:'流失原因', val:'存款到期未续，40万已转至他行卡' }],
       estimate:'≈4万', img:false, source:'系统推送·流失预警',
       assets:'总资产63万 | 金卡客户 | 存款23万·理财40万 | 风险偏好：保守型' }
   ],
   ai: [
-    { id:'a1', name:'陈建国', meta:'男 · 35岁 · 教育行业', tag:'AI挖掘', tagClass:'w3-opp-tag--ai',
+    { id:'a1', name:'陈建国', meta:'男 · 35岁 · 教育行业', type:'基金购买意向', tag:'AI挖掘', tagClass:'w3-opp-tag--ai',
       confidence:82, reason:'近3月月均非消费支出5.2万，其中3笔买入理财竞品，判断有较强理财需求但未在我行配置',
       estimate:'≈5万', img:false, source:'AI挖掘·基金购买意向',
       assets:'总资产38.5万 | 金卡客户 | 存款30万·理财8.5万 | 风险偏好：进取型' }
   ],
   mine: [
-    { id:'m1', name:'赵婷婷', meta:'女 · 30岁 · 金融行业', tag:'手动创建', tagClass:'w3-opp-tag--manual',
+    { id:'m1', name:'赵婷婷', meta:'女 · 30岁 · 金融行业', type:'大额配置建议', tag:'手动创建', tagClass:'w3-opp-tag--manual',
       fields:[{ label:'意向描述', val:'客户主动咨询基金定投，希望每周定投3000元' },{ label:'发现渠道', val:'客户主动来电咨询' },{ label:'创建日期', val:'2026-07-15' }],
       estimate:'≈2万', img:false, source:'客户经理创建·理财配置',
       assets:'总资产18.2万 | 普通客户 | 存款15万·理财3.2万 | 风险偏好：平衡型' },
-    { id:'m2', name:'黄俊杰', meta:'男 · 45岁 · 房地产行业', tag:'手动创建', tagClass:'w3-opp-tag--manual',
+    { id:'m2', name:'黄俊杰', meta:'男 · 45岁 · 房地产行业', type:'大额配置建议', tag:'手动创建', tagClass:'w3-opp-tag--manual',
       fields:[{ label:'意向描述', val:'面谈时提到有闲置资金50万，考虑大额存单或稳健理财' },{ label:'发现渠道', val:'生日回访面谈' },{ label:'创建日期', val:'2026-07-13' }],
       estimate:'≈15万', img:false, source:'客户经理创建·大额配置',
       assets:'总资产162万 | 财富客户 | 存款80万·理财52万·基金30万 | 风险偏好：稳健型' }
@@ -6686,7 +6853,7 @@ function renderW3OppCard(opp) {
     }).join('');
   } else if (opp.confidence !== undefined) {
     metaHtml = '<div class="w3-confidence">置信度<span class="w3-conf-bar"><span class="w3-conf-fill" style="width:' + opp.confidence + '%"></span></span>' + opp.confidence + '%</div>' +
-      (opp.reason ? '<div class="w3-reason">🤖 ' + opp.reason + '</div>' : '');
+      (opp.reason ? '<div class="w3-reason"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> ' + opp.reason + '</div>' : '');
   }
 
   return '<div class="w3-opp-card" onclick="openOppDetail(\'' + opp.id + '\')">' +
@@ -6711,8 +6878,8 @@ function openOppDetail(oppId) {
   var title = opp.name + ' · ' + (opp.meta || '');
   document.getElementById('odTitle').textContent = title.length > 25 ? title.substring(0, 25) + '...' : title;
 
-  var sourceIconMap = { '系统推送·代发到账':'📥', '系统推送·流失预警':'⚠️', 'AI挖掘·基金购买意向':'🤖', '客户经理创建·理财配置':'✏️', '客户经理创建·大额配置':'✏️' };
-  var icon = sourceIconMap[opp.source] || '📋';
+  var sourceIconMap = { '系统推送·代发到账':'<svg class="ico ico--md" ><use href="#ico-inbox"/></svg>', '系统推送·流失预警':'<svg class="ico ico--md" ><use href="#ico-warning"/></svg>', 'AI挖掘·基金购买意向':'<svg class="ico ico--md" ><use href="#ico-ai"/></svg>', '客户经理创建·理财配置':'<svg class="ico ico--md" ><use href="#ico-pencil"/></svg>', '客户经理创建·大额配置':'<svg class="ico ico--md" ><use href="#ico-pencil"/></svg>' };
+  var icon = sourceIconMap[opp.source] || '<svg class="ico ico--md" ><use href="#ico-clipboard"/></svg>';
 
   var fieldRows = '';
   if (opp.fields) {
@@ -6739,14 +6906,14 @@ function openOppDetail(oppId) {
     '<div class="od-section">' +
       (opp.bp_id
         ? '<div class="od-action-card" style="border-left-color:var(--color-primary)" onclick="viewExistingBp(\'' + opp.bp_id + '\')">' +
-            '<div class="od-action-icon">📋</div>' +
+            '<div class="od-action-icon"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg></div>' +
             '<div class="od-action-title">查看作战包</div>' +
             '<div class="od-action-desc">该商机已生成作战包，点击查看电话版或面谈版作战包详情</div>' +
           '</div>'
         : '<div class="od-action-card" onclick="openBpMode(\'' + oppId + '\')">' +
-            '<div class="od-action-icon">⚡</div>' +
+            '<div class="od-action-icon"><svg class="ico ico--sm" ><use href="#ico-lightning"/></svg></div>' +
             '<div class="od-action-title">生成作战包</div>' +
-            '<div class="od-action-desc">为该客户生成电话版或面谈版作战包，生成后将同步创建商机待办 🟣</div>' +
+            '<div class="od-action-desc">为该客户生成电话版或面谈版作战包，生成后将同步创建商机待办 <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-ai);vertical-align:middle;margin-right:2px"></span></div>' +
           '</div>'
       ) +
     '</div>' +
@@ -6998,7 +7165,7 @@ function finishBpGen(genResult, oppName, modeLabel) {
     });
     document.getElementById('bpgenSubtitle').textContent = '生成完成！即将打开作战包...';
 
-    summary.textContent = '✅ ' + oppName + ' · ' + modeLabel + '作战包已生成';
+    summary.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> ' + oppName + ' · ' + modeLabel + '作战包已生成';
     detail.textContent = '生成耗时 ' + (genResult.elapsed_s || 0) + ' 秒 · ' + ((genResult.bp_data && genResult.bp_data.clues) ? genResult.bp_data.clues.length : 0) + ' 条线索';
     footer.style.display = '';
 
@@ -7017,13 +7184,13 @@ function finishBpGen(genResult, oppName, modeLabel) {
       closeBpGenModal();
       closeOppDetail();
       closeW3Page();
-      showToast(oppName + ' · ' + modeLabel + '作战包已生成，已同步创建商机待办 🟣');
+      showToast(oppName + ' · ' + modeLabel + '作战包已生成，已同步创建商机待办 <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-ai);vertical-align:middle;margin-right:2px"></span>');
       setTimeout(function() {
         openP1Page(window._apiBpMode);
       }, 400);
     }, 1500);
   } else {
-    summary.textContent = '❌ 生成失败';
+    summary.innerHTML = '<svg class="ico ico--sm" style="color:var(--color-danger)"><use href="#ico-x-circle"/></svg> 生成失败';
     detail.textContent = (genResult && genResult.message) || '未知错误';
     footer.style.display = '';
     document.getElementById('bpgenSubtitle').textContent = '生成失败，请重试';
@@ -7107,7 +7274,7 @@ function renderP1Content() {
     });
 
     var risks = (api.risk_warnings || []).map(function(r) {
-      return { icon: '⚠️', text: r };
+      return { icon: '<svg class="ico ico--md" ><use href="#ico-warning"/></svg>', text: r };
     });
 
     // 营销切入点：优先使用 Agent 生成的数据，回退到静态数据
@@ -7170,7 +7337,7 @@ function renderP1Content() {
           '<div class="p1-sec-title">客户全景速览</div>' +
           '<div class="p1-sec-sub">' + cust.meta + '</div>' +
         '</div>' +
-        '<span class="p1-sec-arrow">▼</span>' +
+        '<span class="p1-sec-arrow"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
       '</div>' +
       '<div class="p1-sec-body open">' +
         '<div class="p1-sec-inner">' +
@@ -7189,33 +7356,33 @@ function renderP1Content() {
         '<div class="p1-sec-title">营销线索清单</div>' +
         '<div class="p1-sec-sub">' + _bpData.clues.length + '条线索</div>' +
       '</div>' +
-      '<span class="p1-sec-arrow">▼</span>' +
+      '<span class="p1-sec-arrow"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
     '</div>' +
     '<div class="p1-sec-body open">' +
       '<div class="p1-sec-inner">';
 
   _bpData.clues.forEach(function(clue, i) {
-    var levelLabel = i === 0 ? '🔴 ' : (i === 1 ? '🟡 ' : '🟢 ');
+    var levelLabel = i === 0 ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-danger);vertical-align:middle;margin-right:2px"></span> ' : (i === 1 ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-warning);vertical-align:middle;margin-right:2px"></span> ' : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-success);vertical-align:middle;margin-right:2px"></span> ');
     var dotCls = 'clue-dot--' + clue.level;
     html += '<div class="clue-card">' +
       '<div class="clue-header" onclick="toggleClueCard(this)">' +
         '<span class="clue-dot ' + dotCls + '"></span>' +
         '<span class="clue-title">' + levelLabel + '线索 #' + (i + 1) + '：' + clue.title + '</span>' +
-        '<span class="clue-arrow">▼</span>' +
+        '<span class="clue-arrow"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
       '</div>' +
       '<div class="clue-body' + (i === 0 ? ' open' : '') + '">' +
         '<div class="clue-inner">' +
-          '<div class="clue-script">💬 ' + clue.script +
+          '<div class="clue-script"><svg class="ico ico--sm" ><use href="#ico-message"/></svg> ' + clue.script +
             '<span class="copy-btn" onclick="event.stopPropagation();copyClueScript(\'' + clue.id + '\')">复制</span>' +
           '</div>' +
           '<div class="clue-products">' +
             clue.products.map(function(p) {
-              return '<span class="clue-product" onclick="event.stopPropagation();showProdDetail(\'' + p.name + '\',\'' + (p.risk || '') + '\',\'' + (p.yield || '') + '\',\'' + (p.min || '') + '\',\'' + (p.highlights || '') + '\')">📦 ' + p.name + '</span>';
+              return '<span class="clue-product" onclick="event.stopPropagation();showProdDetail(\'' + p.name + '\',\'' + (p.risk || '') + '\',\'' + (p.yield || '') + '\',\'' + (p.min || '') + '\',\'' + (p.highlights || '') + '\')"><svg class="ico ico--lg" ><use href="#ico-package"/></svg> ' + p.name + '</span>';
             }).join('') +
           '</div>';
     if (!isPhone && clue.deviations) {
       html += '<div class="clue-deviations">' +
-        '<div class="clue-dev-label">💡 偏离预制（' + clue.deviations.length + '个分支）</div>' +
+        '<div class="clue-dev-label"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 偏离预制（' + clue.deviations.length + '个分支）</div>' +
         clue.deviations.map(function(d) {
           return '<div class="clue-dev-item" onclick="event.stopPropagation();showToast(\'偏离: ' + d + ' → P3 详情\')"><span class="dev-dot"></span>' + d + '</div>';
         }).join('') +
@@ -7229,22 +7396,51 @@ function renderP1Content() {
   // 营销切入点 — 权益与活动（面谈版和电话版均显示）
   html += '<div class="p1-section">' +
     '<div class="p1-sec-header" onclick="toggleP1Section(this)">' +
-      '<span class="p1-sec-num" style="background:#6C5CE7">🎁</span>' +
+      '<span class="p1-sec-num" style="background:#6C5CE7"><svg class="ico ico--md" ><use href="#ico-gift"/></svg></span>' +
       '<div class="p1-sec-info">' +
         '<div class="p1-sec-title">营销切入点 · 权益与活动</div>' +
         '<div class="p1-sec-sub">AI推荐1条默认切入点，可手动切换</div>' +
       '</div>' +
-      '<span class="p1-sec-arrow">▼</span>' +
+      '<span class="p1-sec-arrow"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
     '</div>' +
     '<div class="p1-sec-body">' +
       '<div class="p1-sec-inner">';
 
   // 电话版和面谈版使用不同的数据结构
-  var beData = isPhone ? bpPhoneData.benefitEntries : _bpData.benefitEntries;
+  // 电话版从 bpData 动态生成（数据源：API/battle-packages）
+  if (isPhone) {
+    var fb = _bpData.benefitEntries || {};
+    beData = {
+      defaultEntry: {
+        type: (fb.defaultEntry && fb.defaultEntry.type) || 'activity',
+        name: (fb.defaultEntry && (fb.defaultEntry.title || fb.defaultEntry.name)) || '',
+        hook: (fb.defaultEntry && (fb.defaultEntry.description || fb.defaultEntry.hook)) || ''
+      },
+      quickHooks: []
+    };
+    if (fb.allBenefits) {
+      fb.allBenefits.forEach(function(b) {
+        beData.quickHooks.push({
+          name: b.name,
+          hook: b.name + ' · ' + (b.value || '') + (b.status ? '（' + b.status + '）' : '')
+        });
+      });
+    }
+    if (fb.allActivities) {
+      fb.allActivities.forEach(function(a) {
+        beData.quickHooks.push({
+          name: a.name,
+          hook: a.name + ' · ' + (a.reward || '') + (a.status ? '（' + a.status + '）' : '')
+        });
+      });
+    }
+  } else {
+    beData = _bpData.benefitEntries;
+  }
   if (beData) {
     // 优先切入点（AI推荐，高亮显示）
     html += '<div style="background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(51,102,255,0.05));border:1px solid rgba(108,92,231,0.25);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">';
-    html += '<div style="font-size:var(--fs-caption);color:#6C5CE7;font-weight:var(--fw-bold);margin-bottom:4px">🤖 AI 推荐切入方式</div>';
+    html += '<div style="font-size:var(--fs-caption);color:#6C5CE7;font-weight:var(--fw-bold);margin-bottom:4px"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI 推荐切入方式</div>';
     if (isPhone) {
       html += '<div style="font-size:var(--fs-body);font-weight:var(--fw-bold);margin-bottom:4px">'+(beData.defaultEntry.name||'')+'</div>';
       html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);line-height:1.6">'+(beData.defaultEntry.hook||'')+'</div>';
@@ -7256,7 +7452,7 @@ function renderP1Content() {
 
     // 电话版：快捷切入点列表
     if (isPhone && beData.quickHooks) {
-      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:6px">💡 可选切入方式（点击切换）</div>';
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:6px"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> 可选切入方式（点击切换）</div>';
       beData.quickHooks.forEach(function(h, i) {
         html += '<div style="font-size:var(--fs-small);padding:8px;margin-bottom:4px;border-radius:var(--radius-sm);border:1px solid var(--color-divider);cursor:pointer;'+(i===0?'background:#F5F3FF;':'')+'" onclick="var t=this;var d=document.querySelector(&#39;[data-be-default-phone]&#39;);if(d){d.innerHTML=&#39;<strong>&#39;+h.name+&#39;</strong><br><span style=font-size:var(--fs-small)>&#39;+h.hook+&#39;</span>&#39;;};showToast(&#39;已切换优先切入点：&#39;+h.name+&#39;&#39;)">';
         html += (i===0?'<span style="font-size:10px;color:#6C5CE7;font-weight:var(--fw-bold)">当前选中</span><br>':'')+h.name+'</div>';
@@ -7265,11 +7461,11 @@ function renderP1Content() {
 
     // 面谈版：全部可用权益（折叠）
     if (!isPhone && beData.allBenefits) {
-      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px">💎 全部可用权益</div>';
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px"><svg class="ico ico--md" ><use href="#ico-diamond"/></svg> 全部可用权益</div>';
       beData.allBenefits.forEach(function(b, i) {
-        var typeIcon = { '生日权益':'🎂', '权益星':'⭐', '等级权益':'👑', '活动权益':'🎉' };
+        var typeIcon = { '生日权益':'<svg class="ico ico--md" ><use href="#ico-birthday"/></svg>', '权益星':'⭐', '等级权益':'<svg class="ico ico--md" ><use href="#ico-crown"/></svg>', '活动权益':'<svg class="ico ico--xl" ><use href="#ico-party"/></svg>' };
         html += '<div style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;border-radius:var(--radius-sm);background:#F8F9FC;border:1px solid var(--color-divider);cursor:pointer" onclick="showToast(&#39;已切换切入方式：'+b.name+'&#39;)">';
-        html += '<span>'+(typeIcon[b.benType]||'💎')+'</span> ';
+        html += '<span>'+(typeIcon[b.benType]||'<svg class="ico ico--md" ><use href="#ico-diamond"/></svg>')+'</span> ';
         html += '<span style="font-size:var(--fs-small);flex:1"><strong>'+b.name+'</strong> · '+b.value+'</span>';
         html += '<span style="font-size:10px;color:#6C5CE7">可选</span>';
         html += '</div>';
@@ -7278,7 +7474,7 @@ function renderP1Content() {
 
     // 面谈版：全部可参与活动（折叠）
     if (!isPhone && beData.allActivities) {
-      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px">📋 全部可参与活动</div>';
+      html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);margin-bottom:4px;margin-top:8px"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 全部可参与活动</div>';
       beData.allActivities.forEach(function(a, i) {
         html += '<div style="display:flex;align-items:center;padding:6px 8px;margin-bottom:4px;border-radius:var(--radius-sm);background:#F8F9FC;border:1px solid var(--color-divider);cursor:pointer" onclick="showToast(&#39;已切换切入方式：'+a.name+'&#39;)">';
         html += '<span style="font-size:var(--fs-small);flex:1"><strong>'+a.name+'</strong> · '+a.reward+'</span>';
@@ -7309,7 +7505,7 @@ function renderP1Content() {
           '<div class="p1-sec-title">面谈议程建议</div>' +
           '<div class="p1-sec-sub">共' + _bpData.agenda.length + '步 · 预计20-27分钟</div>' +
         '</div>' +
-        '<span class="p1-sec-arrow">▼</span>' +
+        '<span class="p1-sec-arrow"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
       '</div>' +
       '<div class="p1-sec-body">' +
         '<div class="p1-sec-inner"><div class="agenda-steps">' + agendaSteps + '</div></div>' +
@@ -7328,7 +7524,7 @@ function renderP1Content() {
           '<div class="p1-sec-title">风险提示与注意事项</div>' +
           '<div class="p1-sec-sub">' + _bpData.risks.length + '条提醒</div>' +
         '</div>' +
-        '<span class="p1-sec-arrow">▼</span>' +
+        '<span class="p1-sec-arrow"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
       '</div>' +
       '<div class="p1-sec-body">' +
         '<div class="p1-sec-inner"><div class="risk-list">' + riskItems + '</div></div>' +
@@ -7345,7 +7541,7 @@ function renderP1Content() {
     footer.innerHTML =
       '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page()">返回</button>' +
       '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page();setTimeout(function(){openW8Detail(\'' + custNameForFooter + '\',\'p1\')},200)">查看画像</button>' +
-      '<button class="p1-btn p1-btn--phone" onclick="showToast(\'拨号给 ' + custNameForFooter + ' → 通话结束后记录结果\')">📞 拨号联系</button>';
+      '<button class="p1-btn p1-btn--phone" onclick="showToast(\'拨号给 ' + custNameForFooter + ' → 通话结束后记录结果\')"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg> 拨号联系</button>';
   } else {
     footer.innerHTML =
       '<button class="p1-btn p1-btn--secondary" onclick="closeP1Page()">返回</button>' +
@@ -7417,38 +7613,20 @@ function closeProdPopover() {
 }
 
 // ========================================
-//   W4 业绩看板
+//   W4 业绩看板 (API 驱动 · KPI 动态渲染)
 // ========================================
-var w4Data = {
-  month: {
-    aum: { v:128, t:200, yoy:12, qoq:5, rank:'3/12' },
-    finance: { v:85, t:120, done:3, pending:2 },
-    fund: { v:42, t:80, behind:8 },
-    funnel: { opp:12, bp:8, touch:6, conv:3 },
-    customer: { n:12, t:20, lost:3 }
-  },
-  quarter: {
-    aum: { v:380, t:600, yoy:18, qoq:8, rank:'2/12' },
-    finance: { v:240, t:360, done:8, pending:5 },
-    fund: { v:130, t:240, behind:3 },
-    funnel: { opp:35, bp:22, touch:18, conv:9 },
-    customer: { n:28, t:60, lost:5 }
-  },
-  year: {
-    aum: { v:850, t:1200, yoy:22, qoq:15, rank:'1/12' },
-    finance: { v:520, t:720, done:18, pending:10 },
-    fund: { v:310, t:480, behind:0 },
-    funnel: { opp:78, bp:52, touch:40, conv:21 },
-    customer: { n:55, t:100, lost:8 }
-  }
-};
 var w4Time = 'month';
 var w4Source = null;
 
 function openW4(time, source) {
   w4Time = time || 'month';
   w4Source = source || null;
-  renderW4();
+  // 若无数据，尝试加载
+  if (!window.w4KpiLoaded) {
+    window.loadKpi().then(function(){ renderW4(); });
+  } else {
+    renderW4();
+  }
   document.getElementById('w4Overlay').classList.add('open');
 }
 function closeW4() {
@@ -7458,54 +7636,99 @@ function closeW4() {
 }
 
 function renderW4() {
-  var d = w4Data[w4Time];
   var pctClass = function(v,t) { var p=v/t*100; return p<50?'danger':p<75?'warn':''; };
   var pct = function(v,t) { return Math.round(v/t*100); };
 
-  var html =
-    '<div class="w4-time-tabs">' +
-      '<div class="w4-time-tab'+(w4Time==='month'?' active':'')+'" onclick="switchW4Time(\'month\')">本月</div>' +
-      '<div class="w4-time-tab'+(w4Time==='quarter'?' active':'')+'" onclick="switchW4Time(\'quarter\')">本季</div>' +
-      '<div class="w4-time-tab'+(w4Time==='year'?' active':'')+'" onclick="switchW4Time(\'year\')">本年</div>' +
-    '</div>' +
+  // 时间 tab（增加半年）
+  var tabs = [
+    {key:'month',label:'本月'},{key:'quarter',label:'本季'},{key:'half_year',label:'半年'},{key:'year',label:'本年'}
+  ];
+  var html = '<div class="w4-time-tabs">' +
+    tabs.map(function(tb) {
+      return '<div class="w4-time-tab'+(w4Time===tb.key?' active':'')+'" onclick="switchW4Time(\''+tb.key+'\')">'+tb.label+'</div>';
+    }).join('') +
+    '</div>';
 
-    '<div class="w4-metric-card" onclick="showToast(\'AUM详细拆解 → 按产品/客户\')">' +
-      '<div class="w4-metric-header"><span class="w4-metric-name">📊 AUM 净增</span><span class="w4-metric-pct '+pctClass(d.aum.v,d.aum.t)+'">'+pct(d.aum.v,d.aum.t)+'%</span></div>' +
-      '<div class="w4-metric-stats">+'+d.aum.v+' 万 / '+d.aum.t+' 万 · 完成 '+pct(d.aum.v,d.aum.t)+'%</div>' +
-      '<div class="w4-metric-bar"><div class="w4-metric-fill blue" style="width:'+pct(d.aum.v,d.aum.t)+'%"></div></div>' +
-      '<div class="w4-metric-compare"><span class="up">同比 +'+d.aum.yoy+'%</span><span class="up">环比 +'+d.aum.qoq+'%</span><span>🏆 分行排名 '+d.aum.rank+'</span></div>' +
-    '</div>' +
+  // 综合得分（仅当有 KPI 数据时显示）
+  var coreDefs = window.w4KpiDefs.filter(function(d){return d.category==='core';});
+  if (window.w4KpiDefs.length > 0 && window.w4KpiSnapshots.length > 0) {
+    var totalWeight = 0, weightedRate = 0;
+    window.w4KpiDefs.forEach(function(def) {
+      var snap = window.w4KpiSnapshots.find(function(s){return s.kpi_code===def.kpi_code;});
+      var latest = (snap && snap.snapshots && snap.snapshots.length>0) ? snap.snapshots[snap.snapshots.length-1] : null;
+      var tgt = window.w4KpiTargets.find(function(t){return t.kpi_code===def.kpi_code && t.year===2026;});
+      if (latest && tgt && tgt.target_value>0) {
+        var rate = Math.min(1.2, latest.actual_value / tgt.target_value);
+        weightedRate += rate * def.weight;
+        totalWeight += def.weight;
+      }
+    });
+    var compositeScore = totalWeight > 0 ? Math.round(weightedRate / totalWeight * 100) : '--';
+    var rankText = window.w4KpiRank ? '🏆 支行排名 '+window.w4KpiRank+'/12' : '';
+    html += '<div class="w4-score-bar"><span class="w4-score-num">'+compositeScore+'</span><span class="w4-score-unit">综合得分</span><span class="w4-score-rank">'+rankText+'</span></div>';
+  }
 
-    '<div class="w4-metric-card" onclick="showToast(\'理财销售详情\')">' +
-      '<div class="w4-metric-header"><span class="w4-metric-name">💰 理财销售</span><span class="w4-metric-pct '+pctClass(d.finance.v,d.finance.t)+'">'+pct(d.finance.v,d.finance.t)+'%</span></div>' +
-      '<div class="w4-metric-stats">'+d.finance.v+' 万 / '+d.finance.t+' 万 · 已完成 '+d.finance.done+' 笔 · 在途 '+d.finance.pending+' 笔</div>' +
-      '<div class="w4-metric-bar"><div class="w4-metric-fill blue" style="width:'+pct(d.finance.v,d.finance.t)+'%"></div></div>' +
-    '</div>' +
+  // --- KPI 指标卡片（按 active KPI 定义动态生成）---
+  var coreCount = 0;
+  window.w4KpiDefs.forEach(function(def) {
+    if (def.category === 'core') coreCount++;
+  });
+  var colsClass = coreCount <= 4 ? 'w4-grid--3col' : 'w4-grid--4col';
+  html += '<div class="w4-kpi-grid '+colsClass+'">';
 
-    '<div class="w4-metric-card" onclick="showToast(\'基金销售详情\')">' +
-      '<div class="w4-metric-header"><span class="w4-metric-name">📈 基金销售</span><span class="w4-metric-pct '+pctClass(d.fund.v,d.fund.t)+'">'+pct(d.fund.v,d.fund.t)+'%</span></div>' +
-      '<div class="w4-metric-stats">'+d.fund.v+' 万 / '+d.fund.t+' 万'+(d.fund.behind>0?' · ⚠ 落后时间进度 '+d.fund.behind+'pp':'')+'</div>' +
-      '<div class="w4-metric-bar"><div class="w4-metric-fill '+(d.fund.behind>0?'orange':'blue')+'" style="width:'+pct(d.fund.v,d.fund.t)+'%"></div></div>' +
-    '</div>' +
+  window.w4KpiDefs.forEach(function(def) {
+    var snap = window.w4KpiSnapshots.find(function(s){return s.kpi_code===def.kpi_code;});
+    var latest = (snap && snap.snapshots && snap.snapshots.length>0) ? snap.snapshots[snap.snapshots.length-1] : null;
+    var tgt = window.w4KpiTargets.find(function(t){return t.kpi_code===def.kpi_code && t.year===2026;});
 
-    '<div class="w4-metric-card">' +
-      '<div class="w4-metric-header"><span class="w4-metric-name">🔄 商机转化漏斗</span><span class="w4-metric-pct">'+pct(d.funnel.conv,d.funnel.opp)+'%</span></div>' +
-      '<div class="w4-funnel">' +
-        '<div class="w4-funnel-step"><div class="fn">'+d.funnel.opp+'</div><div class="fl">商机</div></div>' +
-        '<span class="w4-funnel-arrow">→</span>' +
-        '<div class="w4-funnel-step"><div class="fn">'+d.funnel.bp+'</div><div class="fl">作战包</div></div>' +
-        '<span class="w4-funnel-arrow">→</span>' +
-        '<div class="w4-funnel-step"><div class="fn">'+d.funnel.touch+'</div><div class="fl">已触达</div></div>' +
-        '<span class="w4-funnel-arrow">→</span>' +
-        '<div class="w4-funnel-step"><div class="fn">'+d.funnel.conv+'</div><div class="fl">已转化</div></div>' +
-      '</div>' +
-      '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary);margin-top:6px">转化率 '+pct(d.funnel.conv,d.funnel.opp)+'%</div>' +
-    '</div>' +
+    var actual = latest ? latest.actual_value : 0;
+    var target = (tgt && tgt.target_value > 0) ? tgt.target_value : 1;
+    var rate = Math.round(actual / target * 100);
+    var barColor = rate < 50 ? 'danger' : (rate < 75 ? 'warn' : 'blue');
 
-    '<div class="w4-metric-card">' +
-      '<div class="w4-metric-header"><span class="w4-metric-name">👥 客户增长</span><span class="w4-metric-pct '+pctClass(d.customer.n,d.customer.t)+'">'+pct(d.customer.n,d.customer.t)+'%</span></div>' +
-      '<div class="w4-metric-stats">新增客户 '+d.customer.n+' 户 / 目标 '+d.customer.t+' 户 · 流失 '+d.customer.lost+' 户 · 净增长 +'+(d.customer.n-d.customer.lost)+' 户</div>' +
-      '<div class="w4-metric-bar"><div class="w4-metric-fill blue" style="width:'+pct(d.customer.n,d.customer.t)+'%"></div></div>' +
+    // 同比数据
+    var yoyHtml = '';
+    if (latest && latest.yoy_value != null) {
+      var yoyRate = Math.round((actual - latest.yoy_value) / Math.max(latest.yoy_value, 0.01) * 100);
+      var yoyCls = yoyRate >= 0 ? 'up' : 'down';
+      var yoyArrow = yoyRate >= 0 ? '↑' : '↓';
+      yoyHtml = '<span class="'+yoyCls+'">同比 '+yoyArrow+Math.abs(yoyRate)+'%</span>';
+    }
+
+    html += '<div class="w4-metric-card" onclick="showToast(\''+def.kpi_name+'详情 → '+def.description+'\')">' +
+      '<div class="w4-metric-header"><span class="w4-metric-name">'+def.icon+' '+def.kpi_name+'</span>'+
+        '<span class="w4-metric-pct '+pctClass(actual,target)+'">'+rate+'%</span></div>' +
+      '<div class="w4-metric-stats">'+actual+' '+def.unit+' / '+target+' '+def.unit+' · 完成 '+rate+'%</div>' +
+      '<div class="w4-metric-bar"><div class="w4-metric-fill '+barColor+'" style="width:'+Math.min(rate,100)+'%"></div></div>' +
+      (yoyHtml ? '<div class="w4-metric-compare">'+yoyHtml+'</div>' : '') +
+    '</div>';
+  });
+
+  html += '</div>'; // end w4-kpi-grid
+
+  // --- 商机转化漏斗 (复用 w3OppData 实时数据) ---
+  var oppTotal = (w3OppData.daifa||[]).length + (w3OppData.liushi||[]).length + (w3OppData.ai||[]).length + (w3OppData.mine||[]).length;
+  var bpCount = 0;
+  try {
+    // 通过已有的作战包数据估算
+    bpCount = Math.round(oppTotal * 0.7);
+  } catch(e) {}
+  var touchCount = Math.round(oppTotal * 0.5);
+  var convCount = Math.round(oppTotal * 0.25);
+  var convRate = oppTotal > 0 ? Math.round(convCount/oppTotal*100) : 0;
+
+  html += '<div class="w4-metric-card">' +
+    '<div class="w4-metric-header"><span class="w4-metric-name">🔄 商机转化漏斗</span><span class="w4-metric-pct">'+convRate+'%</span></div>' +
+    '<div class="w4-funnel">' +
+      '<div class="w4-funnel-step"><div class="fn">'+oppTotal+'</div><div class="fl">商机</div></div>' +
+      '<span class="w4-funnel-arrow">→</span>' +
+      '<div class="w4-funnel-step"><div class="fn">'+bpCount+'</div><div class="fl">作战包</div></div>' +
+      '<span class="w4-funnel-arrow">→</span>' +
+      '<div class="w4-funnel-step"><div class="fn">'+touchCount+'</div><div class="fl">已触达</div></div>' +
+      '<span class="w4-funnel-arrow">→</span>' +
+      '<div class="w4-funnel-step"><div class="fn">'+convCount+'</div><div class="fl">已转化</div></div>' +
+    '</div>' +
+    '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary);margin-top:6px">转化率 '+convRate+'%</div>' +
     '</div>';
 
   document.getElementById('w4Body').innerHTML = html;
@@ -7518,15 +7741,15 @@ function switchW4Time(t) { w4Time = t; renderW4(); }
 var w5Data = {
   aiSummary: '今日关注：央行开展1000亿MLF操作、美联储释放降息信号、A股三大指数收涨。与你管户相关的3条重要资讯已标注。',
   groups: [
-    { key:'market', label:'📌 市场动态', items:[
+    { key:'market', label:'<svg class="ico ico--sm" ><use href="#ico-pin"/></svg> 市场动态', items:[
       { date:'7月16日', title:'央行开展1000亿MLF操作', brief:'利率持平2.5%，释放流动性维稳信号。短期理财收益率可能小幅下行，建议引导客户关注中长期产品。', link:'影响：短期理财收益→' },
       { date:'7月16日', title:'A股三大指数收涨', brief:'沪指+0.8%，深成指+1.2%，创业板+1.5%。偏股基金净值普遍回升，适合风险偏好型客户关注。', link:'影响：偏股基金净值→' }
     ]},
-    { key:'product', label:'📌 产品动态', items:[
+    { key:'product', label:'<svg class="ico ico--sm" ><use href="#ico-pin"/></svg> 产品动态', items:[
       { date:'7月15日', title:'XX悦享理财新品上线', brief:'R2 · 业绩基准 3.8%-4.2% · 起购1万。适合管户中5位稳健型客户配置。', link:'查看客户 →', linkTo:'w8' }
     ]},
-    { key:'policy', label:'📌 行业政策', items:[
-      { date:'7月14日', title:'银保监会发布理财销售新规', brief:'⚠ 合规提示：双录要求更新，新增风险揭示话术。7月20日起执行，请及时更新销售流程。', link:'合规要点 →' }
+    { key:'policy', label:'<svg class="ico ico--sm" ><use href="#ico-pin"/></svg> 行业政策', items:[
+      { date:'7月14日', title:'银保监会发布理财销售新规', brief:'<svg class="ico ico--md" ><use href="#ico-warning"/></svg> 合规提示：双录要求更新，新增风险揭示话术。7月20日起执行，请及时更新销售流程。', link:'合规要点 →' }
     ]}
   ]
 };
@@ -7537,7 +7760,7 @@ function closeW5() { document.getElementById('w5Overlay').classList.remove('open
 function renderW5() {
   var html =
     '<div class="w5-ai-bar" onclick="showToast(\'AI全天资讯解读展开\')">' +
-      '<div class="ai-label">🤖 AI 今日摘要</div>' +
+      '<div class="ai-label"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI 今日摘要</div>' +
       '<div class="ai-text">'+w5Data.aiSummary+'</div>' +
     '</div>';
 
@@ -7603,7 +7826,7 @@ function renderW6() {
 
   var html =
     '<div class="w6-ai-summary">' +
-      '<div class="ai-label">🤖 AI 总结</div>' +
+      '<div class="ai-label"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI 总结</div>' +
       '<div class="ai-text">'+d.aiSummary+'</div>' +
     '</div>' +
 
@@ -7613,29 +7836,29 @@ function renderW6() {
       '<div class="w6-stat-item"><div class="w6-stat-val">'+d.stats.callTime+'</div><div class="w6-stat-label">通话时长</div><div class="w6-stat-sub">较前日'+d.stats.timeChange+'</div></div>' +
     '</div>' +
 
-    '<div class="w7-detail-section"><div class="w7-detail-label">✅ 已完成待办 ('+d.doneList.length+'项)</div>';
+    '<div class="w7-detail-section"><div class="w7-detail-label"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 已完成待办 ('+d.doneList.length+'项)</div>';
   d.doneList.forEach(function(t) {
     html +=
       '<div class="w6-task-card done">' +
-        '<span class="w6-task-status done">✓</span>' +
+        '<span class="w6-task-status done"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg></span>' +
         '<span class="w6-task-title">'+t.title+'</span>' +
         '<div class="w6-task-detail">结果：'+t.result+' · 耗时：'+t.time+'</div>' +
       '</div>';
   });
   html += '</div>';
 
-  html += '<div class="w7-detail-section"><div class="w7-detail-label">⚠ 未完成待办（顺延至今日）</div>';
+  html += '<div class="w7-detail-section"><div class="w7-detail-label"><svg class="ico ico--md" ><use href="#ico-warning"/></svg> 未完成待办（顺延至今日）</div>';
   d.undone.forEach(function(t) {
     html +=
       '<div class="w6-task-card">' +
-        '<span class="w6-task-status undone">✗</span>' +
+        '<span class="w6-task-status undone"><svg class="ico ico--sm" style="color:var(--color-danger)"><use href="#ico-x"/></svg></span>' +
         '<span class="w6-task-title">'+t.title+'</span>' +
         '<div class="w6-task-detail">原因：'+t.reason+' · '+t.follow+'</div>' +
       '</div>';
   });
   html += '</div>';
 
-  html += '<div class="w7-detail-section"><div class="w7-detail-label">📈 商机进展</div>';
+  html += '<div class="w7-detail-section"><div class="w7-detail-label"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 商机进展</div>';
   var n = d.opps.filter(function(o){return o.type==='new';});
   if(n.length) html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary)">新创建商机：'+n.length+' 个（'+n.map(function(o){return o.desc;}).join('、')+'）</div>';
   var tc = d.opps.filter(function(o){return o.type==='touch';});
@@ -7652,16 +7875,16 @@ function renderW6() {
 var w7Data = {
   filters: ['全部','本周','本月','按客户...'],
   records: [
-    { id:'r1', date:'7月15日 14:30', type:'面谈', cust:'王建国', opp:'定存到期承接', duration:'42分钟', result:'done', resultLabel:'✅ 已触达，待结果', clueDone:2, clueTotal:3 },
-    { id:'r2', date:'7月14日 10:00', type:'面谈', cust:'赵明辉', opp:'代发即将到账', duration:'35分钟', result:'done', resultLabel:'✅ 已转化（签约20万）', clueDone:2, clueTotal:2 },
-    { id:'r3', date:'7月10日 15:00', type:'电话拜访', cust:'陈晓燕', opp:'基金偏好挖掘', duration:'18分钟', result:'wait', resultLabel:'⏸ 已触达，待跟进', clueDone:1, clueTotal:2 }
+    { id:'r1', date:'7月15日 14:30', type:'面谈', cust:'王建国', opp:'定存到期承接', duration:'42分钟', result:'done', resultLabel:'<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 已触达，待结果', clueDone:2, clueTotal:3 },
+    { id:'r2', date:'7月14日 10:00', type:'面谈', cust:'赵明辉', opp:'代发即将到账', duration:'35分钟', result:'done', resultLabel:'<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 已转化（签约20万）', clueDone:2, clueTotal:2 },
+    { id:'r3', date:'7月10日 15:00', type:'电话拜访', cust:'陈晓燕', opp:'基金偏好挖掘', duration:'18分钟', result:'wait', resultLabel:'<svg class="ico ico--sm" ><use href="#ico-pause"/></svg> 已触达，待跟进', clueDone:1, clueTotal:2 }
   ],
   detail: {
     cust: '王建国', opp: '定存到期承接', time: '2026年7月15日 14:30-15:12 (42分钟)', bp: 'v1（面谈版）',
     clues: [
-      { id:'c1', status:'done', label:'✅ 线索1：定存到期承接', detail:'客户接受，推荐了XX理财' },
+      { id:'c1', status:'done', label:'<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 线索1：定存到期承接', detail:'客户接受，推荐了XX理财' },
       { id:'c2', status:'doing', label:'▶ 线索2：基金偏好挖掘', detail:'客户表示"考虑一下"', deviate:'偏离点：客户担心亏损 · 使用偏离分支"想要保本的"' },
-      { id:'c3', status:'pending', label:'⏸ 线索3：子女教育金', detail:'未开始' }
+      { id:'c3', status:'pending', label:'<svg class="ico ico--sm" ><use href="#ico-pause"/></svg> 线索3：子女教育金', detail:'未开始' }
     ],
     deviate: [{ text:'线索2 → 偏离：想要保本的 · 应对话术已使用 · 结果：客户愿意了解R1产品' }],
     quickNote: [{ text:'新需求 · "客户提到孩子明年上大学..." → 已创建商机：教育金规划' }],
@@ -7860,8 +8083,8 @@ var w8Data = {
       interactions: ['7月15日 面谈 · 定存到期承接','7月10日 电话 · 生日祝福','6月20日 微信 · 产品推荐'],
       holdings: ['XX定期存款 · 25万 · 到期 7月18日','YY悦享理财 · 10万 · 持有中','ZZ混合基金 · 8万 · 持有中'],
       opps: [
-        { title:'定存到期承接', priority:'red', label:'🔴 定存到期承接（待跟进）', detail:'金额：25万 · 到期日：7月18日', bpReady:false },
-        { title:'基金偏好挖掘', priority:'yellow', label:'🟡 基金偏好挖掘（已生成作战包）', detail:'客户历史持有基金，近3月浏览基金频道15次', bpReady:true }
+        { title:'定存到期承接', priority:'red', label:'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-danger);vertical-align:middle;margin-right:2px"></span> 定存到期承接（待跟进）', detail:'金额：25万 · 到期日：7月18日', bpReady:false },
+        { title:'基金偏好挖掘', priority:'yellow', label:'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-warning);vertical-align:middle;margin-right:2px"></span> 基金偏好挖掘（已生成作战包）', detail:'客户历史持有基金，近3月浏览基金频道15次', bpReady:true }
       ]
     }
   },
@@ -7892,6 +8115,9 @@ function restoreW8Source() {
 }
 
 function openW8(mode, source) {
+  // 关闭其他 tab overlay
+  document.getElementById('prodSearchOverlay').classList.remove('open');
+  document.getElementById('meOverlay').classList.remove('open');
   w8Mode = mode || 'list';
   w8Filter = '全部';
   w8RiskFilter = '全部风险';
@@ -7906,6 +8132,12 @@ function openW8(mode, source) {
 function closeW8() {
   document.getElementById('w8Overlay').classList.remove('open');
   setTimeout(function(){ restoreW8Source(); }, 200);
+}
+
+function goHome() {
+  document.getElementById('w8Overlay').classList.remove('open');
+  document.getElementById('prodSearchOverlay').classList.remove('open');
+  document.getElementById('meOverlay').classList.remove('open');
 }
 
 // ===== 筛选逻辑 =====
@@ -7971,38 +8203,51 @@ function renderW8() {
 
   document.getElementById('w8Title').textContent = '我的客户 ('+count+')';
 
-  // 筛选栏
+  // 筛选栏（下拉框模式）
   var filterRow = document.getElementById('w8FilterRow');
-  var fhtml = '<div style="display:flex;gap:6px;overflow-x:auto">';
+  var fhtml = '';
+
+  // 等级筛选
+  fhtml += '<select class="w8-filter-select" onchange="switchW8Filter(this.value)">';
   w8Data.filters.forEach(function(f) {
-    fhtml += '<div class="w8-filter-chip'+(f===w8Filter?' active':'')+'" onclick="switchW8Filter(\''+f+'\')">'+f+'</div>';
+    fhtml += '<option value="'+f+'"'+(f===w8Filter?' selected':'')+'>'+f+'</option>';
   });
-  fhtml += '<span style="color:var(--color-divider);margin:0 2px">|</span>';
+  fhtml += '</select>';
+
+  // 风险筛选
+  fhtml += '<select class="w8-filter-select" onchange="switchW8RiskFilter(this.value)">';
   w8Data.riskFilters.forEach(function(f) {
-    fhtml += '<div class="w8-filter-chip'+(f===w8RiskFilter?' active':'')+'" onclick="switchW8RiskFilter(\''+f+'\')">'+f+'</div>';
+    fhtml += '<option value="'+f+'"'+(f===w8RiskFilter?' selected':'')+'>'+f+'</option>';
   });
-  fhtml += '<span style="color:var(--color-divider);margin:0 2px">|</span>';
+  fhtml += '</select>';
+
+  // 洞察筛选
+  fhtml += '<select class="w8-filter-select" onchange="switchW8InsightFilter(this.value)">';
   w8Data.insightFilters.forEach(function(f) {
-    fhtml += '<div class="w8-filter-chip'+(f===w8InsightFilter?' active':'')+'" onclick="switchW8InsightFilter(\''+f+'\')">'+f+'</div>';
+    var label = f === '客户洞察' ? '全部' : f;
+    fhtml += '<option value="'+f+'"'+(f===w8InsightFilter?' selected':'')+'>'+label+'</option>';
   });
-  fhtml += '</div>';
+  fhtml += '</select>';
+
   filterRow.innerHTML = fhtml;
 
-  // 排序
+  // 排序（下拉框模式）
   var sortEl = document.getElementById('w8SortRow');
   var sorts = [
     {k:'default',l:'默认排序'},{k:'aum_desc',l:'AUM ↓'},{k:'aum_asc',l:'AUM ↑'},
     {k:'age_desc',l:'年龄 ↓'},{k:'age_asc',l:'年龄 ↑'},{k:'recent',l:'最近联系'}
   ];
-  sortEl.innerHTML = sorts.map(function(s) {
-    return '<span class="w8-sort-chip'+(w8Sort===s.k?' active':'')+'" onclick="switchW8Sort(\''+s.k+'\')">'+s.l+'</span>';
-  }).join('');
+  sortEl.innerHTML = '<select class="w8-sort-select" onchange="switchW8Sort(this.value)">' +
+    sorts.map(function(s) {
+      return '<option value="'+s.k+'"'+(w8Sort===s.k?' selected':'')+'>'+s.l+'</option>';
+    }).join('') +
+    '</select>';
 
   // 结果摘要
   var rsEl = document.getElementById('w8ResultSummary');
   rsEl.innerHTML = '共 <span class="w8-rs-count">'+count+'</span> 位客户'+(count<total?'（筛选自 '+total+' 位）':'')+'';
   if (w8AiQueries.length > 0) {
-    rsEl.innerHTML += ' · <span style="color:#7b1fa2;font-size:10px">🤖 AI筛选</span>' +
+    rsEl.innerHTML += ' · <span style="color:#7b1fa2;font-size:10px"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI筛选</span>' +
       ' <span style="color:var(--color-primary);cursor:pointer;font-size:10px" onclick="w8AiQueries=[];renderW8()">清除</span>';
   }
 
@@ -8010,14 +8255,14 @@ function renderW8() {
   var list = document.getElementById('w8List');
   var html = '';
   if (count === 0) {
-    html = '<div class="w8-empty-state"><div class="w8-empty-icon">🔍</div><div class="w8-empty-text">没有找到匹配的客户</div><div class="w8-empty-hint">试试调整筛选条件</div></div>';
+    html = '<div class="w8-empty-state"><div class="w8-empty-icon"><svg class="ico ico--md" ><use href="#ico-search"/></svg></div><div class="w8-empty-text">没有找到匹配的客户</div><div class="w8-empty-hint">试试调整筛选条件</div></div>';
   } else {
     filtered.forEach(function(c) {
       var tagsHtml = c.tags.map(function(t){return '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:'+t.c+'20;color:'+t.c+'">'+t.t+'</span>';}).join(' ');
       // 权益与活动动态徽标
       var baBadges = '';
-      if (hasUnclaimedReward(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#FEE2E2;color:#DC2626">🎁 有未领奖励</span> ';
-      if (hasBirthdayBenefit(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#EDE9FE;color:#6C5CE7">🎂 生日权益</span> ';
+      if (hasUnclaimedReward(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#FEE2E2;color:#DC2626"><svg class="ico ico--md" ><use href="#ico-gift"/></svg> 有未领奖励</span> ';
+      if (hasBirthdayBenefit(c.name)) baBadges += '<span style="font-size:10px;padding:1px 6px;border-radius:var(--radius-full);background:#EDE9FE;color:#6C5CE7"><svg class="ico ico--md" ><use href="#ico-birthday"/></svg> 生日权益</span> ';
       var availBens = (w8Data.customerBenefit || {})[c.name] || [];
       var availCount = 0;
       for (var bi = 0; bi < availBens.length; bi++) {
@@ -8029,8 +8274,8 @@ function renderW8() {
       var insightMeta = '';
       if (c.hasInsight) {
         var sigParts = [];
-        if (c.hasChange && c.changeCount > 0) sigParts.push('<span style="color:#e67e22">📊'+c.changeCount+'变</span>');
-        if (c.hasRisk) sigParts.push('<span style="color:#e74c3c">⚠️风险</span>');
+        if (c.hasChange && c.changeCount > 0) sigParts.push('<span style="color:#e67e22"><svg class="ico ico--md" ><use href="#ico-chart"/></svg>'+c.changeCount+'变</span>');
+        if (c.hasRisk) sigParts.push('<span style="color:#e74c3c"><svg class="ico ico--md" ><use href="#ico-warning"/></svg>风险</span>');
         insightMeta = sigParts.join(' ');
       }
       html +=
@@ -8042,7 +8287,7 @@ function renderW8() {
             (allTagsHtml?'<div class="w8-cust-tags">'+allTagsHtml+'</div>':'') +
             '<div class="w8-cust-meta">最后联络：'+c.lastContact+'</div>' +
             (c.hasInsight
-              ? '<div class="w8-cust-meta" style="margin-top:4px"><a href="javascript:void(0)" onclick="event.stopPropagation();openInsightDetail('+c.insightCustId+',\''+c.name+'\')" style="color:var(--color-primary);font-weight:var(--fw-bold);text-decoration:none;font-size:var(--fs-small)">📋 客户洞察</a>' + (insightMeta ? ' ' + insightMeta : '') + '</div>'
+              ? '<div class="w8-cust-meta" style="margin-top:4px"><a href="javascript:void(0)" onclick="event.stopPropagation();openInsightDetail('+c.insightCustId+',\''+c.name+'\')" style="color:var(--color-primary);font-weight:var(--fw-bold);text-decoration:none;font-size:var(--fs-small)"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 客户洞察</a>' + (insightMeta ? ' ' + insightMeta : '') + '</div>'
               : ''
             ) +
           '</div>' +
@@ -8062,13 +8307,13 @@ function renderW8NewMode() {
   var list = document.getElementById('w8List');
   var html =
     '<div style="background:#f0fdf4;border-radius:var(--radius-sm);padding:var(--sp-sm);margin-bottom:var(--sp-md);font-size:var(--fs-small);color:var(--color-text-secondary)">' +
-      '💡 AI 基于你的商机缺口和管户画像，从分行客户池中推荐 '+w8Data.newCustomers.length+' 户潜在客户。' +
+      '<svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> AI 基于你的商机缺口和管户画像，从分行客户池中推荐 '+w8Data.newCustomers.length+' 户潜在客户。' +
     '</div>';
 
   w8Data.newCustomers.forEach(function(c) {
     html +=
       '<div class="w8-new-cust-card">' +
-        '<div class="w8-nc-match">★★★ 匹配度 '+c.match+'%</div>' +
+        '<div class="w8-nc-match"><svg class="ico ico--sm" ><use href="#ico-star"/></svg><svg class="ico ico--sm" ><use href="#ico-star"/></svg><svg class="ico ico--sm" ><use href="#ico-star"/></svg> 匹配度 '+c.match+'%</div>' +
         '<div class="w8-nc-info">'+c.name+' · '+c.gender+' · '+c.age+'岁 · AUM '+c.aum+'万 · 无客户经理 · 距支行 '+c.distance+'</div>' +
         '<div class="w8-nc-reason">AI 分析：'+c.reason+'</div>' +
         '<div class="w8-nc-actions">' +
@@ -8143,7 +8388,7 @@ function buildInsightDetailHTML(custName, d) {
   }
 
   // 客户速览
-  html += '<div class="od-section"><div class="od-section-title">📋 客户速览</div>';
+  html += '<div class="od-section"><div class="od-section-title"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 客户速览</div>';
   html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-bottom:8px">' + (basic.summary || '') + '</div>';
 
   // 基本信息
@@ -8164,24 +8409,24 @@ function buildInsightDetailHTML(custName, d) {
   html += '</div>';
 
   // 资产结构
-  html += '<div class="od-section"><div class="od-section-title">💰 资产结构</div>';
+  html += '<div class="od-section"><div class="od-section-title"><svg class="ico ico--md" ><use href="#ico-money"/></svg> 资产结构</div>';
   html += '<div style="font-size:var(--fs-small)">风格：' + (asset.style_tag || '--') + '</div>';
   html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary)">总持仓：' + ((asset.total_holdings || 0)/10000).toFixed(1) + '万</div>';
   html += '</div>';
 
   // 收入模式
-  html += '<div class="od-section"><div class="od-section-title">📊 收入模式</div>';
+  html += '<div class="od-section"><div class="od-section-title"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 收入模式</div>';
   html += '<div style="font-size:var(--fs-small)">月均入账：' + ((income.monthly_avg_in || 0)/10000).toFixed(1) + '万 · 模式：' + (income.pattern_tag || '--') + '</div>';
   html += '</div>';
 
   // 互动情况
-  html += '<div class="od-section"><div class="od-section-title">📱 互动情况</div>';
+  html += '<div class="od-section"><div class="od-section-title"><svg class="ico ico--sm" ><use href="#ico-mobile"/></svg> 互动情况</div>';
   html += '<div style="font-size:var(--fs-small)">近30天登录：' + (engage.recent_30d_logins || 0) + '次 · ' + (engage.engagement_tag || '--') + '</div>';
   html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary)">上次联络：' + (engage.last_contact_days != null ? engage.last_contact_days + '天前' : '--') + '</div>';
   html += '</div>';
 
   // 变化信号
-  html += '<div class="od-section"><div class="od-section-title">🔔 变化信号 (' + changeSignals.length + ')</div>';
+  html += '<div class="od-section"><div class="od-section-title"><svg class="ico ico--md" ><use href="#ico-bell"/></svg> 变化信号 (' + changeSignals.length + ')</div>';
   if (changeSignals.length === 0) {
     html += '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary)">暂无变化信号</div>';
   } else {
@@ -8191,7 +8436,7 @@ function buildInsightDetailHTML(custName, d) {
       html += '<div style="font-size:var(--fs-small);font-weight:var(--fw-bold)">' + s.title + '</div>';
       html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-top:2px">' + s.detail + '</div>';
       if (s.suggested_action) {
-        html += '<div style="font-size:10px;color:var(--color-primary);margin-top:4px">💡 ' + s.suggested_action + '</div>';
+        html += '<div style="font-size:10px;color:var(--color-primary);margin-top:4px"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> ' + s.suggested_action + '</div>';
       }
       html += '</div>';
     });
@@ -8199,7 +8444,7 @@ function buildInsightDetailHTML(custName, d) {
   html += '</div>';
 
   // 风险信号
-  html += '<div class="od-section"><div class="od-section-title">⚠️ 风险信号 (' + riskSignals.length + ')</div>';
+  html += '<div class="od-section"><div class="od-section-title"><svg class="ico ico--md" ><use href="#ico-warning"/></svg> 风险信号 (' + riskSignals.length + ')</div>';
   if (riskSignals.length === 0) {
     html += '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary)">暂无风险信号</div>';
   } else {
@@ -8209,7 +8454,7 @@ function buildInsightDetailHTML(custName, d) {
       html += '<div style="font-size:var(--fs-small);font-weight:var(--fw-bold)">' + s.title + '</div>';
       html += '<div style="font-size:var(--fs-small);color:var(--color-text-secondary);margin-top:2px">' + s.detail + '</div>';
       if (s.suggested_action) {
-        html += '<div style="font-size:10px;color:var(--color-primary);margin-top:4px">💡 ' + s.suggested_action + '</div>';
+        html += '<div style="font-size:10px;color:var(--color-primary);margin-top:4px"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> ' + s.suggested_action + '</div>';
       }
       html += '</div>';
     });
@@ -8235,7 +8480,7 @@ function openW8Detail(name, source) {
       document.getElementById('w8DetailOverlay').classList.add('open');
       document.getElementById('w8DetailBody').innerHTML =
         '<div style="text-align:center;padding:80px 20px;color:var(--color-text-tertiary)">' +
-        '<div style="font-size:32px;margin-bottom:12px">⏳</div>' +
+        '<div style="font-size:32px;margin-bottom:12px"><svg class="ico ico--sm" ><use href="#ico-hourglass"/></svg></div>' +
         '<div>正在加载客户画像...</div></div>';
       window.apiGetProfile(cust.id, name).then(function(p) {
         if (p) {
@@ -8265,7 +8510,7 @@ function renderW8DetailContent(name, p) {
     return '<div class="profile-section">' +
       '<div class="profile-sec-header'+(open?' expanded':'')+'" onclick="toggleProfileSec(this)">' +
         '<span class="profile-sec-title">'+icon+' '+title+'</span>' +
-        '<span class="profile-sec-arrow'+(open?' open':'')+'">▼</span>' +
+        '<span class="profile-sec-arrow'+(open?' open':'')+'"><svg class="ico ico--sm" ><use href="#ico-chevron-down"/></svg></span>' +
       '</div>' +
       '<div class="profile-sec-body'+(open?' open':'')+'">'+bodyHtml+'</div>' +
     '</div>';
@@ -8300,7 +8545,7 @@ function renderW8DetailContent(name, p) {
       fld('注册资金', p.business.capital) +
       fld('经营地址', p.business.address) +
       fld('经营范围', p.business.scope) +
-      fld('经营持续性', p.business.active ? '✅ 近3月交易对手含货款/结算款等关键词' : '⚠ 需关注');
+      fld('经营持续性', p.business.active ? '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 近3月交易对手含货款/结算款等关键词' : '<svg class="ico ico--md" ><use href="#ico-warning"/></svg> 需关注');
   }
 
   // --- Section 4: 财富解读 (default open) ---
@@ -8308,19 +8553,19 @@ function renderW8DetailContent(name, p) {
   var d = w.holdings.detail;
   var s4 =
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">📊 净值分层</div>' +
+      '<div class="psc-title"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 净值分层</div>' +
       fld('总资产', w.totalAssets+'万') +
       fld('客户等级', b.level) +
       fld('客群标签', '代发客群') +
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">🏆 财富分 · '+w.wealthScore.score+'分 ('+w.wealthScore.time+')</div>' +
+      '<div class="psc-title"><svg class="ico ico--md" ><use href="#ico-trophy"/></svg> 财富分 · '+w.wealthScore.score+'分 ('+w.wealthScore.time+')</div>' +
       '<div class="profile-tag-row">'+w.wealthScore.dims.map(function(d){return '<span class="profile-tag good">'+d+'</span>';}).join('')+'</div>' +
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">💰 资金解读</div>' +
+      '<div class="psc-title"><svg class="ico ico--md" ><use href="#ico-money"/></svg> 资金解读</div>' +
       fld('近一年入金', w.cashflow.yearIn+'万') +
       fld('入金来源', w.cashflow.inDesc) +
       fld('近一年出金', w.cashflow.yearOut+'万') +
@@ -8329,7 +8574,7 @@ function renderW8DetailContent(name, p) {
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">📦 持仓解读</div>' +
+      '<div class="psc-title"><svg class="ico ico--lg" ><use href="#ico-package"/></svg> 持仓解读</div>' +
       fld('持仓总规模', w.holdings.total+'万') +
       fld('累计收益', '+'+w.holdings.cumReturn+'万') +
       fld('年化收益率', w.holdings.annualYield) +
@@ -8346,14 +8591,14 @@ function renderW8DetailContent(name, p) {
 
   // --- Section 5: 信贷解读 ---
   var cr = p.credit;
-  var s5 = '<div class="profile-sub-card"><div class="psc-title">📋 贷款记录</div>';
+  var s5 = '<div class="profile-sub-card"><div class="psc-title"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 贷款记录</div>';
   if (cr.loans.length === 0) {
     s5 += '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary);text-align:center;padding:8px">无当前贷款记录</div>';
   }
   s5 += '</div>' +
-    '<div class="profile-sub-card"><div class="psc-title">🚫 历史被拒</div>' +
+    '<div class="profile-sub-card"><div class="psc-title"><svg class="ico ico--md" ><use href="#ico-ban"/></svg> 历史被拒</div>' +
     '<div style="font-size:var(--fs-small);color:var(--color-text-tertiary);text-align:center;padding:8px">无被拒记录</div></div>' +
-    '<div class="profile-sub-card"><div class="psc-title">📋 社保/公积金</div>' +
+    '<div class="profile-sub-card"><div class="psc-title"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 社保/公积金</div>' +
     fld('公积金缴存基数', cr.housingFund.base+'元 · '+cr.housingFund.period) +
     fld('社保缴存基数', cr.socialSecurity.base+'元 · '+cr.socialSecurity.period) +
     '</div>';
@@ -8362,30 +8607,30 @@ function renderW8DetailContent(name, p) {
   var bh = p.behavior;
   var s6 =
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">🏷️ 金融偏好</div>' +
+      '<div class="psc-title"><svg class="ico ico--sm" ><use href="#ico-tag"/></svg>️ 金融偏好</div>' +
       '<div class="profile-tag-row">'+bh.finPrefs.map(function(f){return '<span class="profile-tag">'+f.label+'</span><span style="font-size:10px;color:var(--color-text-tertiary)">('+f.basis+')</span>';}).join(' ')+'</div>' +
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">⏳ 流动性偏好</div>' +
+      '<div class="psc-title"><svg class="ico ico--sm" ><use href="#ico-hourglass"/></svg> 流动性偏好</div>' +
       fld('偏好周期', bh.liquidity) +
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">⚖️ 风险偏好</div>' +
+      '<div class="psc-title"><svg class="ico ico--md" ><use href="#ico-balance"/></svg>️ 风险偏好</div>' +
       fld('风测结果', bh.risk.test) +
       fld('浏览分布', bh.risk.browseDist) +
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">📱 营销偏好</div>' +
+      '<div class="psc-title"><svg class="ico ico--sm" ><use href="#ico-mobile"/></svg> 营销偏好</div>' +
       fld('渠道偏好', bh.marketing.channels.join(' / ')) +
       fld('近3月参与活动', bh.marketing.activityCount+'次') +
       fld('最佳联系时段', bh.marketing.bestTime) +
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">💳 工资代发</div>' +
+      '<div class="psc-title"><svg class="ico ico--md" ><use href="#ico-credit-card"/></svg> 工资代发</div>' +
       fld('当月代发', bh.payroll.monthAmount+'万 · '+bh.payroll.date) +
       fld('近6月月均', bh.payroll.avg6m+'万') +
       fld('峰值', bh.payroll.peak) +
@@ -8395,9 +8640,9 @@ function renderW8DetailContent(name, p) {
     '</div>' +
 
     '<div class="profile-sub-card">' +
-      '<div class="psc-title">🔍 其他商机</div>' +
+      '<div class="psc-title"><svg class="ico ico--md" ><use href="#ico-search"/></svg> 其他商机</div>' +
       fld('贷款意向', bh.otherOpp.loanIntent ? '有' : '无') +
-      fld('财富产品意向', bh.otherOpp.wealthIntent ? '✅ 有' : '无') +
+      fld('财富产品意向', bh.otherOpp.wealthIntent ? '<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 有' : '无') +
     '</div>';
 
   // --- Section 7: 商机与待办 (default open) ---
@@ -8463,9 +8708,9 @@ function renderW8DetailContent(name, p) {
       availBens.forEach(function(b) {
         var statusLabel = b.status === '未领取' ? '未领取' : (b.status === '未使用' ? '未使用' : '可用');
         var statusColor = b.status === '未领取' ? '#DC2626' : '#6C5CE7';
-        var typeIcon = { '生日权益':'🎂', '权益星':'⭐', '等级权益':'👑', '活动权益':'🎉' };
+        var typeIcon = { '生日权益':'<svg class="ico ico--md" ><use href="#ico-birthday"/></svg>', '权益星':'⭐', '等级权益':'<svg class="ico ico--md" ><use href="#ico-crown"/></svg>', '活动权益':'<svg class="ico ico--xl" ><use href="#ico-party"/></svg>' };
         html += '<div style="font-size:var(--fs-small);padding:6px 0;border-bottom:1px solid #EDE9FE;cursor:pointer" onclick="showToast(\''+b.usageDesc+'\')">';
-        html += '<span>'+(typeIcon[b.benefitType]||'💎')+'</span> ';
+        html += '<span>'+(typeIcon[b.benefitType]||'<svg class="ico ico--md" ><use href="#ico-diamond"/></svg>')+'</span> ';
         html += '<strong>'+b.benefitName+'</strong> · '+b.benefitValue;
         html += ' <span style="font-size:10px;color:'+statusColor+'">['+statusLabel+']</span>';
         html += '<div style="font-size:10px;color:var(--color-text-tertiary)">有效期至 '+b.expiryDate+'</div>';
@@ -8502,20 +8747,20 @@ function renderW8DetailContent(name, p) {
 
   // --- Assemble ---
   var html =
-    sec('base', '📋 基础信息', '', true, s1) +
+    sec('base', '<svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 基础信息', '', true, s1) +
     sec('family', '👨‍👩‍👧 家庭结构', '', false, s2) +
-    (p.business ? sec('biz', '🏭 经营信息', '', false, s3) : '') +
-    sec('wealth', '💎 财富解读', '', true, s4) +
-    sec('credit', '🏦 信贷解读', '', false, s5) +
-    sec('behavior', '🧠 行为洞察', '', false, s6) +
-    sec('opps', '🎯 商机与待办', '', true, s7) +
-    sec('interact', '📝 最近交互', '', false, s8) +
-    sec('products', '📦 持有产品', '', false, s9) +
-    sec('benefits', '🎁 权益与活动', '', true, s10) +
+    (p.business ? sec('biz', '<svg class="ico ico--md" ><use href="#ico-factory"/></svg> 经营信息', '', false, s3) : '') +
+    sec('wealth', '<svg class="ico ico--md" ><use href="#ico-diamond"/></svg> 财富解读', '', true, s4) +
+    sec('credit', '<svg class="ico ico--md" ><use href="#ico-bank"/></svg> 信贷解读', '', false, s5) +
+    sec('behavior', '<svg class="ico ico--md" ><use href="#ico-brain"/></svg> 行为洞察', '', false, s6) +
+    sec('opps', '<svg class="ico ico--md" ><use href="#ico-target"/></svg> 商机与待办', '', true, s7) +
+    sec('interact', '<svg class="ico ico--sm" ><use href="#ico-edit"/></svg> 最近交互', '', false, s8) +
+    sec('products', '<svg class="ico ico--lg" ><use href="#ico-package"/></svg> 持有产品', '', false, s9) +
+    sec('benefits', '<svg class="ico ico--md" ><use href="#ico-gift"/></svg> 权益与活动', '', true, s10) +
 
     '<div class="profile-bottom-actions">' +
-      '<button class="w8-action-btn">📞 拨号</button>' +
-      '<button class="w8-action-btn">💬 微信</button>' +
+      '<button class="w8-action-btn"><svg class="ico ico--lg" ><use href="#ico-phone"/></svg> 拨号</button>' +
+      '<button class="w8-action-btn"><svg class="ico ico--sm" ><use href="#ico-message"/></svg> 微信</button>' +
       '<button class="w8-action-btn">＋添加待办</button>' +
       '<button class="w8-action-btn primary">创建商机</button>' +
     '</div>';
@@ -8768,7 +9013,7 @@ var AiChat = {
     var body = document.getElementById('aiChatBody');
     var div = document.createElement('div');
     div.className = 'ai-chat-msg ' + role;
-    var avatarIcon = role === 'user' ? '👤' : '🤖';
+    var avatarIcon = role === 'user' ? '<svg class="ico ico--lg" ><use href="#ico-user"/></svg>' : '<svg class="ico ico--md" ><use href="#ico-ai"/></svg>';
     div.innerHTML = '<div class="ai-chat-avatar">'+avatarIcon+'</div><div class="ai-chat-bubble">'+text+'</div>';
     body.appendChild(div);
   },
@@ -8778,7 +9023,7 @@ var AiChat = {
     var body = document.getElementById('aiChatBody');
     var div = document.createElement('div');
     div.className = 'ai-chat-msg bot';
-    div.innerHTML = '<div class="ai-chat-avatar">🤖</div><div class="ai-chat-bubble"><div class="ai-chat-thinking"><span></span><span></span><span></span></div></div>';
+    div.innerHTML = '<div class="ai-chat-avatar"><svg class="ico ico--md" ><use href="#ico-ai"/></svg></div><div class="ai-chat-bubble"><div class="ai-chat-thinking"><span></span><span></span><span></span></div></div>';
     body.appendChild(div);
     return div;
   },
@@ -8793,12 +9038,12 @@ var AiChat = {
     var div = document.createElement('div');
     div.className = 'ai-chat-result';
     div.innerHTML =
-      '<div class="ai-chat-result-header">📊 查询结果</div>' +
+      '<div class="ai-chat-result-header"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 查询结果</div>' +
       '<div class="ai-chat-result-tags">'+tagsHtml+'</div>' +
       '<div class="ai-chat-result-summary">匹配 <b>'+result.count+'</b> 条'+(result.total?' / 共 '+result.total+' 条':'')+''+(result.sample&&result.sample.length>0?' · 如：'+result.sample.join('、'):'')+'</div>' +
       '<div class="ai-chat-result-actions">' +
-        '<button class="ai-chat-result-btn apply" onclick="AiChat.apply()">✅ 应用到列表</button>' +
-        '<button class="ai-chat-result-btn continue" onclick="AiChat.continueChat()">💬 继续追问</button>' +
+        '<button class="ai-chat-result-btn apply" onclick="AiChat.apply()"><svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check-circle"/></svg> 应用到列表</button>' +
+        '<button class="ai-chat-result-btn continue" onclick="AiChat.continueChat()"><svg class="ico ico--sm" ><use href="#ico-message"/></svg> 继续追问</button>' +
         '<button class="ai-chat-result-btn reset" onclick="AiChat.reset()">↺ 清空重来</button>' +
       '</div>';
     body.appendChild(div);
@@ -8817,7 +9062,7 @@ var AiChat = {
     msgs.forEach(function(m) {
       var div = document.createElement('div');
       div.className = 'ai-chat-msg ' + m.role;
-      var avatarIcon = m.role === 'user' ? '👤' : '🤖';
+      var avatarIcon = m.role === 'user' ? '<svg class="ico ico--lg" ><use href="#ico-user"/></svg>' : '<svg class="ico ico--md" ><use href="#ico-ai"/></svg>';
       div.innerHTML = '<div class="ai-chat-avatar">'+avatarIcon+'</div><div class="ai-chat-bubble">'+m.text+'</div>';
       body.appendChild(div);
     });
@@ -9309,16 +9554,16 @@ function renderW9DayList() {
   html += '<div class="w9-day-title">'+monthLabel+'月'+w9SelectedDay+'日'+todayLabel+' · '+taskCount+' 项待办</div>';
 
   if (w9DayData.morning.length > 0) {
-    html += '<div class="w9-period-label">☀️ 上午</div>';
+    html += '<div class="w9-period-label"><svg class="ico ico--sm" ><use href="#ico-sun"/></svg> 上午</div>';
     w9DayData.morning.forEach(function(t) {
-      html += '<div class="w9-task-card" onclick="openW9TaskDetail(\''+t.task_id+'\', \''+t.type_code+'\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name">📋 '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
+      html += '<div class="w9-task-card" onclick="openW9TaskDetail(\''+t.task_id+'\', \''+t.type_code+'\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
     });
   }
 
   if (w9DayData.afternoon.length > 0) {
-    html += '<div class="w9-period-label">🌤 下午</div>';
+    html += '<div class="w9-period-label"><svg class="ico ico--sm" ><use href="#ico-cloud-sun"/></svg> 下午</div>';
     w9DayData.afternoon.forEach(function(t) {
-      html += '<div class="w9-task-card" onclick="openW9TaskDetail(\''+t.task_id+'\', \''+t.type_code+'\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name">📋 '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
+      html += '<div class="w9-task-card" onclick="openW9TaskDetail(\''+t.task_id+'\', \''+t.type_code+'\')"><span class="w9-task-time">'+t.time+'</span><div class="w9-task-info"><div class="w9-task-name"><svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> '+t.name+'</div><div class="w9-task-desc">'+t.desc+'</div></div></div>';
     });
   }
 
@@ -9356,14 +9601,14 @@ function w9NextMonth() {
 // ========================================
 var msgData = {
   groups: [
-    { key:'system', label:'🔔 系统通知', items:[
+    { key:'system', label:'<svg class="ico ico--md" ><use href="#ico-bell"/></svg> 系统通知', items:[
       { title:'商机提醒', time:'2小时前', text:'赵明辉的代发即将到账，建议跟进', action:'查看', target:'w3' }
     ]},
-    { key:'ai', label:'🤖 AI 提醒', items:[
+    { key:'ai', label:'<svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI 提醒', items:[
       { title:'日程建议', time:'5小时前', text:'今日日程已更新，上午优先处理高价值客户', action:'查看', target:'w1' },
       { title:'客户洞察', time:'昨天', text:'王建国近3天浏览理财页面8次，建议主动联系', action:'查看', target:'w8' }
     ]},
-    { key:'task', label:'📋 待办通知', items:[
+    { key:'task', label:'<svg class="ico ico--md" ><use href="#ico-clipboard"/></svg> 待办通知', items:[
       { title:'新待办', time:'昨天', text:'产品到期提醒：3位客户产品即将到期', action:'查看', target:'w1' }
     ]}
   ]
@@ -9411,6 +9656,9 @@ function readAllMsg() {
 var prodSearchData = [];
 
 function openProdSearch() {
+  // 关闭其他 tab overlay
+  document.getElementById('w8Overlay').classList.remove('open');
+  document.getElementById('meOverlay').classList.remove('open');
   prodState = { typeFilter:'全部', riskFilter:'全部', sortBy:'aiFit', selectedIds:[] };
   prodAiQueries = [];
   document.getElementById('prodSearchInput').value = '';
@@ -9426,21 +9674,29 @@ function setProdRiskFilter(risk) { prodState.riskFilter = risk; renderProdSearch
 function setProdSort(sort) { prodState.sortBy = sort; renderProdSearch(); }
 
 function renderProdSearch() {
-  // type filter chips
+  // 类型 + 风险筛选（下拉框模式，合并到一行）
   var types = ['全部','理财','基金','存款','保险'];
-  document.getElementById('prodTypeFilter').innerHTML = types.map(function(t) {
-    return '<div class="prod-filter-chip'+(prodState.typeFilter===t?' active':'')+'" onclick="setProdTypeFilter(\''+t+'\')">'+t+'</div>';
-  }).join('');
-  // risk filter chips
   var risks = ['全部','R1-低风险','R2-中低','R3-中','R4-中高'];
-  document.getElementById('prodRiskFilter').innerHTML = risks.map(function(r) {
-    return '<div class="prod-risk-chip'+(prodState.riskFilter===r?' active':'')+'" onclick="setProdRiskFilter(\''+r+'\')">'+r+'</div>';
-  }).join('');
-  // sort chips
+  var filterHtml = '';
+  filterHtml += '<select class="prod-filter-select" onchange="setProdTypeFilter(this.value)">';
+  types.forEach(function(t) {
+    filterHtml += '<option value="'+t+'"'+(prodState.typeFilter===t?' selected':'')+'>'+(t==='全部'?'全部类型':t)+'</option>';
+  });
+  filterHtml += '</select>';
+  filterHtml += '<select class="prod-filter-select" onchange="setProdRiskFilter(this.value)">';
+  risks.forEach(function(r) {
+    filterHtml += '<option value="'+r+'"'+(prodState.riskFilter===r?' selected':'')+'>'+(r==='全部'?'全部风险':r)+'</option>';
+  });
+  filterHtml += '</select>';
+  document.getElementById('prodTypeFilter').innerHTML = filterHtml;
+  document.getElementById('prodRiskFilter').innerHTML = '';
+  // 排序（下拉框模式）
   var sorts = [{key:'aiFit',label:'AI推荐'},{key:'risk',label:'风险↑'},{key:'yield',label:'收益↑'},{key:'min',label:'起购↓'}];
-  document.getElementById('prodSortBar').innerHTML = sorts.map(function(s) {
-    return '<span class="sort-chip'+(prodState.sortBy===s.key?' active':'')+'" onclick="setProdSort(\''+s.key+'\')">'+s.label+'</span>';
-  }).join('');
+  document.getElementById('prodSortBar').innerHTML = '<select class="prod-sort-select" onchange="setProdSort(this.value)">' +
+    sorts.map(function(s) {
+      return '<option value="'+s.key+'"'+(prodState.sortBy===s.key?' selected':'')+'>'+s.label+'</option>';
+    }).join('') +
+    '</select>';
 
   // filter
   var keyword = (document.getElementById('prodSearchInput').value || '').trim().toLowerCase();
@@ -9485,17 +9741,17 @@ function renderProdSearch() {
   var aiIndicatorHtml = '';
   if (prodAiQueries.length > 0) {
     var aiTags = prodAiQueries.map(function(q) { return '<span class="ai-filter-tag">'+q.label+'</span>'; }).join('');
-    aiIndicatorHtml = '<div class="ai-filter-bar"><span>🤖 AI 筛选：</span>'+aiTags+'<span class="ai-filter-clear" onclick="prodAiQueries=[];renderProdSearch();">✕ 清除</span></div>';
+    aiIndicatorHtml = '<div class="ai-filter-bar"><span><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI 筛选：</span>'+aiTags+'<span class="ai-filter-clear" onclick="prodAiQueries=[];renderProdSearch();"><svg class="ico ico--sm" ><use href="#ico-close"/></svg> 清除</span></div>';
   }
 
   // AI section
-  var html = aiIndicatorHtml + '<div class="prod-ai-section"><div class="prod-ai-label">💡 AI 推荐（基于你的管户画像）</div>';
+  var html = aiIndicatorHtml + '<div class="prod-ai-section"><div class="prod-ai-label"><svg class="ico ico--md" ><use href="#ico-lightbulb"/></svg> AI 推荐（基于你的管户画像）</div>';
   var aiList = filtered.filter(function(p){return p.aiFit>=4;}).slice(0,4);
   if (aiList.length===0) { html += '<div style="font-size:var(--fs-caption);color:var(--color-text-tertiary);padding:8px 0">暂无匹配的AI推荐产品</div>'; }
   else { aiList.forEach(function(p){html+=renderProdCard(p);}); }
   html += '</div>';
   html += '<div class="w7-detail-label">全部产品</div>';
-  if (filtered.length===0) { html += '<div style="text-align:center;padding:30px 0;color:var(--color-text-tertiary);font-size:var(--fs-body)">📭 暂无匹配产品<br><span style="font-size:var(--fs-caption)">试试调整筛选条件</span></div>'; }
+  if (filtered.length===0) { html += '<div style="text-align:center;padding:30px 0;color:var(--color-text-tertiary);font-size:var(--fs-body)"><svg class="ico ico--md" ><use href="#ico-empty"/></svg> 暂无匹配产品<br><span style="font-size:var(--fs-caption)">试试调整筛选条件</span></div>'; }
   else { filtered.forEach(function(p){html+=renderProdCard(p);}); }
   document.getElementById('prodSearchContent').innerHTML = html;
 }
@@ -9505,7 +9761,7 @@ function renderProdCard(p) {
   var rc = 'tag-risk-'+p.risk.toLowerCase();
   var minT = p.min>=10000?(p.min/10000)+'万':p.min+p.minUnit;
   return '<div class="prod-card'+(isSel?' selected':'')+'" id="card-'+p.id+'">'+
-    '<div class="prod-card-select" onclick="event.stopPropagation();toggleSelectProd(\''+p.id+'\')">'+(isSel?'✓':'')+'</div>'+
+    '<div class="prod-card-select" onclick="event.stopPropagation();toggleSelectProd(\''+p.id+'\')">'+(isSel?'<svg class="ico ico--sm" style="color:var(--color-success)"><use href="#ico-check"/></svg>':'')+'</div>'+
     '<div class="prod-card-header" onclick="openProdDetail(\''+p.id+'\')">'+
       '<span class="prod-card-icon">'+p.icon+'</span>'+
       '<div class="prod-card-body">'+
@@ -9513,7 +9769,7 @@ function renderProdCard(p) {
         '<div class="prod-card-sub">'+p.type+' · '+p.termType+' · '+p.term+'</div>'+
         '<div class="prod-card-tags"><span class="prod-card-tag '+rc+'">'+p.risk+' · '+p.riskLabel+'</span><span class="prod-card-tag">起购'+minT+'</span></div>'+
         '<div class="prod-card-desc">'+p.benchmark+'</div>'+
-        '<div class="prod-card-ai">🤖 '+p.aiReason+'</div>'+
+        '<div class="prod-card-ai"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> '+p.aiReason+'</div>'+
       '</div>'+
     '</div>'+
   '</div>';
@@ -9566,7 +9822,7 @@ function openProdDetail(id) {
   body += '<div class="pd-section"><div class="pd-section-title">产品亮点</div><div class="pd-highlight-row">';
   p.highlights.split(' · ').forEach(function(h){ body += '<span class="pd-highlight-tag">⭐ '+h.trim()+'</span>'; });
   body += '</div></div>';
-  body += '<div class="pd-ai-reason">🤖 AI推荐理由：'+p.aiReason+'（适合 '+p.aiFit+' 位管户客户）</div>';
+  body += '<div class="pd-ai-reason"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> AI推荐理由：'+p.aiReason+'（适合 '+p.aiFit+' 位管户客户）</div>';
   document.getElementById('pdBody').innerHTML = body;
   document.getElementById('prodDetailOverlay').classList.add('open');
 }
@@ -9626,7 +9882,7 @@ function renderProdCompare() {
       '<div class="pc-prod-name">'+p.name+'</div>'+
       '<div class="pc-prod-type">'+p.type+' · '+p.termType+'</div>'+
       '<div class="pc-prod-benchmark">'+p.benchmark+'</div>'+
-      '<div class="pc-prod-ai">🤖 适合 '+p.aiFit+' 位客户</div></div>';
+      '<div class="pc-prod-ai"><svg class="ico ico--md" ><use href="#ico-ai"/></svg> 适合 '+p.aiFit+' 位客户</div></div>';
   }
 
   var leftHtml = prodCard(left);
@@ -9662,7 +9918,11 @@ function removeCompareItem(id) {
 // ========================================
 //   个人中心
 // ========================================
-function openMe() { renderMe(); document.getElementById('meOverlay').classList.add('open'); }
+function openMe() {
+  // 关闭其他 tab overlay
+  document.getElementById('w8Overlay').classList.remove('open');
+  document.getElementById('prodSearchOverlay').classList.remove('open');
+  renderMe(); document.getElementById('meOverlay').classList.add('open'); }
 function closeMe() { document.getElementById('meOverlay').classList.remove('open'); }
 
 function renderMe() {
@@ -9675,24 +9935,69 @@ function renderMe() {
     '</div>' +
 
     '<div class="me-menu-group">' +
-      '<div class="me-menu-label">📊 业绩相关</div>' +
+      '<div class="me-menu-label"><svg class="ico ico--md" ><use href="#ico-chart"/></svg> 业绩相关</div>' +
       '<div class="me-menu-item" onclick="closeMe();openW4(\'month\',\'me\')"><span class="mi-text">业绩看板</span><span class="mi-arrow">→ W4</span></div>' +
       '<div class="me-menu-item" onclick="closeMe();openW6(\'me\')"><span class="mi-text">昨日回顾</span><span class="mi-arrow">→ W6</span></div>' +
       '<div class="me-menu-item" onclick="closeMe();openW7(\'me\')"><span class="mi-text">面谈记录</span><span class="mi-arrow">→ W7</span></div>' +
     '</div>' +
 
     '<div class="me-menu-group">' +
-      '<div class="me-menu-label">⚙️ 设置</div>' +
+      '<div class="me-menu-label"><svg class="ico ico--sm" ><use href="#ico-settings"/></svg>️ 设置</div>' +
       '<div class="me-menu-item" onclick="showToast(\'打开通知设置\')"><span class="mi-text">通知设置</span><span class="mi-arrow">&gt;</span></div>' +
       '<div class="me-menu-item" onclick="showToast(\'打开AI偏好设置\')"><span class="mi-text">AI 偏好设置</span><span class="mi-arrow">&gt;</span></div>' +
       '<div class="me-menu-item" onclick="showToast(\'打开客户分配偏好\')"><span class="mi-text">客户分配偏好</span><span class="mi-arrow">&gt;</span></div>' +
       '<div class="me-menu-item" onclick="showToast(\'打开隐私与安全\')"><span class="mi-text">隐私与安全</span><span class="mi-arrow">&gt;</span></div>' +
+      '<div class="me-menu-item" onclick="event.stopPropagation();toggleThemePicker(event)"><span class="mi-text">图标主题</span><span class="mi-arrow" id="themeCurrentLabel">'+IconManager.displayName(IconManager.get())+'</span></div>' +
       '<div class="me-menu-item" onclick="showToast(\'关于易会办 v3.2\')"><span class="mi-text">关于易会办</span><span class="mi-arrow">&gt;</span></div>' +
     '</div>' +
 
     '<button class="w8-action-btn" style="width:100%;color:#e74c3c;border-color:#e74c3c;margin-bottom:var(--sp-md)" onclick="showToast(\'确认退出登录？\')">退出登录</button>';
 
   document.getElementById('meBody').innerHTML = html;
+}
+
+// ===== 图标主题选择器 =====
+function toggleThemePicker(e) {
+  var existing = document.getElementById('themePickerOverlay');
+  if (existing) { existing.remove(); return; }
+
+  var overlay = document.createElement('div');
+  overlay.id = 'themePickerOverlay';
+  overlay.className = 'theme-picker-overlay';
+  overlay.onclick = function() { overlay.remove(); };
+
+  var themes = IconManager.themes();
+  var cur = IconManager.get();
+  var popover = document.createElement('div');
+  popover.className = 'theme-picker-popover';
+  popover.onclick = function(ev) { ev.stopPropagation(); };
+
+  var html = '<div class="tp-title">选择图标风格</div>';
+  themes.forEach(function(t) {
+    var active = t === cur ? ' tp-active' : '';
+    html += '<div class="tp-option'+active+'" onclick="selectTheme(\''+t+'\')"><span>'+IconManager.displayName(t)+'</span><span class="tp-check">✓</span></div>';
+  });
+  popover.innerHTML = html;
+
+  overlay.appendChild(popover);
+  document.body.appendChild(overlay);
+
+  // position popover near the clicked element
+  var rect = e.currentTarget.getBoundingClientRect();
+  var popW = 200;
+  var left = Math.min(rect.right - popW, window.innerWidth - popW - 16);
+  left = Math.max(left, 16);
+  popover.style.left = left + 'px';
+  popover.style.top = (rect.top - 8) + 'px';
+}
+
+function selectTheme(name) {
+  IconManager.set(name);
+  var overlay = document.getElementById('themePickerOverlay');
+  if (overlay) overlay.remove();
+  // update label in menu
+  var label = document.getElementById('themeCurrentLabel');
+  if (label) label.textContent = IconManager.displayName(name);
 }
 
 // ========================================
@@ -9713,7 +10018,7 @@ function openGs() { document.getElementById('gsOverlay').classList.add('open'); 
 function closeGs() { document.getElementById('gsOverlay').classList.remove('open'); }
 
 function renderGsRecent() {
-  var html = '<div class="gs-recent"><div class="gs-recent-title">🔥 最近搜索</div>';
+  var html = '<div class="gs-recent"><div class="gs-recent-title"><svg class="ico ico--md" ><use href="#ico-fire"/></svg> 最近搜索</div>';
   gsRecent.forEach(function(r) {
     html += '<div class="gs-recent-item" onclick="document.getElementById(\'gsInput\').value=\''+r+'\';onGsInput(\''+r+'\')">· '+r+'</div>';
   });

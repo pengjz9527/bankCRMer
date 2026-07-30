@@ -5,7 +5,7 @@
  *   <script src="api_adapter.js"></script>
  *   <script>
  *     // 设置 API 地址
- *     EYH.setBaseURL('http://localhost:8000');
+ *     EYH.setBaseURL('http://localhost:8008');
  *     
  *     // 获取客户列表
  *     const result = await EYH.getCustomers({ keyword: '张', page: 1 });
@@ -24,7 +24,7 @@
     // ============================================================
     // 配置
     // ============================================================
-    _baseURL: 'http://localhost:8000',
+    _baseURL: 'http://localhost:8008',
     _offline: false,
     _timeout: 5000,
 

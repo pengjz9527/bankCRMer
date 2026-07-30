@@ -33,7 +33,7 @@ from ..model_adapter import get_adapter
 log = logging.getLogger("agentos.battle_pkg")
 
 # 产品数据库路径
-PRODUCT_DB_PATH = Path(__file__).parent.parent.parent.parent / "原型设计" / "data" / "product_database.json"
+PRODUCT_DB_PATH = Path(__file__).parent.parent.parent.parent / "prototype" / "data" / "product_database.json"
 
 
 def load_product_db() -> dict:
@@ -159,7 +159,6 @@ def format_product_context(products: list[dict]) -> str:
         "gen_overview", "gen_clues", "gen_scripts",
         "match_products", "query_customers", "query_holdings",
     ],
-    model="deepseek-chat",
     triggers=["on_demand"],
     rate_limit=20,
     timeout=300,
@@ -217,6 +216,7 @@ class BattlePackageAgent(Agent):
         cust_id: int,
         mode: str,
         opportunity_info: dict = None,
+        insight_data: dict = None,
     ) -> str:
         """构建发送给 LLM 的 user prompt"""
         ctx = self._build_customer_context(cust_id)
@@ -225,6 +225,11 @@ class BattlePackageAgent(Agent):
         risk = ctx.get("risk_assessment", {})
         risk_current = risk.get("current", {}) if isinstance(risk, dict) else {}
         risk_result = risk_current.get("test_result", "稳健型") if isinstance(risk_current, dict) else "稳健型"
+
+        # 如果有洞察快照，使用洞察 Agent 的 overview 替代 LLM 生成
+        insight_overview_json = ""
+        if insight_data and insight_data.get("overview"):
+            insight_overview_json = json.dumps(insight_data["overview"], ensure_ascii=False, indent=2)
 
         # 格式化客户上下文
         cust_info = json.dumps({
@@ -345,6 +350,8 @@ class BattlePackageAgent(Agent):
 
 {opp_section}
 
+{"**客户洞察快照（由 CustomerInsightAgent 预生成）**：\n```json\n" + insight_overview_json + "\n```\n请直接使用以上 customer_overview，不要重新生成。" if insight_overview_json else ""}
+
 **客户全维度数据**：
 ```json
 {cust_info}
@@ -355,7 +362,7 @@ class BattlePackageAgent(Agent):
 
 **重要提示**：
 1. 这是{"面谈版" if mode == "面谈版" else "电话版"}作战包，请按对应格式输出
-2. 营销线索的发现依据必须引用上述客户数据中的具体数字/事实
+2. {"customer_overview 请直接使用上面提供的洞察快照，不要修改" if insight_overview_json else "营销线索的发现依据必须引用上述客户数据中的具体数字/事实"}
 3. 推荐产品必须从上述产品库中选择（填写产品全名），不要编造产品
 4. 切入话术必须是自然的口语对话，包含引导性问题
 5. 请严格按照 system prompt 中定义的 JSON 输出格式返回结果"""
@@ -368,6 +375,7 @@ class BattlePackageAgent(Agent):
         cust_id: int,
         mode: str = "面谈版",
         opportunity_info: dict = None,
+        insight_data: dict = None,
         progress_callback=None,
     ) -> dict:
         """
@@ -417,13 +425,14 @@ class BattlePackageAgent(Agent):
         # 调用 LLM
         start = time.time()
         try:
-            result = self.adapter.analyze_json(
+            resp = self.adapter.analyze_json(
                 system_prompt=self.system_prompt_text,
                 user_prompt=user_prompt,
                 temperature=0.4,
             )
+            result = resp["result"]
             elapsed = time.time() - start
-            log.info(f"BattlePackage generated: {elapsed:.1f}s, tokens_approx={len(user_prompt)//3}")
+            log.info(f"BattlePackage generated: {elapsed:.1f}s, tokens={resp['usage']['total_tokens']}")
 
             if progress_callback:
                 await progress_callback("phase", {
@@ -451,13 +460,14 @@ class BattlePackageAgent(Agent):
                 "error": str(e),
             }
 
-    def save_battle_package(self, bp_result: dict, db) -> dict:
+    def save_battle_package(self, bp_result: dict, db, opp_id: str = "") -> dict:
         """
         将生成的作战包保存到数据库
 
         Args:
             bp_result: generate_battle_package 的返回结果
             db: SQLite 数据库连接
+            opp_id: 关联的商机ID（为空时自动生成）
 
         Returns:
             {"bp_id": "...", "clue_ids": [...]}
@@ -472,7 +482,7 @@ class BattlePackageAgent(Agent):
         expires = (date.today() + timedelta(days=7)).isoformat()
 
         bp_id = f"BP_AI_{int(datetime.now().timestamp())}"
-        opp_id = f"OPP_{bp_id}"
+        opp_id = opp_id if opp_id else f"OPP_{bp_id}"
 
         # 保存 customer_overview
         overview = bp_data.get("customer_overview", {})

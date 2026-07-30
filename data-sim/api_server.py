@@ -919,7 +919,7 @@ async def battle_package_generate(body: dict):
     gen_at = datetime.now()
     exp_at = gen_at.date() + timedelta(days=7)
 
-    mode = "电话版" if _random.random() < 0.4 else "面谈版"
+    mode = "标准版"
 
     risk_warns = '{"不得承诺收益","不得误导风险等级","基金产品须说明过往业绩不代表未来表现"}'
     post_act = '{"录入本次沟通记录","标记客户意向产品","创建跟进任务"}'

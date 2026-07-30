@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图标总览 · 易会办</title>
+<script src="/icons/icons-classic.js"></script>
+<script src="/icons/icons-modern.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #fff;
+    --text: #1a1a2e;
+    --sub: #888;
+    --border: #e8e8e8;
+    --accent: #AB2029;
+    --classic-tag: #3B82F6;
+    --modern-tag: #6C5CE7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box }
+  body { font-family: -apple-system, "SF Pro", "PingFang SC", sans-serif; background: var(--bg); color: var(--text); padding: 24px }
+  h1 { font-size: 22px; margin-bottom: 4px }
+  h2 { font-size: 15px; font-weight: 500; color: var(--sub); margin: 28px 0 12px; display: flex; align-items: center; gap: 8px }
+  h2 .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; color: #fff }
+  h2 .badge--classic { background: var(--classic-tag) }
+  h2 .badge--modern { background: var(--modern-tag) }
+  .subtitle { color: var(--sub); font-size: 13px; margin-bottom: 20px }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px }
+  .item {
+    background: var(--card); border-radius: 8px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; padding: 14px 6px 10px;
+    transition: box-shadow .15s; cursor: default;
+  }
+  .item:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06) }
+  .item svg { width: 28px; height: 28px; color: var(--accent); margin-bottom: 6px }
+  .item span { font-size: 10px; color: var(--sub); text-align: center; word-break: break-all; line-height: 1.3 }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+  @media (max-width: 640px) { .pair { grid-template-columns: 1fr } body { padding: 12px } }
+</style>
+</head>
+<body>
+<h1>🎨 易会办 SVG 图标总览</h1>
+<p class="subtitle">左侧 Classic (实心) · 右侧 Modern (描边) · 共 <strong id="total">--</strong> 个图标</p>
+<div id="root"></div>
+
+<script>
+(function(){
+  var sets = window.ICON_SETS || {};
+  var classic = sets['classic'] || {};
+  var modern  = sets['modern']  || {};
+  var allKeys = Object.keys(classic).concat(Object.keys(modern)).filter(function(k,i,a){ return a.indexOf(k)===i });
+
+  document.getElementById('total').textContent = allKeys.length;
+
+  var root = document.getElementById('root');
+  var categories = {
+    '导航 / Tab Bar':      ['ico-home','ico-people','ico-package','ico-user'],
+    '搜索 / 通知':         ['ico-search','ico-bell'],
+    'AI / 智能':           ['ico-ai','ico-sparkles','ico-brain','ico-robot'],
+    '日程 / 时间':         ['ico-sun','ico-cloud-sun','ico-clock','ico-calendar','ico-hourglass','ico-alarm','ico-stopwatch'],
+    '商机 / 作战包':       ['ico-clipboard','ico-target','ico-lightbulb','ico-lightning','ico-inbox','ico-inbox-arrow'],
+    '图表 / 数据':         ['ico-chart','ico-money','ico-ruler','ico-trend-up'],
+    '状态 / 操作':         ['ico-warning','ico-check-circle','ico-x-circle','ico-check','ico-close','ico-x','ico-ban'],
+    '通讯':               ['ico-phone','ico-mobile','ico-message','ico-email','ico-empty'],
+    '编辑 / 设置':         ['ico-settings','ico-pencil','ico-edit','ico-tag'],
+    '箭头 / 导航':         ['ico-chevron-down','ico-chevron-right','ico-refresh'],
+    '媒体':               ['ico-play','ico-pause','ico-skip-fwd'],
+    '庆祝 / 成就':         ['ico-party','ico-star','ico-crown','ico-trophy','ico-gift','ico-birthday'],
+    '业务场景':            ['ico-fire','ico-diamond','ico-pin'],
+    '金融':               ['ico-credit-card','ico-bank','ico-handshake','ico-money-fly','ico-balance','ico-factory', 'ico-wallet','ico-laptop'],
+    '文档 / 公告':         ['ico-file-text','ico-megaphone'],
+    '建筑 / 家庭 / 导出':   ['ico-building','ico-family','ico-upload'],
+  };
+
+  function renderIcon(key, setObj, color) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" style="color:'+color+'">';
+    if (setObj[key]) svg += setObj[key];
+    else svg += '<text x="12" y="14" text-anchor="middle" font-size="10" fill="#ccc">缺</text>';
+    svg += '</svg>';
+    return svg;
+  }
+
+  var html = '';
+  for (var catName in categories) {
+    html += '<h2>'+catName+'</h2>';
+    html += '<div class="grid">';
+    categories[catName].forEach(function(key){
+      html += '<div class="item">';
+      // side-by-side: classic left, modern right
+      html += '<div class="pair" style="display:flex;gap:4px;width:100%;justify-content:center">';
+      html += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" style="color:#3B82F6">'+(classic[key] || '<text x="12" y="14" text-anchor="middle" font-size="10" fill="#ccc">缺</text>')+'</svg>';
+      html += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" style="color:#6C5CE7">'+(modern[key] || '<text x="12" y="14" text-anchor="middle" font-size="10" fill="#ccc">缺</text>')+'</svg>';
+      html += '</div>';
+      html += '<span>'+key.replace('ico-','')+'</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  root.innerHTML = html;
+})();
+</script>
+</body>
+</html>

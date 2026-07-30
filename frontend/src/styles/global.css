@@ -1,0 +1,96 @@
+@import './variables.css';
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-family); font-size: var(--fs-body);
+  color: var(--color-text-primary); background: #C0C4CC;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  display:flex; justify-content:center; align-items:flex-start;
+  min-height:100vh; padding:20px 0;
+}
+
+/* admin 桌面端：取消居中 flex，填满视口 */
+body.admin-mode {
+  display: block;
+  padding: 0;
+}
+
+/* ---------- Phone Frame ---------- */
+.phone-frame {
+  width: var(--page-width); height: 812px; max-height: 95vh;
+  background: var(--color-bg); border-radius: 24px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 2px #B0B4BC;
+  position: relative; display: flex; flex-direction: column;
+  transform: translateZ(0); /* 创建 fixed 元素包含块，约束弹窗不超出手机框架 */
+}
+
+/* ---------- 工作区 ---------- */
+.workspace { flex: 1; position: relative; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+.workspace::-webkit-scrollbar { display: none; }
+
+/* ---------- Scroll Content ---------- */
+.scroll-content {
+  position: relative;
+  overflow: visible;
+  padding: 10px 15px 16px 15px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.scroll-content .bottom-spacer { height: 24px; flex-shrink: 0; }
+
+/* ---------- Section Header ---------- */
+.section-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: var(--sp-xs);
+}
+.section-header .title { font-size: var(--fs-h2); font-weight: var(--fw-bold); color: var(--color-text-primary); }
+.section-header .sub { font-size: var(--fs-caption); color: var(--color-text-tertiary); font-weight: var(--fw-regular); margin-left: var(--sp-xs); }
+.section-header .header-action {
+  font-size: var(--fs-caption); color: var(--color-primary);
+  cursor: pointer; font-weight: var(--fw-medium);
+  -webkit-tap-highlight-color: transparent;
+}
+.section-header .header-action:active { opacity: 0.7; }
+.section-header .header-actions-group {
+  display: flex; align-items: center; gap: var(--sp-sm);
+}
+
+/* ---------- SVG Icon ---------- */
+.ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex-shrink: 0; }
+.ico--sm { font-size: 14px; }
+.ico--md { font-size: 18px; }
+.ico--lg { font-size: 24px; }
+.ico--xl { font-size: 28px; }
+.ico--prod { font-size: 20px; }
+
+/* ---------- Tab Bar ---------- */
+.tab-bar {
+  height: var(--tab-height); background: var(--color-card);
+  display: flex; align-items: center; flex-shrink: 0;
+  border-top: 1px solid var(--color-divider);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  position: relative; z-index: 300;
+}
+.tab-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px; cursor: pointer;
+  color: var(--color-text-tertiary);
+  transition: color var(--duration-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-item .tab-icon { font-size: 18px; }
+.tab-item .tab-label { font-size: 9px; font-weight: var(--fw-medium); }
+.tab-item--active { color: var(--color-primary); }
+.tab-item--active::after {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 3px; background: var(--color-primary); border-radius: 0 0 3px 3px;
+}
+
+/* ---------- Tag 体系 ---------- */
+.tag-danger { background: var(--color-danger-light); color: var(--color-danger); }
+.tag-warning { background: var(--color-warning-light); color: #B8600C; }
+.tag-success { background: var(--color-success-light); color: #009A59; }
+.tag-muted { background: var(--color-bg); color: var(--color-text-tertiary); }
+.tag-opportunity { background: var(--color-ai-light); color: var(--color-ai); }

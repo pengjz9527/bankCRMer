@@ -298,7 +298,7 @@ def query_customer_full(cust_id: int) -> dict:
     try:
         cust = conn.execute(
             """SELECT id, name, age, gender, occupation, industry,
-                      city, education, tier, total_aum, employment_status
+                      city, education, tier, total_aum, employment_status, contact_prefer
                FROM customers WHERE id = ?""",
             (cust_id,),
         ).fetchone()
@@ -363,5 +363,334 @@ def query_activities(cust_id: int) -> list[dict]:
             (cust_id,),
         ).fetchall()
         return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+# ============================================================
+# 客户洞察查询
+# ============================================================
+
+def query_customer_insight(cust_id: int) -> dict:
+    """查询客户最新洞察快照"""
+    conn = _db()
+    try:
+        row = conn.execute(
+            """SELECT id, cust_id, manager_id, overview_json,
+                      change_signals_json, risk_signals_json, risk_level,
+                      generated_at, expires_at
+               FROM customer_insights
+               WHERE cust_id = ?
+               ORDER BY generated_at DESC LIMIT 1""",
+            (cust_id,),
+        ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        import json
+        d["overview"] = json.loads(d["overview_json"]) if isinstance(d["overview_json"], str) else d["overview_json"]
+        d["change_signals"] = json.loads(d["change_signals_json"]) if isinstance(d["change_signals_json"], str) else d["change_signals_json"]
+        d["risk_signals"] = json.loads(d["risk_signals_json"]) if isinstance(d["risk_signals_json"], str) else d["risk_signals_json"]
+        return d
+    finally:
+        conn.close()
+
+
+def query_customers_by_insight_filter(manager_id: str, insight_filter: str) -> list[dict]:
+    """
+    按洞察信号筛选客户
+    insight_filter: 'change' = 有变化信号, 'risk' = 有预警信号
+    """
+    conn = _db()
+    try:
+        if insight_filter == 'change':
+            sql = """SELECT DISTINCT c.id, c.name, c.tier, c.total_aum
+                     FROM customers c
+                     INNER JOIN customer_insights ci ON c.id = ci.cust_id
+                     WHERE ci.manager_id = ?
+                       AND ci.change_signals_json != '[]'
+                       AND ci.change_signals_json IS NOT NULL
+                       AND ci.change_signals_json != ''
+                     ORDER BY c.total_aum DESC LIMIT 50"""
+        elif insight_filter == 'risk':
+            sql = """SELECT DISTINCT c.id, c.name, c.tier, c.total_aum
+                     FROM customers c
+                     INNER JOIN customer_insights ci ON c.id = ci.cust_id
+                     WHERE ci.manager_id = ?
+                       AND ci.risk_level IN ('orange', 'red')
+                     ORDER BY c.total_aum DESC LIMIT 50"""
+        else:
+            return []
+        rows = conn.execute(sql, (manager_id,)).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def query_customer_insights_by_manager(manager_id: str) -> list[dict]:
+    """查询某经理所有客户的最新洞察快照列表"""
+    conn = _db()
+    try:
+        rows = conn.execute(
+            """SELECT ci.cust_id, c.name, c.tier, c.total_aum,
+                      ci.risk_level, ci.generated_at, ci.expires_at,
+                      ci.change_signals_json, ci.risk_signals_json
+               FROM customer_insights ci
+               INNER JOIN customers c ON ci.cust_id = c.id
+               WHERE ci.manager_id = ?
+                 AND ci.generated_at = (
+                   SELECT MAX(ci2.generated_at)
+                   FROM customer_insights ci2
+                   WHERE ci2.cust_id = ci.cust_id
+                 )
+               ORDER BY c.total_aum DESC""",
+            (manager_id,),
+        ).fetchall()
+        results = []
+        import json
+        for r in rows:
+            d = dict(r)
+            cs = d.get("change_signals_json", "[]")
+            rs = d.get("risk_signals_json", "[]")
+            d["has_change"] = bool(cs and cs != "[]" and cs != "")
+            d["has_risk"] = d["risk_level"] in ("orange", "red")
+            d["change_count"] = len(json.loads(cs)) if (cs and cs != "[]") else 0
+            d["risk_count"] = len(json.loads(rs)) if (rs and rs != "[]") else 0
+            results.append(d)
+        return results
+    finally:
+        conn.close()
+
+
+# ============================================================
+# 日程排程 — 任务收集（基础待办 + 商机 + 洞察联动）
+# ============================================================
+
+def query_tasks_for_schedule(manager_id: str, schedule_date: str = None) -> list[dict]:
+    """
+    收集指定日期的全部待办任务，用于日程排程输入。
+    包含三类来源：基础待办（产品到期/贷款逾期/大额异动/联络超期）
+              + 商机待办（opportunities 表）
+              + 洞察预警（customer_insights 表）
+
+    Args:
+        manager_id: 客户经理 ID
+        schedule_date: 排程基准日期（YYYY-MM-DD），默认为今天
+
+    Returns:
+        [{task_id, type, type_code, cust_id, cust_name, summary, cust_count,
+          priority, priority_weight, is_opportunity_task, deadline_date,
+          customer_ids, customer_names, ...}]
+    """
+    from datetime import date, timedelta
+
+    conn = _db()
+    try:
+        sd = schedule_date or date.today().isoformat()
+        sd_date = date.fromisoformat(sd)
+
+        # 获取该经理的管户 ID 集合
+        mgr_rows = conn.execute(
+            "SELECT cust_id FROM cust_manager_rel WHERE manager_id = ?", (manager_id,)
+        ).fetchall()
+        mgr_cust_ids = set(r["cust_id"] for r in (mgr_rows or []))
+        if not mgr_cust_ids:
+            return []
+
+        tasks = []
+
+        # ---- 1. 产品到期 ----
+        due_rows = conn.execute(
+            """SELECT h.cust_id, c.name, COUNT(*) as cnt, SUM(h.amount) as total,
+                      MIN(h.maturity_date) as earliest_due
+               FROM holdings h JOIN customers c ON h.cust_id = c.id
+               WHERE h.maturity_date BETWEEN ? AND ?
+               GROUP BY h.cust_id, c.name""",
+            (sd, (sd_date + timedelta(days=7)).isoformat()),
+        ).fetchall()
+        for r in due_rows:
+            if r["cust_id"] not in mgr_cust_ids:
+                continue
+            tasks.append({
+                "task_id": f"TK_DUE_{r['cust_id']}",
+                "type": "产品到期", "type_code": "due",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": f"{r['cnt']}笔产品到期, 合计{float(r['total'] or 0)/10000:.0f}万",
+                "cust_count": r["cnt"], "priority": "高", "priority_weight": 100,
+                "is_opportunity_task": True,
+                "deadline_date": r["earliest_due"],
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # ---- 2. 贷款逾期 ----
+        overdue_rows = conn.execute(
+            """SELECT l.cust_id, c.name, l.overdue_count
+               FROM loans l JOIN customers c ON l.cust_id = c.id
+               WHERE l.overdue_count > 0"""
+        ).fetchall()
+        for r in overdue_rows:
+            if r["cust_id"] not in mgr_cust_ids:
+                continue
+            tasks.append({
+                "task_id": f"TK_OD_{r['cust_id']}",
+                "type": "贷款逾期", "type_code": "overdue",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": f"贷款逾期{r['overdue_count']}期",
+                "cust_count": 1, "priority": "高", "priority_weight": 80,
+                "is_opportunity_task": False,
+                "deadline_date": sd,
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # ---- 3. 大额异动 ----
+        big_rows = conn.execute(
+            """SELECT t.cust_id, c.name, t.amount
+               FROM transactions t JOIN customers c ON t.cust_id = c.id
+               WHERE t.txn_date = ? AND t.amount > 30000 AND t.txn_type = 'out'
+               ORDER BY t.amount DESC LIMIT 3""",
+            (sd,),
+        ).fetchall()
+        for r in big_rows:
+            if r["cust_id"] not in mgr_cust_ids:
+                continue
+            tasks.append({
+                "task_id": f"TK_BIG_{r['cust_id']}",
+                "type": "大额异动", "type_code": "big_move",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": f"昨日转出{float(r['amount'])/10000:.1f}万",
+                "cust_count": 1, "priority": "高", "priority_weight": 80,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=1)).isoformat(),
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # ---- 4. 联络超期 ----
+        cutoff = (sd_date - timedelta(days=14)).isoformat()
+        lapse_rows = conn.execute(
+            """SELECT c.id, c.name, MAX(cm.comm_date) as last_date
+               FROM customers c
+               LEFT JOIN communications cm ON c.id = cm.cust_id
+               GROUP BY c.id
+               HAVING MAX(cm.comm_date) IS NULL OR MAX(cm.comm_date) < ?
+               LIMIT 5""",
+            (cutoff,),
+        ).fetchall()
+        for r in lapse_rows:
+            if r["id"] not in mgr_cust_ids:
+                continue
+            if r["last_date"]:
+                days = (sd_date - date.fromisoformat(r["last_date"])).days
+                summary = f"超期{days}天未联络"
+            else:
+                summary = "从未联络"
+            tasks.append({
+                "task_id": f"TK_CT_{r['id']}",
+                "type": "联络超期", "type_code": "contact_lapse",
+                "cust_id": r["id"], "cust_name": r["name"],
+                "summary": summary,
+                "cust_count": 1, "priority": "中", "priority_weight": 50,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=3)).isoformat(),
+                "customer_ids": [r["id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # ---- 5. 商机待办（Agent 联动：opportunities 表）----
+        opp_rows = conn.execute(
+            """SELECT opp_id, cust_id, cust_name, title, priority, suggested_action,
+                      generated_at, estimated_value
+               FROM opportunities
+               WHERE manager_id = ? AND status = '待跟进'
+                 AND generated_at >= ?
+               ORDER BY priority DESC, estimated_value DESC""",
+            (manager_id, (sd_date - timedelta(days=7)).isoformat()),
+        ).fetchall()
+        for r in opp_rows:
+            opp_deadline = (date.fromisoformat(r["generated_at"][:10]) + timedelta(days=7)).isoformat()
+            priority_map = {"高": 75, "中": 50, "低": 30}
+            pw = priority_map.get(r["priority"], 50)
+            tasks.append({
+                "task_id": f"TK_OPP_{r['opp_id']}",
+                "type": "商机待办", "type_code": "opp",
+                "cust_id": r["cust_id"], "cust_name": r["cust_name"],
+                "summary": r["title"] or "",
+                "cust_count": 1, "priority": r["priority"], "priority_weight": pw,
+                "is_opportunity_task": True,
+                "deadline_date": opp_deadline,
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["cust_name"]],
+            })
+
+        # ---- 6. 洞察预警（Agent 联动：customer_insights 表）----
+        import json as _json
+        insight_rows = conn.execute(
+            """SELECT ci.cust_id, c.name, ci.risk_level, ci.change_signals_json,
+                      ci.risk_signals_json, ci.generated_at
+               FROM customer_insights ci
+               INNER JOIN customers c ON ci.cust_id = c.id
+               WHERE ci.manager_id = ?
+                 AND ci.generated_at = (
+                   SELECT MAX(ci2.generated_at)
+                   FROM customer_insights ci2
+                   WHERE ci2.cust_id = ci.cust_id
+                 )
+                 AND (ci.risk_level IN ('orange', 'red')
+                      OR (ci.change_signals_json IS NOT NULL
+                          AND ci.change_signals_json != ''
+                          AND ci.change_signals_json != '[]'))
+               ORDER BY CASE ci.risk_level
+                   WHEN 'red' THEN 0 WHEN 'orange' THEN 1 ELSE 2 END""",
+            (manager_id,),
+        ).fetchall()
+        for r in insight_rows:
+            has_risk = r["risk_level"] in ("orange", "red")
+            has_change = bool(r["change_signals_json"] and r["change_signals_json"] not in ("", "[]"))
+            signals = []
+            if has_risk:
+                try:
+                    risk_sigs = _json.loads(r["risk_signals_json"] or "[]")
+                    signals.extend([s.get("title", "风险信号") for s in risk_sigs[:2]])
+                except Exception:
+                    pass
+            if has_change:
+                try:
+                    change_sigs = _json.loads(r["change_signals_json"] or "[]")
+                    signals.extend([s.get("title", "变化信号") for s in change_sigs[:1]])
+                except Exception:
+                    pass
+            summary = "；".join(signals) if signals else "洞察预警"
+
+            tasks.append({
+                "task_id": f"TK_INS_{r['cust_id']}",
+                "type": "洞察预警", "type_code": "insight_alert",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": summary,
+                "cust_count": 1, "priority": "高", "priority_weight": 75,
+                "is_opportunity_task": False,
+                "deadline_date": (sd_date + timedelta(days=2)).isoformat(),
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # ---- 7. 批量查询 contact_prefer（客户联系时段偏好）----
+        all_cust_ids = list(set(
+            t["cust_id"] for t in tasks if t.get("cust_id", 0) > 0
+        ))
+        contact_prefer_map = {}
+        if all_cust_ids:
+            placeholders = ",".join("?" for _ in all_cust_ids)
+            cp_rows = conn.execute(
+                f"SELECT id, contact_prefer FROM customers WHERE id IN ({placeholders})",
+                all_cust_ids,
+            ).fetchall()
+            contact_prefer_map = {r["id"]: r["contact_prefer"] for r in cp_rows}
+
+        for t in tasks:
+            t["contact_prefer"] = contact_prefer_map.get(t.get("cust_id", 0), "不限定")
+
+        return tasks
     finally:
         conn.close()

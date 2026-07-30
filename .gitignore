@@ -17,3 +17,9 @@ ehthumbs.db
 # Temporary files
 *.tmp
 *~
+
+# Environment secrets
+.env
+
+# SQLite DB
+*.db

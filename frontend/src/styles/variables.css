@@ -1,0 +1,66 @@
+/* ==========================================
+   易会办 Design System v3.2
+   核心：智能日程(轮播) + 商机看板(双页签)
+   风格：浅色科技风 · 字体锐利 · 高对比
+   ========================================== */
+
+:root {
+  /* === 品牌红体系（源自设计规范.xlsx） === */
+  --color-primary: #ab2029;
+  --color-primary-dark: #8B1A22;
+  --color-primary-light: #FDF0F1;
+  --color-primary-gradient: linear-gradient(135deg, #ab2029, #D66765);
+
+  /* === 功能色 === */
+  --color-highlight: #F6434F;
+  --color-success: #10B981;
+  --color-success-light: #EDFAF3;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FFFAED;
+  --color-danger: #EF4444;
+  --color-danger-light: #FFF0F0;
+
+  /* === AI 专属色（独立于品牌红体系） === */
+  --color-ai: #6C5CE7;
+  --color-ai-light: #F3F0FF;
+
+  /* === 中性色 === */
+  --color-bg: #f5f5f5;
+  --color-card: #FFFFFF;
+  --color-divider: #e5e5e5;
+  --color-border: #d5d5d5;
+
+  /* === 文字色 === */
+  --color-text-primary: #333333;
+  --color-text-secondary: #999999;
+  --color-text-tertiary: #bbbbbb;
+
+  /* === 字体 === */
+  --font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-number: "DIN Alternate", "SF Mono", "Menlo", monospace;
+
+  /* === 字号阶梯 === */
+  --fs-h1: 24px; --fs-h2: 16px; --fs-h3: 15px;
+  --fs-body: 14px; --fs-caption: 12px; --fs-small: 11px;
+  --fs-num-lg: 28px; --fs-num-md: 24px; --fs-num-sm: 18px;
+
+  /* === 字重 === */
+  --fw-bold: 700; --fw-medium: 500; --fw-regular: 400;
+
+  /* === 间距 === */
+  --sp-xxs: 4px; --sp-xs: 8px; --sp-sm: 12px; --sp-md: 16px; --sp-lg: 20px; --sp-xl: 24px;
+
+  /* === 圆角 === */
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 16px; --radius-full: 999px;
+
+  /* === 阴影 === */
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-ai: 0 0 20px rgba(108, 92, 231, 0.12);
+
+  /* === 动效 === */
+  --ease-default: ease;
+  --duration-fast: 150ms; --duration-normal: 250ms; --duration-slow: 300ms;
+
+  --page-width: 375px; --tab-height: 56px;
+}

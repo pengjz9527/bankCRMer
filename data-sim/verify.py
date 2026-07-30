@@ -11,7 +11,7 @@ from datetime import date, timedelta
 # 配置
 # ============================================================
 DB_CONFIG = "dbname=yihuiban_sim user=yihuiban password=yihuiban_dev host=localhost port=5432"
-API_BASE = "http://localhost:8000"
+API_BASE = "http://localhost:8008"
 TODAY = date.today()
 
 try:

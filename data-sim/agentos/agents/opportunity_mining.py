@@ -1,10 +1,10 @@
 """
 OppMiningAgent — 商机挖掘智能体
-基于客户行为/生命周期/关系图谱数据，批量或按需发现潜在商机信号
+基于客户行为/生命周期/关系图谱数据，按需发现潜在商机信号
 
 触发方式：
-  - 定时批量：每日凌晨 2:00，全行全量扫描
-  - 按需挖掘：客户经理在 APP 手动点击"AI 挖掘"
+  - 按需挖掘：客户经理在商机看板点击"AI 挖掘"
+  - 增强输入：自动注入 CustomerInsightAgent 洞察缓存（方案 B+）
 """
 
 import os
@@ -20,6 +20,7 @@ from ..skills import (
     query_customer_full,
     query_customers,
     query_customers_by_ids,
+    query_customer_insight,
 )
 from ..model_adapter import get_adapter
 
@@ -75,7 +76,6 @@ class OpportunitySignal:
         "create_opportunity", "query_customers", "query_behavior",
         "query_holdings", "query_transactions",
     ],
-    model="deepseek-chat",
     triggers=["scheduled", "on_demand"],
     rate_limit=50,
     timeout=600,
@@ -91,15 +91,15 @@ class OpportunityMiningAgent(Agent):
         self.load_prompt(self.system_prompt)
 
     # ================================================================
-    # 定时批量挖掘（核心能力）
+    # 定时批量挖掘（已废弃）
+    # 注：v2.0 起由 on-demand 按需挖掘替代，方法保留供可能的批量回放使用
     # ================================================================
 
     async def batch_mine_all(self, ctx: AgentContext):
         """
-        每天凌晨 2:00，全量扫描所有管户，批量生成商机
-
-        流程：
-          查询全量客户 → 分批(50人/批) → LLM 分析 → 评估 → 入库 → 通知
+        [已废弃] 全量扫描所有管户，批量生成商机。
+        v2.0 起不再通过定时任务调用，改为经理在商机看板手动触发 mine_on_demand()。
+        方法体保留供后续可能的批量回放 / 离线分析使用。
         """
         log.info(f"batch_mine_all start: scope={ctx.scope}")
 
@@ -258,12 +258,13 @@ class OpportunityMiningAgent(Agent):
         # 调用 LLM
         start = time.time()
         try:
-            result = self.adapter.analyze_json(
+            resp = self.adapter.analyze_json(
                 system_prompt=self.system_prompt_text,
                 user_prompt=user_prompt,
             )
+            result = resp["result"]
             elapsed = time.time() - start
-            log.info(f"LLM analyze: {len(enriched)} customers, {elapsed:.1f}s, tokens_approx={len(user_prompt)//3}")
+            log.info(f"LLM analyze: {len(enriched)} customers, {elapsed:.1f}s, tokens={resp['usage']['total_tokens']}")
 
             # 解析结果
             signals = self._parse_batch_result(result)
@@ -273,11 +274,13 @@ class OpportunityMiningAgent(Agent):
             return []
 
     def _build_user_prompt(self, customers: list[dict], ctx: AgentContext) -> str:
-        """构建发送给 LLM 的 user prompt（数据上下文）"""
+        """构建发送给 LLM 的 user prompt（数据上下文 + 洞察增强）"""
         # 精简数据：只保留 prompt 中定义需要的字段
         slim = []
+        insight_hint = False  # 至少有 1 位客户有洞察缓存时才追加指引
         for c in customers:
             cust = c.get("customer", {})
+            cust_id = cust.get("id", 0)
             item = {
                 "customer": cust,
                 "family": c.get("family", {}),
@@ -290,11 +293,28 @@ class OpportunityMiningAgent(Agent):
                 "relations": c.get("relations", [])[:3],
                 "loans": c.get("loans", []),
             }
+
+            # ---- 方案 B+：注入 CustomerInsightAgent 洞察缓存 ----
+            if cust_id:
+                try:
+                    insight = query_customer_insight(cust_id)
+                    if insight and insight.get("overview"):
+                        item["_insight_cache"] = {
+                            "risk_level": insight.get("risk_level", "green"),
+                            "risk_score": insight.get("risk_score", 0),
+                            "change_signals": insight.get("change_signals", []),
+                            "risk_signals": insight.get("risk_signals", []),
+                            "generated_at": insight.get("generated_at", ""),
+                        }
+                        insight_hint = True
+                except Exception:
+                    pass  # 洞察查询失败不影响挖掘，降级为纯原始数据分析
+
             slim.append(item)
 
         data_json = json.dumps(slim, ensure_ascii=False, indent=2)
 
-        return f"""请分析以下 {len(slim)} 位客户的数据，按照 system prompt 中定义的 12 条挖掘方法，发现潜在商机信号。
+        prompt = f"""请分析以下 {len(slim)} 位客户的数据，按照 system prompt 中定义的 12 条挖掘方法，发现潜在商机信号。
 
 注意：
 - 只输出 confidence >= 0.60 的信号
@@ -310,6 +330,19 @@ class OpportunityMiningAgent(Agent):
 ```
 
 请严格按照 system prompt 中定义的 JSON 输出格式返回结果。"""
+
+        # 洞察交叉验证指引（仅在有缓存客户时追加）
+        if insight_hint:
+            prompt += f"""
+---
+**洞察交叉验证指引**：
+部分客户附带了 _insight_cache 字段，由 CustomerInsightAgent 预生成（每周更新）。
+- 如果 change_signals / risk_signals 中有与你判断方向一致的信号 -> confidence 加 0.05~0.10（交叉验证加分），在 reasoning 末尾注明 "[洞察交叉验证]"
+- 如果 risk_level 为 orange/red -> 重点检查是否存在流失预警、风险错配等商机
+- 如果某客户无 _insight_cache 或信号与你判断不一致 -> 以原始数据为准，不做额外调整
+- _insight_cache 可能略有滞后（每周更新），原始数据的时效性优先级更高"""
+
+        return prompt
 
     def _parse_batch_result(self, result: dict) -> list[OpportunitySignal]:
         """解析 LLM 返回的批次结果"""

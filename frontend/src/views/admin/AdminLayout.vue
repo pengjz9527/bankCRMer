@@ -45,6 +45,7 @@ const menuItems = [
   { path: '/admin/monitor', icon: 'M', label: '运行监测' },
   { path: '/admin/cost', icon: 'C', label: '费用分析' },
   { path: '/admin/models', icon: 'L', label: '模型配置' },
+  { path: '/admin/env-config', icon: 'E', label: '环境变量' },
 ]
 
 // 首页用精确匹配，其他页面用前缀匹配

@@ -133,6 +133,7 @@ const router = createRouter({
         { path: 'monitor', name: 'admin-monitor', component: () => import('../views/admin/AgentMonitor.vue') },
         { path: 'cost', name: 'admin-cost', component: () => import('../views/admin/CostAnalysis.vue') },
         { path: 'models', name: 'admin-models', component: () => import('../views/admin/ModelConfigManager.vue') },
+        { path: 'env-config', name: 'admin-env-config', component: () => import('../views/admin/EnvConfigManager.vue') },
       ],
     },
   ],

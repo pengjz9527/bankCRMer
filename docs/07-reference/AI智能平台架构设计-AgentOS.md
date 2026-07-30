@@ -88,7 +88,7 @@
 │     ▼                       ▼                       ▼            │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────┐  │
 │  │ Agent Pool   │   │  Skill Pool  │   │  Knowledge Base      │  │
-│  │ 13个领域专家 │   │  公共工具库   │   │  客户/产品/机构/     │  │
+│  │ 14个领域专家 │   │  公共工具库   │   │  客户/产品/机构/     │  │
 │  │ 智能体       │   │              │   │  行为/商机/套路      │  │
 │  └──────────────┘   └──────────────┘   └──────────────────────┘  │
 │                                                                   │
@@ -120,7 +120,7 @@
 
 ## 二、Agent 体系设计
 
-### 2.1 Agent 全景图（13 个领域专家智能体）
+### 2.1 Agent 全景图（14 个领域专家智能体）
 
 ```
                               对话路由智能体
@@ -131,7 +131,7 @@
           │                        │                        │
     ┌─────┴─────┐            ┌─────┴─────┐            ┌─────┴─────┐
     │ 前台 Agent群│            │ 后台 Agent群│            │ 系统 Agent │
-    │  (7个)     │            │  (5个)     │            │  (1个)     │
+    │  (8个)     │            │  (5个)     │            │  (1个)     │
     └───────────┘            └───────────┘            └───────────┘
 ```
 
@@ -144,8 +144,9 @@
 | **客户洞察智能体** | `CustomerInsightAgent` | 360°客户理解，行为变化监测，风险预警 | `query_profile`, `analyze_behavior`, `detect_risk` | 定时 + 事件触发 |
 | **作战包智能体** | `BattlePkgAgent` | 生成访前作战包，含客户速览/营销线索/切入话术/产品推荐/风险提示 | `gen_overview`, `gen_clues`, `gen_scripts`, `match_products` | 按需(实时) |
 | **面谈辅助智能体** | `MeetingAgent` | 面谈中实时辅助：偏离应对/即时话术/产品搜索与对比 | `gen_deviation_response`, `search_product`, `compare_products` | 实时(流式) |
-| **内容生成智能体** | `ContentAgent` | 总结/摘要/资讯解读：昨日回顾/周报/今日资讯 | `gen_summary`, `gen_digest`, `gen_review` | 定时 + 按需 |
+| **内容生成智能体** | `ContentAgent` (role=`content_gen`) | 信息秘书：总结/摘要/资讯解读/面谈口述转写 | `gen_review`(昨日回顾), `gen_digest`(资讯摘要), `gen_summary`(周报), `transcribe_dictation`(面谈转写) | 定时(20:00回顾+08:35摘要) + 按需 + 事件触发 |
 | **推荐智能体** | `RecommendAgent` | 新客推荐/产品匹配/策略建议 | `match_similar_profiles`, `rank_candidates`, `gen_reasons` | 按需 |
+| **智能问答助手** | `QAAgent` (role=`qa_assistant`) | 产品信息查询解读、业务知识问答、综合理财建议，基于 RAG(ChromaDB+DashScope)检索增强 | `ask`, `search_products`, `explain_product`, `answer_business_qa`, `advise_allocation` | 按需 |
 
 ### 2.3 后台 Agent 群（服务管理者）
 
@@ -308,7 +309,8 @@ class OpportunityMiningAgent(Agent):
 | `CustomerInsightAgent` | 客户洞察、风险预警、大额异动 | 流失预警客户清单 |
 | `BattlePkgAgent` | 作战包生成、话术生成 | 话术精华提取(协作) |
 | `MeetingAgent` | 偏离应对、实时产品搜索/对比 | — |
-| `ContentAgent` | 昨日回顾、周报、资讯摘要 | — |
+| `ContentAgent` | 昨日回顾、周报、资讯摘要、面谈口述转写回填 | — |
+| `QAAgent` | 产品查询、业务问答、合规咨询、配置建议 | — |
 | `RecommendAgent` | 新客推荐、策略建议 | 目标分解建议 |
 | `DiagnosisAgent` | — | 健康诊断、归因分析、排名解读 |
 | `ForecastAgent` | — | 预测预警、期末预测、缺口计算 |
@@ -578,6 +580,7 @@ AI_CONFIG = {
         "BattlePkgAgent":     "openai/gpt-4o",          # 作战包质量要求高
         "InsightAgent":       "openai/gpt-4o",          # 套路提炼需要深度分析
         "ContentAgent":       "openai/gpt-4o-mini",     # 摘要/资讯用轻量模型
+        "QAAgent":           "openai/gpt-4o",           # QA 需要强推理和合规判断
         "DiagnosisAgent":     "openai/gpt-4o",          # 诊断归因需要强推理
         "CoachingAgent":      "openai/gpt-4o",          # 辅导建议需个性化
         "ReportAgent":        "openai/gpt-4o-mini",     # 报告生成可模板化
@@ -896,7 +899,7 @@ data-sim/
 | **流式协议** | SSE 而非 WebSocket | 单向流足够，浏览器原生支持，实现简单 |
 | **技能管理** | 白名单注册 + 装饰器声明 | 安全可控，避免 Agent 任意调用函数 |
 | **提示词管理** | Markdown 文件 + 版本控制 | 可 diff/可 review/非开发人员可编辑 |
-| **Agent 粒度** | 13 个，按领域划分 | 内聚性好，每个 Agent 职责单一，prompt 可精细调优 |
+| **Agent 粒度** | 14 个，按领域划分 | 内聚性好，每个 Agent 职责单一，prompt 可精细调优 |
 | **模型粒度** | 按 Agent 独立指定 | 高价值任务(商机挖掘/作战包)用强模型，摘要类用轻量模型，控制成本 |
 | **不引入向量库** | MVP 阶段用全文检索 + prompt 注入 | 数据量小，向量库 ROI 待验证 |
 

@@ -33,7 +33,7 @@ from ..model_adapter import get_adapter
 log = logging.getLogger("agentos.battle_pkg")
 
 # 产品数据库路径
-PRODUCT_DB_PATH = Path(__file__).parent.parent.parent.parent / "prototype" / "data" / "product_database.json"
+PRODUCT_DB_PATH = Path(__file__).parent.parent.parent / "data" / "product_database.json"
 
 
 def load_product_db() -> dict:

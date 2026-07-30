@@ -8,7 +8,7 @@ from fastapi import Query, HTTPException
 from fastapi.responses import StreamingResponse
 
 
-def register_admin_routes(app, scheduler, get_db, aq, ae, harness):
+def register_admin_routes(app, scheduler, get_db, aq, ae, harness, reload_configs=None):
     """在 FastAPI app 上注册所有 /api/admin/* 路由"""
 
     # ================================================================
@@ -32,7 +32,10 @@ def register_admin_routes(app, scheduler, get_db, aq, ae, harness):
         job_name_map = {
             "daily_data_tick": "日增数据引擎",
             "daily_schedule_gen": "日程自动生成",
-            "weekly_insight_gen": "客户洞察刷新",
+            "daily_news_fetch": "金融资讯抓取",
+            "daily_digest_gen": "资讯摘要生成",
+            "daily_review_gen": "昨日回顾生成",
+            "weekly_insight_gen": "客户洞察生成",
         }
         jobs = scheduler.get_jobs()
         items = []
@@ -752,4 +755,69 @@ def register_admin_routes(app, scheduler, get_db, aq, ae, harness):
             "model_name": exist["model_name"],
         })
 
-    print(f"[Admin API] {26} 个管理端点已注册")
+    # ================================================================
+    # 2.6 平台环境配置管理
+    # ================================================================
+
+    @app.get("/api/admin/platform-configs")
+    async def admin_platform_configs():
+        """获取所有平台环境配置"""
+        rows = await aq("SELECT * FROM platform_configs ORDER BY category, config_key")
+        return ok({"configs": [dict(r) for r in (rows or [])], "count": len(rows or [])})
+
+    @app.post("/api/admin/platform-configs")
+    async def admin_platform_config_create(body: dict):
+        """新增平台配置项"""
+        key = body.get("config_key", "").strip()
+        if not key:
+            return err(400, "缺少 config_key")
+        exist = await aq("SELECT config_key FROM platform_configs WHERE config_key = ?", (key,), one=True)
+        if exist:
+            return err(409, f"配置 {key} 已存在")
+        now = datetime.now().isoformat()
+        await ae(
+            "INSERT INTO platform_configs (config_key, config_value, category, description, updated_at, created_at) VALUES (?,?,?,?,?,?)",
+            (key, body.get("config_value", ""), body.get("category", "general"), body.get("description", ""), now, now))
+        await ae(
+            "INSERT INTO audit_logs (action, target_type, target_id, operator, detail, created_at) VALUES (?,?,?,?,?,?)",
+            ("create_config", "platform_config", key, "admin", f"新增配置 {key}", now))
+        if reload_configs:
+            reload_configs()
+        return ok(message=f"配置 {key} 已创建")
+
+    @app.put("/api/admin/platform-configs/{config_key:path}")
+    async def admin_platform_config_update(config_key: str, body: dict):
+        """更新平台配置项"""
+        exist = await aq("SELECT * FROM platform_configs WHERE config_key = ?", (config_key,), one=True)
+        if not exist:
+            return err(404, f"配置 {config_key} 不存在")
+        now = datetime.now().isoformat()
+        new_val = body.get("config_value", exist["config_value"])
+        new_cat = body.get("category", exist["category"])
+        new_desc = body.get("description", exist.get("description", ""))
+        await ae(
+            "UPDATE platform_configs SET config_value=?, category=?, description=?, updated_at=? WHERE config_key=?",
+            (new_val, new_cat, new_desc, now, config_key))
+        await ae(
+            "INSERT INTO audit_logs (action, target_type, target_id, operator, detail, created_at) VALUES (?,?,?,?,?,?)",
+            ("update_config", "platform_config", config_key, "admin", f"更新配置 {config_key}", now))
+        if reload_configs:
+            reload_configs()
+        return ok(message=f"配置 {config_key} 已更新")
+
+    @app.delete("/api/admin/platform-configs/{config_key:path}")
+    async def admin_platform_config_delete(config_key: str):
+        """删除平台配置项"""
+        exist = await aq("SELECT * FROM platform_configs WHERE config_key = ?", (config_key,), one=True)
+        if not exist:
+            return err(404, f"配置 {config_key} 不存在")
+        await ae("DELETE FROM platform_configs WHERE config_key = ?", (config_key,))
+        now = datetime.now().isoformat()
+        await ae(
+            "INSERT INTO audit_logs (action, target_type, target_id, operator, detail, created_at) VALUES (?,?,?,?,?,?)",
+            ("delete_config", "platform_config", config_key, "admin", f"删除配置 {config_key}", now))
+        if reload_configs:
+            reload_configs()
+        return ok(message=f"配置 {config_key} 已删除")
+
+    print(f"[Admin API] {30} 个管理端点已注册")

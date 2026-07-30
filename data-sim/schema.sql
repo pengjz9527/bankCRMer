@@ -350,3 +350,97 @@ CREATE INDEX idx_bp_status ON battle_packages(status);
 CREATE INDEX idx_bp_clues_bpid ON battle_package_clues(bp_id);
 CREATE INDEX idx_benefits_cust ON customer_benefits(cust_id);
 CREATE INDEX idx_activity_part_cust ON customer_activity_participation(cust_id);
+
+-- ============================================================
+-- ContentAgent 数据基础设施
+-- ============================================================
+
+-- 昨日回顾存储
+CREATE TABLE daily_reviews (
+    id              SERIAL PRIMARY KEY,
+    manager_id      VARCHAR(20) NOT NULL,
+    review_date     DATE NOT NULL,
+    content         TEXT NOT NULL,
+    generated_at    TIMESTAMP NOT NULL DEFAULT NOW(),
+    is_read         BOOLEAN DEFAULT FALSE,
+    CONSTRAINT uq_daily_review UNIQUE (manager_id, review_date)
+);
+CREATE INDEX idx_dr_mgr_date ON daily_reviews(manager_id, review_date);
+
+-- 金融资讯缓存
+CREATE TYPE news_source_enum AS ENUM ('tushare', 'sina', 'eastmoney', 'manual');
+CREATE TYPE news_category_enum AS ENUM ('finance', 'product', 'policy', 'bank');
+
+CREATE TABLE daily_news (
+    id              SERIAL PRIMARY KEY,
+    title           VARCHAR(300) NOT NULL,
+    content         TEXT,
+    source          news_source_enum NOT NULL DEFAULT 'tushare',
+    category        news_category_enum NOT NULL DEFAULT 'finance',
+    news_url        VARCHAR(500),
+    fetched_at      DATE NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_dn_fetch_date ON daily_news(fetched_at);
+CREATE INDEX idx_dn_category ON daily_news(category);
+
+-- 面谈记录 + PDCA
+CREATE TABLE meeting_records (
+    id              SERIAL PRIMARY KEY,
+    cust_id         INT NOT NULL REFERENCES customers(id),
+    bp_id           VARCHAR(30),
+    opp_id          VARCHAR(30),
+    manager_id      VARCHAR(20) NOT NULL,
+    meeting_date    DATE NOT NULL,
+    plan_result     TEXT,       -- P：面谈目的达成情况
+    deviation_note  TEXT,       -- D：执行偏离记录
+    customer_feedback TEXT,     -- C：客户反馈
+    action_items    TEXT,       -- A：后续行动项
+    dictation_raw   TEXT,       -- 原始口述文本
+    generated_at    TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_mr_cust ON meeting_records(cust_id);
+CREATE INDEX idx_mr_mgr_date ON meeting_records(manager_id, meeting_date);
+
+-- 画像变更追踪
+CREATE TABLE profile_change_log (
+    id              SERIAL PRIMARY KEY,
+    cust_id         INT NOT NULL REFERENCES customers(id),
+    field_name      VARCHAR(50) NOT NULL,
+    old_value       TEXT,
+    new_value       TEXT,
+    source          VARCHAR(30) DEFAULT 'dictation',
+    meeting_id      INT REFERENCES meeting_records(id),
+    changed_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_pcl_cust_time ON profile_change_log(cust_id, changed_at);
+
+-- 行内公告/活动
+CREATE TYPE ann_type_enum AS ENUM ('system', 'product', 'compliance', 'marketing');
+CREATE TYPE ann_priority_enum AS ENUM ('urgent', 'high', 'normal', 'low');
+
+CREATE TABLE internal_announcements (
+    id              SERIAL PRIMARY KEY,
+    title           VARCHAR(200) NOT NULL,
+    content         TEXT,
+    ann_type        ann_type_enum NOT NULL,
+    priority        ann_priority_enum DEFAULT 'normal',
+    published_at    DATE NOT NULL,
+    expires_at      DATE,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_ia_pub_date ON internal_announcements(published_at);
+
+-- 产品变更日志
+CREATE TYPE product_change_type_enum AS ENUM ('new_product', 'yield_change', 'rate_change', 'status_change', 'min_amount_change');
+
+CREATE TABLE product_updates (
+    id              SERIAL PRIMARY KEY,
+    product_code    VARCHAR(30) NOT NULL,
+    change_type     product_change_type_enum NOT NULL,
+    old_value       TEXT,
+    new_value       TEXT,
+    changed_at      DATE NOT NULL
+);
+CREATE INDEX idx_pu_date ON product_updates(changed_at);
+

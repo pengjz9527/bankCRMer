@@ -136,7 +136,7 @@ const aumCurrent = computed(() => aumKpi.value?.current ?? 0)
 const aumTarget = computed(() => aumKpi.value?.target ?? 0)
 const aumUnit = computed(() => aumKpi.value?.unit || '万')
 const aumProgress = computed(() => aumKpi.value?.progress ?? 0)
-const aumRemaining = computed(() => Math.max(0, aumTarget.value - aumCurrent.value))
+const aumRemaining = computed(() => parseFloat((Math.max(0, aumTarget.value - aumCurrent.value)).toFixed(1)))
 
 // 转化率（基于历史数据或默认 15%）
 const conversionRate = ref(0.15)

@@ -13,12 +13,12 @@ export interface KpiItem {
 
 /* 静态回落 */
 const staticKpi: KpiItem[] = [
-  { label:'新增AUM', current: 380, target: 500, unit:'万', progress: 76, trend:'↑ 12%' },
-  { label:'新客拓展', current: 15, target: 20, unit:'户', progress: 75, trend:'↑ 3户' },
-  { label:'理财销售', current: 420, target: 600, unit:'万', progress: 70, trend:'→ 持平' },
-  { label:'基金销售', current: 180, target: 300, unit:'万', progress: 60, trend:'↓ 5%' },
-  { label:'保险销售', current: 85, target: 120, unit:'万', progress: 71, trend:'↑ 8%' },
-  { label:'客户满意度', current: 4.6, target: 5, unit:'分', progress: 92, trend:'→ 稳定' },
+  { label:'新增AUM', current: 280, target: 500, unit:'万', progress: 56, trend:'↑ 8%' },
+  { label:'新客拓展', current: 9, target: 20, unit:'户', progress: 45, trend:'↑ 2户' },
+  { label:'理财销售', current: 320, target: 600, unit:'万', progress: 53, trend:'→ 持平' },
+  { label:'基金销售', current: 120, target: 300, unit:'万', progress: 40, trend:'↓ 3%' },
+  { label:'保险销售', current: 55, target: 120, unit:'万', progress: 46, trend:'↑ 5%' },
+  { label:'客户满意度', current: 3.8, target: 5, unit:'分', progress: 76, trend:'→ 稳定' },
 ]
 
 export const useKpiStore = defineStore('kpi', () => {
@@ -73,7 +73,7 @@ export const useKpiStore = defineStore('kpi', () => {
           return {
             label: k.kpi_name,
             current: Number(current.toFixed(1)),
-            target,
+            target: Number(target.toFixed(1)),
             unit: unitMap[k.kpi_code] || k.unit || '',
             progress,
             trend,

@@ -95,6 +95,9 @@ function formatTime(iso: string): string {
 const taskNameMap: Record<string, string> = {
   daily_data_tick: '日增数据引擎',
   daily_schedule_gen: '日程自动生成',
+  daily_news_fetch: '金融资讯抓取',
+  daily_digest_gen: '资讯摘要生成',
+  daily_review_gen: '昨日回顾生成',
   weekly_insight_gen: '客户洞察生成',
 }
 

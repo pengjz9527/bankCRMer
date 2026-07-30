@@ -21,5 +21,14 @@ ehthumbs.db
 # Environment secrets
 .env
 
-# SQLite DB
+# Python cache
+__pycache__/
+*.pyc
+
+# ChromaDB vector store
+chroma_db/
+
+# SQLite
 *.db
+*.db-shm
+*.db-wal

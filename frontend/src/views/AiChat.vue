@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, computed } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/api'
 import { useManagerStore } from '@/stores/manager'
+import { marked } from 'marked'
+
+// 配置 marked 安全渲染
+marked.setOptions({
+  breaks: true,    // 支持单换行
+  gfm: true,       // GitHub 风格 Markdown
+})
 
 const route = useRoute()
 const router = useRouter()
 const managerStore = useManagerStore()
 
 interface Message {
-  role: 'user' | 'bot' | 'result'
+  role: 'user' | 'bot'
   text: string
-  result?: { queries: string[]; count: number; total: number }
+  summary?: string
+  fullAnswer?: string
+  expanded?: boolean
 }
 
 const channel = ref((route.query.from as string) || 'home')
@@ -77,124 +86,68 @@ function send() {
   isThinking.value = true
   scrollToBottom()
 
-  // 尝试通过 SSE 流式调用 AI 接口
-  trySseMining(text).catch(() => {
-    // SSE 失败时回退到本地模拟
-    setTimeout(() => {
-      isThinking.value = false
-      const reply = generateReply(text)
-      messages.value.push({ role: 'bot', text: reply.text })
-      if (reply.result) {
-        messages.value.push({ role: 'result', text: '', result: reply.result })
-      }
-      scrollToBottom()
-    }, 800 + Math.random() * 600)
-  })
+  // 调用 QAAgent 接口
+  callQaAgent(text)
 }
 
-/** 尝试 SSE 流式调用商机挖掘接口 */
-async function trySseMining(userText: string) {
-  const res = await api.aiMineStream(managerStore.currentId)
-  if (!res.ok) throw new Error(`SSE error: ${res.status}`)
+/** 调用 QAAgent 智能问答接口 */
+async function callQaAgent(userText: string) {
+  try {
+    const res = await api.aiQaAsk(userText, managerStore.currentId)
+    isThinking.value = false
 
-  isThinking.value = false
-  const botMsg: Message = { role: 'bot', text: '' }
-  messages.value.push(botMsg)
+    if (res.code === 0 && res.data) {
+      const summary = res.data.summary || extractFirstLine(res.data.answer || '')
+      const answer = res.data.answer || '暂无回答，请换个问题试试。'
 
-  const reader = res.body!.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const payload = line.slice(6).trim()
-        if (payload === '[DONE]') continue
-        try {
-          const chunk = JSON.parse(payload)
-          if (chunk.text) botMsg.text += chunk.text
-          if (chunk.content) botMsg.text += chunk.content
-        } catch {
-          botMsg.text += payload
-        }
-        scrollToBottom()
-      }
+      messages.value.push({
+        role: 'bot',
+        text: summary,
+        summary: summary,
+        fullAnswer: answer,
+        expanded: false,
+      })
+    } else {
+      messages.value.push({
+        role: 'bot',
+        text: res.message || 'AI 问答服务暂不可用，请稍后重试',
+      })
     }
+  } catch {
+    isThinking.value = false
+    messages.value.push({
+      role: 'bot',
+      text: 'AI 问答服务连接失败，请确保后端服务已启动后重试',
+    })
   }
-
-  if (!botMsg.text) botMsg.text = 'AI 分析完成，暂无更多结果。'
   scrollToBottom()
 }
 
-function generateReply(text: string): { text: string; result?: { queries: string[]; count: number; total: number } } {
-  const t = text.toLowerCase()
+/** 提取第一段文字作为降级摘要 */
+function extractFirstLine(text: string): string {
+  const first = text.split('\n').filter(l => l.trim()).slice(0, 2).join(' ')
+  return first.length > 100 ? first.slice(0, 100) + '...' : first
+}
 
-  // Customer queries
-  if (t.includes('财富') || t.includes('列出')) {
-    return {
-      text: '好的，已为你筛选出符合条件的客户：',
-      result: { queries: ['财富客户'], count: 3, total: 7 },
-    }
+/** 渲染 Markdown 为 HTML */
+function renderMarkdown(md: string): string {
+  if (!md) return ''
+  try {
+    return marked.parse(md) as string
+  } catch {
+    return md.replace(/\n/g, '<br>')
   }
-  if (t.includes('未联系') || t.includes('30天')) {
-    return {
-      text: '以下客户超过30天未联系，建议尽快跟进：',
-      result: { queries: ['超30天未联系'], count: 2, total: 7 },
-    }
-  }
-  if (t.includes('基金')) {
-    return {
-      text: '以下是持有基金的客户清单：',
-      result: { queries: ['持有基金'], count: 2, total: 7 },
-    }
-  }
-  if (t.includes('定存到期') || t.includes('到期')) {
-    return {
-      text: '以下客户近期有定存到期，请及时对接：',
-      result: { queries: ['定存到期'], count: 1, total: 7 },
-    }
-  }
-  if (t.includes('aum') || t.includes('50万')) {
-    return {
-      text: '已筛选 AUM 超过 50 万的客户：',
-      result: { queries: ['AUM≥50万'], count: 3, total: 7 },
-    }
-  }
+}
 
-  // Product queries
-  if (t.includes('理财') || t.includes('推荐')) {
-    return {
-      text: '根据你的管户画像，推荐以下理财产品：',
-      result: { queries: ['理财产品推荐'], count: 4, total: 12 },
-    }
-  }
-  if (t.includes('r2') || t.includes('中低风险')) {
-    return {
-      text: '以下是 R2 中低风险产品：',
-      result: { queries: ['R2中低风险'], count: 4, total: 12 },
-    }
-  }
-  if (t.includes('短期')) {
-    return {
-      text: '以下是短期/灵活申赎产品：',
-      result: { queries: ['短期产品'], count: 3, total: 12 },
-    }
-  }
-  if (t.includes('高收益') || t.includes('收益较高')) {
-    return {
-      text: '以下是收益表现较好的产品（R3及以上）：',
-      result: { queries: ['高收益产品'], count: 4, total: 12 },
-    }
-  }
+/** 展开/折叠完整回答 */
+function toggleExpand(msg: Message) {
+  msg.expanded = !msg.expanded
+  scrollToBottom()
+}
 
-  return {
-    text: '我理解你的需求。你可以尝试更具体的提问，例如："列出财富客户中超过30天未联系的"、或"推荐适合稳健型客户的理财产品"。',
-  }
+/** 内容是否可展开 */
+function hasMoreContent(msg: Message): boolean {
+  return !!(msg.fullAnswer && msg.fullAnswer.length > msg.text.length + 20)
 }
 
 function scrollToBottom() {
@@ -245,24 +198,32 @@ function handleKeydown(e: KeyboardEvent) {
 
       <!-- Messages -->
       <div v-for="(msg, idx) in messages" :key="idx" class="ac-msg" :class="'ac-msg--' + msg.role">
+        <!-- 用户消息 -->
         <template v-if="msg.role === 'user'">
           <div class="ac-bubble user">{{ msg.text }}</div>
         </template>
+
+        <!-- Bot 消息（带摘要/展开） -->
         <template v-else-if="msg.role === 'bot'">
-          <div class="ac-bubble bot">{{ msg.text }}</div>
-        </template>
-        <template v-else-if="msg.role === 'result' && msg.result">
-          <div class="ac-result-card">
-            <div class="ac-result-header">
-              <svg viewBox="0 0 24 24" class="ico ico--sm" style="color:#6C5CE7"><use href="#ico-robot" /></svg> AI 筛选结果
-              <span class="ac-result-count">找到 {{ msg.result.count }} / {{ msg.result.total }}</span>
+          <div class="ac-bubble bot">
+            <!-- 摘要区：始终显示 -->
+            <div class="md-body">{{ msg.text }}</div>
+
+            <!-- 展开按钮：仅有完整内容时显示 -->
+            <div
+              v-if="hasMoreContent(msg)"
+              class="ac-expand-btn"
+              @click="toggleExpand(msg)"
+            >
+              <span>{{ msg.expanded ? '收起全部 ▲' : '展开全部 ▼' }}</span>
             </div>
-            <div class="ac-result-tags">
-              <span v-for="q in msg.result.queries" :key="q" class="ac-result-tag">{{ q }}</span>
-            </div>
-            <div class="ac-result-action" @click="router.push({ name: 'customer-list' })">
-              查看结果 →
-            </div>
+
+            <!-- 完整回答：展开后显示，带 Markdown 渲染 -->
+            <div
+              v-if="msg.expanded && msg.fullAnswer"
+              class="ac-full-answer"
+              v-html="renderMarkdown(msg.fullAnswer)"
+            ></div>
           </div>
         </template>
       </div>
@@ -341,10 +302,9 @@ function handleKeydown(e: KeyboardEvent) {
 .ac-msg { margin-bottom: 14px; display: flex; }
 .ac-msg--user { justify-content: flex-end; }
 .ac-msg--bot { justify-content: flex-start; }
-.ac-msg--result { justify-content: flex-start; }
 
 .ac-bubble {
-  max-width: 80%;
+  max-width: 88%;
   padding: 10px 14px;
   border-radius: 16px;
   font-size: 14px;
@@ -361,6 +321,121 @@ function handleKeydown(e: KeyboardEvent) {
   color: var(--color-text);
   border-bottom-left-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ── 摘要文本 ── */
+.md-body {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── 展开按钮 ── */
+.ac-expand-btn {
+  margin-top: 10px;
+  padding: 8px 0 2px;
+  border-top: 1px dashed #e8e8e8;
+  text-align: center;
+  cursor: pointer;
+}
+.ac-expand-btn span {
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+.ac-expand-btn:active span { opacity: 0.7; }
+
+/* ── 完整回答（Markdown 渲染区） ── */
+.ac-full-answer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--color-text);
+}
+
+/* Markdown 渲染样式 */
+.ac-full-answer :deep(h2) {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+.ac-full-answer :deep(h2:first-child) { margin-top: 0; }
+
+.ac-full-answer :deep(h3) {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 14px 0 6px;
+  color: #444;
+}
+
+.ac-full-answer :deep(p) {
+  margin: 6px 0;
+}
+
+.ac-full-answer :deep(ul),
+.ac-full-answer :deep(ol) {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+.ac-full-answer :deep(li) {
+  margin: 3px 0;
+}
+
+.ac-full-answer :deep(strong) {
+  font-weight: 600;
+  color: #333;
+}
+
+.ac-full-answer :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.ac-full-answer :deep(th) {
+  background: #f5f3ff;
+  color: #5b4ae0;
+  font-weight: 600;
+  padding: 7px 8px;
+  text-align: left;
+  border: 1px solid #e8e4f8;
+}
+.ac-full-answer :deep(td) {
+  padding: 6px 8px;
+  border: 1px solid #eee;
+  vertical-align: top;
+}
+.ac-full-answer :deep(tr:nth-child(even) td) {
+  background: #fafafa;
+}
+
+.ac-full-answer :deep(code) {
+  background: #f5f5f5;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.ac-full-answer :deep(blockquote) {
+  margin: 8px 0;
+  padding: 6px 12px;
+  border-left: 3px solid #6C5CE7;
+  background: #f8f6ff;
+  color: #666;
+}
+
+.ac-full-answer :deep(hr) {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 14px 0;
+}
+
+.ac-full-answer :deep(em) {
+  color: #888;
 }
 
 .ac-thinking {
@@ -387,48 +462,6 @@ function handleKeydown(e: KeyboardEvent) {
 @keyframes ac-pulse {
   0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
   30% { opacity: 1; transform: scale(1); }
-}
-
-.ac-result-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  max-width: 90%;
-  border-left: 3px solid #6C5CE7;
-}
-.ac-result-header {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.ac-result-count {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--color-text-secondary);
-}
-.ac-result-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.ac-result-tag {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #EDE9FE;
-  color: #6C5CE7;
-}
-.ac-result-action {
-  font-size: 13px;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-weight: 500;
 }
 
 .ac-input-bar {

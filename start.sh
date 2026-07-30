@@ -22,7 +22,7 @@ sleep 1
 # ---- 2. 启动后端 API (端口 8008) ----
 echo "[2/3] 启动后端 API (端口 8008)..."
 cd "$SCRIPT_DIR/data-sim"
-nohup python3 app.py > "$LOG_DIR/backend.log" 2>&1 &
+nohup .venv/bin/python app.py > "$LOG_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
 echo "  后端 PID: $BACKEND_PID"
 
@@ -37,17 +37,17 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# ---- 3. 启动前端 (端口 8080) ----
-echo "[3/3] 启动前端工作台 (端口 8080)..."
-cd "$SCRIPT_DIR/prototype"
-nohup python3 -m http.server 8080 > "$LOG_DIR/frontend.log" 2>&1 &
+# ---- 3. 启动前端 Vue 开发服务器 (端口 8080) ----
+echo "[3/3] 启动前端 Vue 应用 (端口 8080)..."
+cd "$SCRIPT_DIR/frontend"
+nohup npx vite --host 0.0.0.0 --port 8080 > "$LOG_DIR/frontend.log" 2>&1 &
 FRONTEND_PID=$!
 echo "  前端 PID: $FRONTEND_PID"
 
 # 等待前端就绪
 echo -n "  等待前端就绪"
-for i in $(seq 1 10); do
-  if curl -s --max-time 1 -o /dev/null -w "%{http_code}" http://localhost:8080/workbench.html | grep -q 200; then
+for i in $(seq 1 30); do
+  if curl -s --max-time 1 -o /dev/null -w "%{http_code}" http://localhost:8080/ | grep -q 200; then
     echo " ✓"
     break
   fi
@@ -62,9 +62,9 @@ echo "  启动完成！"
 echo "========================================="
 echo "  后端 API:    http://localhost:8008"
 echo "  API 文档:    http://localhost:8008/docs"
-echo "  前端工作台:  http://localhost:8080/workbench.html"
-echo "  管理后台:    http://localhost:8080/admin-workbench.html"
+echo "  前端工作台:  http://localhost:8080"
+echo "  管理后台:    http://localhost:8080/admin"
 echo ""
 echo "  日志目录: $LOG_DIR"
 echo "  停止服务:   kill \$(lsof -ti :8008) \$(lsof -ti :8080)"
-echo "========================================="
+echo "========================================"

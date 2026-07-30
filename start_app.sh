@@ -2,7 +2,7 @@
 kill $(lsof -ti :8008) 2>/dev/null
 sleep 2
 cd /Users/pengjizhou/Documents/yihuiban-app/data-sim
-python3 app.py > /tmp/yh_server.log 2>&1 &
+.venv/bin/python app.py > /tmp/yh_server.log 2>&1 &
 echo "PID=$!"
 sleep 15
 echo "=== openapi.json ==="

@@ -14,11 +14,15 @@ from agentos.agents.opportunity_mining import create_opp_mining_agent
 from agentos.agents.battle_package import create_battle_pkg_agent
 from agentos.agents.customer_insight import create_customer_insight_agent
 from agentos.agents.scheduler import create_scheduler_agent
+from agentos.agents.qa_assistant import create_qa_agent
+from agentos.agents.content_agent import create_content_agent
 from agentos.harness import AgentContext
 from agentos.skills import query_customer_insight, query_customer_insights_by_manager, query_customers_by_insight_filter, query_tasks_for_schedule
+from agentos.news_fetcher import fetch_daily_news
 from data_engine import daily_tick
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(levelname)s: %(message)s')
+log = logging.getLogger("app")
 
 # ============================================================
 # 配置
@@ -432,6 +436,16 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS idx_al_action ON audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_al_created ON audit_logs(created_at);
 
+-- 平台环境配置（可视化管理 .env 中的可变配置项）
+CREATE TABLE IF NOT EXISTS platform_configs (
+    config_key TEXT PRIMARY KEY,
+    config_value TEXT NOT NULL DEFAULT '',
+    category TEXT NOT NULL DEFAULT 'general',
+    description TEXT DEFAULT '',
+    updated_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 -- 定时任务执行历史
 CREATE TABLE IF NOT EXISTS task_execution_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -446,6 +460,91 @@ CREATE TABLE IF NOT EXISTS task_execution_history (
 );
 CREATE INDEX IF NOT EXISTS idx_teh_job ON task_execution_history(job_id);
 CREATE INDEX IF NOT EXISTS idx_teh_started ON task_execution_history(started_at);
+
+-- ============================================================
+-- ContentAgent 数据基础设施
+-- ============================================================
+
+-- 昨日回顾存储
+CREATE TABLE IF NOT EXISTS daily_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    manager_id TEXT NOT NULL,
+    review_date TEXT NOT NULL,
+    content TEXT NOT NULL,
+    generated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    is_read INTEGER DEFAULT 0,
+    UNIQUE(manager_id, review_date)
+);
+CREATE INDEX IF NOT EXISTS idx_dr_mgr ON daily_reviews(manager_id, review_date);
+
+-- 金融资讯缓存
+CREATE TABLE IF NOT EXISTS daily_news (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT,
+    source TEXT NOT NULL DEFAULT 'tushare',
+    category TEXT NOT NULL DEFAULT 'finance',
+    news_url TEXT,
+    fetched_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_dn_date ON daily_news(fetched_at);
+CREATE INDEX IF NOT EXISTS idx_dn_category ON daily_news(category);
+
+-- 面谈记录 + PDCA
+CREATE TABLE IF NOT EXISTS meeting_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER NOT NULL REFERENCES customers(id),
+    bp_id TEXT,
+    opp_id TEXT,
+    manager_id TEXT NOT NULL,
+    meeting_date TEXT NOT NULL,
+    plan_result TEXT,
+    deviation_note TEXT,
+    customer_feedback TEXT,
+    action_items TEXT,
+    dictation_raw TEXT,
+    generated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_mr_cust ON meeting_records(cust_id);
+CREATE INDEX IF NOT EXISTS idx_mr_mgr ON meeting_records(manager_id, meeting_date);
+
+-- 画像变更追踪
+CREATE TABLE IF NOT EXISTS profile_change_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cust_id INTEGER NOT NULL REFERENCES customers(id),
+    field_name TEXT NOT NULL,
+    old_value TEXT,
+    new_value TEXT,
+    source TEXT DEFAULT 'dictation',
+    meeting_id INTEGER REFERENCES meeting_records(id),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_pcl_cust ON profile_change_log(cust_id, changed_at);
+
+-- 行内公告
+CREATE TABLE IF NOT EXISTS internal_announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT,
+    ann_type TEXT NOT NULL,
+    priority TEXT DEFAULT 'normal',
+    published_at TEXT NOT NULL,
+    expires_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_ia_date ON internal_announcements(published_at);
+
+-- 产品变更日志
+CREATE TABLE IF NOT EXISTS product_updates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_code TEXT NOT NULL,
+    change_type TEXT NOT NULL,
+    old_value TEXT,
+    new_value TEXT,
+    changed_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_pu_date ON product_updates(changed_at);
 """
 
 # ============================================================
@@ -913,16 +1012,31 @@ def gen_kpi_data(db):
 
     print("生成 KPI 完成快照...")
     _rnd.seed(42)
+    # 三个客户经理梯度差异
+    mgr_mult = {"M001": 0.85, "M002": 0.60, "M003": 0.40}       # 当前季度完成率系数
+    mgr_prev = {"M001": 0.93, "M002": 0.85, "M003": 0.78}        # 已结束季度完成率
     for mgr_id, year_targets in mgr_targets.items():
-        seasonal = [0.06, 0.07, 0.08, 0.07, 0.08, 0.09, 0.10]
+        mult = mgr_mult.get(mgr_id, 0.6)
+        prev_rate = mgr_prev.get(mgr_id, 0.85)
         for m_idx in range(7):
             m_num = m_idx + 1
+            q_num = (m_num - 1) // 3 + 1   # 当前月份所属季度 1/2/3
+            q_idx = q_num - 1
+            month_in_q = m_num - q_idx * 3  # 季度内第几个月 1/2/3
             month_end = monthrange(2026, m_num)[1]
             snap_date = f"2026-{m_num:02d}-{month_end:02d}"
             is_q_end = (m_num % 3 == 0)
             for kpi_code, year_val in year_targets.items():
-                progress = max(0, min(1.1, sum(seasonal[:m_idx+1]) + _rnd.uniform(-0.04, 0.06)))
-                actual = round(year_val * progress, 1)
+                # YTD 累计：已完成季度 + 当前季度部分
+                ytd_actual = 0.0
+                for pq in range(q_idx):
+                    ytd_actual += year_val * q_weights[pq] * prev_rate
+                cur_target = year_val * q_weights[q_idx]
+                base_rate = [0.35, 0.68, 0.95][month_in_q - 1]
+                rate = base_rate * mult + _rnd.uniform(-0.05, 0.05)
+                rate = max(0.06, min(0.98, rate))
+                ytd_actual += cur_target * rate
+                actual = round(ytd_actual, 1)
                 yoy = round(actual * _rnd.uniform(0.85, 0.98), 1) if m_idx < 3 else None
                 cur.execute(
                     "INSERT OR REPLACE INTO kpi_snapshots (kpi_code,org_id,manager_id,snap_date,actual_value,yoy_value,period_type,created_at) VALUES (?,?,?,?,?,?,?,?)",
@@ -1180,7 +1294,7 @@ def main():
         """
         # 读取产品数据库
         import json as _json
-        prod_db_path = Path(__file__).parent.parent / "prototype" / "data" / "product_database.json"
+        prod_db_path = Path(__file__).parent / "data" / "product_database.json"
         if not prod_db_path.exists():
             return ok({"products": [], "total": 0})
 
@@ -1357,19 +1471,28 @@ def main():
         year: int = Query(2026),
         quarter: int = Query(None),
     ):
-        """查询 KPI 目标值"""
+        """查询 KPI 目标值（默认 YTD 累计至当前季度）"""
         w, p = ["t.year=?"], [year]
         if manager_id:
             w.append("t.manager_id=?"); p.append(manager_id)
         if org_id:
             w.append("t.org_id=?"); p.append(org_id)
-        if quarter:
+        if quarter is not None:
+            # 显式指定季度：返回单季度目标
             w.append("t.quarter=?"); p.append(quarter)
-
-        rows = await aq(
-            f"SELECT t.*, d.kpi_name, d.unit, d.weight, d.icon, d.category, d.sort_order "
-            f"FROM kpi_targets t JOIN kpi_definitions d ON t.kpi_code=d.kpi_code "
-            f"WHERE {' AND '.join(w)} ORDER BY d.sort_order", p)
+            rows = await aq(
+                f"SELECT t.*, d.kpi_name, d.unit, d.weight, d.icon, d.category, d.sort_order "
+                f"FROM kpi_targets t JOIN kpi_definitions d ON t.kpi_code=d.kpi_code "
+                f"WHERE {' AND '.join(w)} ORDER BY d.sort_order", p)
+        else:
+            # 默认：YTD 累计至当前季度
+            cur_q = (date.today().month - 1) // 3 + 1
+            w.append("t.quarter<=?"); p.append(cur_q)
+            rows = await aq(
+                f"SELECT t.kpi_code, SUM(t.target_value) as target_value, "
+                f"d.kpi_name, d.unit, d.weight, d.icon, d.category, d.sort_order "
+                f"FROM kpi_targets t JOIN kpi_definitions d ON t.kpi_code=d.kpi_code "
+                f"WHERE {' AND '.join(w)} GROUP BY t.kpi_code ORDER BY d.sort_order", p)
         return ok({"targets": [dict(r) for r in (rows or [])], "count": len(rows or [])})
 
     @app.get("/api/kpi/ranking")
@@ -1630,6 +1753,56 @@ def main():
     adapter = init_adapter_from_db(ae, aq)
     print(f"模型适配器已就绪: provider={adapter.config.provider}, model={adapter.config.model_name}")
 
+    # ================================================================
+    # 平台配置：从 DB 加载并覆盖 os.environ（首次从 .env seed）
+    # ================================================================
+    async def seed_platform_configs():
+        """首次启动时将 .env 关键配置写入 DB，之后从 DB 加载覆盖 os.environ"""
+        import os as _os
+        existing = await aq("SELECT COUNT(*) as cnt FROM platform_configs", one=True)
+        if not existing or existing.get("cnt", 0) == 0:
+            now = datetime.now().isoformat()
+            defaults = [
+                ("TUSHARE_TOKEN", _os.getenv("TUSHARE_TOKEN", ""), "金融数据", "Tushare 数据源 Token，用于抓取金融资讯"),
+                ("DASHSCOPE_API_KEY", _os.getenv("DASHSCOPE_API_KEY", ""), "向量嵌入", "DashScope 百炼 API Key，用于知识库向量化"),
+                ("DASHSCOPE_EMBEDDING_BASE_URL", _os.getenv("DASHSCOPE_EMBEDDING_BASE_URL", ""), "向量嵌入", "DashScope 嵌入服务端点"),
+                ("DASHSCOPE_EMBEDDING_MODEL", _os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v3"), "向量嵌入", "嵌入模型名称"),
+                ("DASHSCOPE_EMBEDDING_DIM", _os.getenv("DASHSCOPE_EMBEDDING_DIM", "1024"), "向量嵌入", "向量维度"),
+                ("CHROMA_PERSIST_DIR", _os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"), "向量存储", "ChromaDB 本地持久化路径"),
+                ("ALIBABA_ACCESS_KEY_ID", _os.getenv("ALIBABA_ACCESS_KEY_ID", ""), "语音识别", "阿里云 AccessKey ID"),
+                ("ALIBABA_ACCESS_KEY_SECRET", _os.getenv("ALIBABA_ACCESS_KEY_SECRET", ""), "语音识别", "阿里云 AccessKey Secret"),
+                ("ALIBABA_NLS_APP_KEY", _os.getenv("ALIBABA_NLS_APP_KEY", ""), "语音识别", "阿里云智能语音交互 AppKey"),
+            ]
+            for key, val, cat, desc in defaults:
+                await ae(
+                    "INSERT OR REPLACE INTO platform_configs (config_key, config_value, category, description, updated_at, created_at) VALUES (?,?,?,?,?,?)",
+                    (key, val, cat, desc, now, now))
+            print(f"Platform configs: 已从 .env seed {len(defaults)} 条配置")
+
+        # 从 DB 加载所有配置并覆盖 os.environ
+        rows = await aq("SELECT config_key, config_value FROM platform_configs")
+        for r in (rows or []):
+            _os.environ[r["config_key"]] = r.get("config_value", "")
+        print(f"Platform configs: 已从 DB 加载 {len(rows or [])} 条配置到环境变量")
+
+    # 同步执行
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(seed_platform_configs())
+    except RuntimeError:
+        asyncio.run(seed_platform_configs())
+
+    def reload_platform_configs_sync():
+        """热加载：从 DB 重新读取配置并覆盖 os.environ（供 admin API 调用的同步版本）"""
+        import os as _os, sqlite3 as _sq
+        db = _sq.connect(DB_PATH)
+        db.row_factory = _sq.Row
+        rows = db.execute("SELECT config_key, config_value FROM platform_configs").fetchall()
+        for r in rows:
+            _os.environ[r["config_key"]] = r["config_value"]
+        db.close()
+        print(f"Platform configs: 热加载 {len(rows)} 条配置")
+
     # 引入全局 harness（用于 invoke 调用，自动记录运行日志和 token 消耗）
     from agentos.harness import harness as h
     # 设置 DB 回调（同步 ex，用于 _log_run / _log_token）
@@ -1656,6 +1829,14 @@ def main():
     # 初始化 SchedulerAgent
     scheduler_agent = create_scheduler_agent()
     print(f"AI Agent loaded: {scheduler_agent.meta.name} (model={scheduler_agent.adapter.config.model_name})")
+
+    # 初始化 QAAgent
+    qa_agent = create_qa_agent()
+    print(f"AI Agent loaded: {qa_agent.meta.name} (model={qa_agent.adapter.config.model_name})")
+
+    # 初始化 ContentAgent
+    content_agent = create_content_agent()
+    print(f"AI Agent loaded: {content_agent.meta.name} (model={content_agent.adapter.config.model_name})")
 
     @app.post("/api/ai/opportunity/mining")
     async def ai_opportunity_mining(body: dict):
@@ -2062,6 +2243,49 @@ def main():
         )
 
     # ================================================================
+    # 智能问答 API (QAAgent)
+    # ================================================================
+
+    @app.post("/api/ai/qa/ask")
+    async def ai_qa_ask(body: dict):
+        """
+        智能问答：客户经理在 AI 对话面板输入问题，QAAgent 基于 RAG 知识库检索并解答
+
+        Request:
+          { "question": "为什么不能提前还贷款？", "manager_id": "M001" }
+
+        Response:
+          { "code": 0, "data": { "answer": "...", "intent": "...", "sources": [...], "matched_rules": [...] } }
+        """
+        question = body.get("question", "").strip()
+        if not question:
+            return {"code": 1, "data": None, "message": "请输入您的提问"}
+
+        manager_id = body.get("manager_id", "")
+        ctx = AgentContext(manager_id=manager_id, scope="on_demand")
+
+        try:
+            result = await h.invoke(
+                "qa_assistant", "ask", ctx,
+                params={
+                    "question": question,
+                    "manager_id": manager_id,
+                }
+            )
+            return ok({
+                "summary": result.get("summary", ""),
+                "answer": result.get("answer", ""),
+                "intent": result.get("intent", ""),
+                "sources": result.get("sources", []),
+                "matched_rules": result.get("matched_rules", []),
+                "knowledge_count": result.get("knowledge_count", 0),
+                "rules_count": result.get("rules_count", 0),
+            })
+        except Exception as e:
+            log.error(f"QAAgent error: {e}")
+            return {"code": 500, "data": None, "message": f"问答处理失败: {str(e)}"}
+
+    # ================================================================
     # 日程管理 API
     # ================================================================
 
@@ -2418,6 +2642,95 @@ def main():
                 (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
+    async def scheduled_news_fetch():
+        """定时金融资讯抓取（每日 08:30）— Tushare/新浪/东方财富"""
+        job_id = "daily_news_fetch"
+        job_name = "金融资讯抓取"
+        started_at = datetime.now().isoformat()
+        start_ts = datetime.now()
+        print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
+        try:
+            result = fetch_daily_news(TODAY, DB_PATH)
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            summary = f"抓取 {result['count']} 条资讯 (来源: {result.get('sources', {})})"
+            print(f"[Scheduler] {job_name}完成: {result['status']}, {result['count']} 条")
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success" if result["status"] != "error" else "error", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+            )
+        except Exception as e:
+            import traceback
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}失败: {e}")
+            traceback.print_exc()
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+            )
+
+    async def scheduled_review_gen():
+        """定时昨日回顾生成（每日 20:00）— 为全行客户经理生成昨日工作总结"""
+        job_id = "daily_review_gen"
+        job_name = "昨日回顾生成"
+        started_at = datetime.now().isoformat()
+        start_ts = datetime.now()
+        print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
+        try:
+            ctx = AgentContext(scope="scheduled")
+            yesterday = (date.today() - timedelta(days=1)).isoformat()
+            results = await content_agent.batch_gen_review(ctx, target_date=yesterday)
+            success_count = sum(1 for r in results if r.get("saved"))
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            summary = f"已为 {success_count}/{len(results)} 位经理生成昨日回顾"
+            print(f"[Scheduler] {job_name}完成: {summary}")
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+            )
+        except Exception as e:
+            import traceback
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}失败: {e}")
+            traceback.print_exc()
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+            )
+
+    async def scheduled_digest_gen():
+        """定时资讯摘要生成（每日 08:35）— 在新闻抓取后提炼要闻"""
+        job_id = "daily_digest_gen"
+        job_name = "资讯摘要生成"
+        started_at = datetime.now().isoformat()
+        start_ts = datetime.now()
+        print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
+        try:
+            ctx = AgentContext(scope="scheduled")
+            result = await content_agent.gen_digest(ctx)
+            headline_count = len(result.get("headlines", []))
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            summary = f"提炼 {headline_count} 条要闻"
+            print(f"[Scheduler] {job_name}完成: {summary}")
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+            )
+        except Exception as e:
+            import traceback
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}失败: {e}")
+            traceback.print_exc()
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+            )
+
     # ================================================================
     # 定时任务配置
     # 注：v2.0 起商机挖掘改为按需触发（经理在商机看板点击"AI 挖掘"），不再定时执行
@@ -2459,14 +2772,17 @@ def main():
     async def start_scheduler():
         scheduler.add_job(scheduled_data_tick, "cron", hour=7, minute=30, id="daily_data_tick")
         scheduler.add_job(scheduled_schedule_gen, "cron", hour=8, minute=0, id="daily_schedule_gen")
+        scheduler.add_job(scheduled_news_fetch, "cron", hour=8, minute=30, id="daily_news_fetch")
+        scheduler.add_job(scheduled_digest_gen, "cron", hour=8, minute=35, id="daily_digest_gen")
+        scheduler.add_job(scheduled_review_gen, "cron", hour=20, minute=0, id="daily_review_gen")
         scheduler.add_job(scheduled_insight_generation, "cron", day_of_week="sun", hour=3, minute=0, id="weekly_insight_gen")
         scheduler.start()
-        print(f"Scheduler started: data tick @ 07:30, schedule gen @ 08:00, insight gen @ Sun 03:00")
+        print(f"Scheduler started: data tick @ 07:30, schedule gen @ 08:00, news fetch @ 08:30, digest gen @ 08:35, review gen @ 20:00, insight gen @ Sun 03:00")
 
     # ---- Admin API 注册 ----
     from admin_api import register_admin_routes
     # h 已在前面设置为 harness 全局单例，DB 回调已设置
-    register_admin_routes(app, scheduler, get_db, aq, ae, h)
+    register_admin_routes(app, scheduler, get_db, aq, ae, h, reload_platform_configs_sync)
 
     uvicorn.run(app, host="0.0.0.0", port=8008, log_level="info")
 

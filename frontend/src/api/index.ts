@@ -221,6 +221,9 @@ export const api = {
   aiGenerateCustomerInsight(customerId: string) {
     return this.post('/api/ai/customer-insight/generate', { customer_id: customerId })
   },
+  aiQaAsk(question: string, managerId: string) {
+    return this.post('/api/ai/qa/ask', { question, manager_id: managerId })
+  },
 }
 
 /* ── Admin API：运营智能体管理后台 ── */

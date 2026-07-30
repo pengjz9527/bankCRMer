@@ -1,3 +1,17 @@
 psycopg2-binary>=2.9
 fastapi>=0.104
 uvicorn[standard]>=0.24
+
+# 金融数据
+
+tushare>=1.4.0
+
+# 阿里云智能语音交互 (ASR)
+alibabacloud-nls-cloud-meta20180518>=1.0.0
+alibabacloud-tea-openapi>=0.4.0
+
+# RAG 知识库
+chromadb>=0.5.0
+openai>=1.0.0
+dashscope>=1.20.0
+python-dotenv>=1.0.0

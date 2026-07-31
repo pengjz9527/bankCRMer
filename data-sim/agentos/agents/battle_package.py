@@ -343,6 +343,15 @@ class BattlePackageAgent(Agent):
 - 置信度: {opportunity_info.get('confidence', '')}
 """
 
+        # 预计算洞察快照区块（避免 f-string 内嵌反斜杠，Python 3.11 兼容）
+        insight_block = ""
+        if insight_overview_json:
+            insight_block = (
+                "**客户洞察快照（由 CustomerInsightAgent 预生成）**：\n"
+                "```json\n" + insight_overview_json + "\n```\n"
+                "请直接使用以上 customer_overview，不要重新生成。"
+            )
+
         prompt = f"""请为以下客户生成一份"{"面谈版(全功能)" if mode == "面谈版" else "电话版(轻量)"}"作战包。
 
 **当前日期**: {date.today().isoformat()}
@@ -350,7 +359,7 @@ class BattlePackageAgent(Agent):
 
 {opp_section}
 
-{"**客户洞察快照（由 CustomerInsightAgent 预生成）**：\n```json\n" + insight_overview_json + "\n```\n请直接使用以上 customer_overview，不要重新生成。" if insight_overview_json else ""}
+{insight_block}
 
 **客户全维度数据**：
 ```json

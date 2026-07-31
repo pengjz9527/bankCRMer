@@ -408,7 +408,7 @@ async def wealth_salary(cust_id: int):
 @app.get("/api/customers/{cust_id}/credit/loans")
 async def credit_loans(cust_id: int):
     rows = await aquery(
-        "SELECT product_name,credit_line,used_amount,remaining,overdue_count,interest_rate,start_date,maturity_date "
+        "SELECT product_name,credit_line,used_amount,(credit_line-used_amount) as remaining,overdue_count,interest_rate,start_date,maturity_date "
         "FROM loans WHERE cust_id=%s", (cust_id,))
     if not rows:
         return ok(None)

@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { productData } from '@/stores/product'
+import { useProductStore, productData } from '@/stores/product'
 
 const route = useRoute()
 const router = useRouter()
+const productStore = useProductStore()
 const prodId = (route.params.id as string) || 'P001'
 
 const p = computed(() => productData.all.find(x => x.id === prodId) || productData.all[0])
+
+const minText = computed(() => {
+  if (!p.value) return ''
+  if (p.value.minUnit === '万') return p.value.min + '万'
+  if (p.value.min >= 10000) return (p.value.min / 10000) + '万'
+  return p.value.min + p.value.minUnit
+})
+
+onMounted(() => {
+  // 直接导航到详情页时，store 可能尚未加载
+  productStore.loadProducts()
+})
 
 function goBack() { router.back() }
 function goCompare() { router.push({ name: 'product-compare', query: { ids: prodId } }) }
@@ -24,7 +37,7 @@ function goCompare() { router.push({ name: 'product-compare', query: { ids: prod
       <div class="pd-icon-row">
         <span class="pd-icon"><svg viewBox="0 0 24 24" class="ico ico--xl"><use :href="'#' + p.icon" /></svg></span>
         <div>
-          <div class="pd-type">{{ p.type }} · {{ p.risk }} · {{ p.riskLabel }}风险</div>
+          <div class="pd-type">{{ p.type }} · {{ p.risk }} · {{ p.riskLabel }}</div>
         </div>
       </div>
 
@@ -33,8 +46,8 @@ function goCompare() { router.push({ name: 'product-compare', query: { ids: prod
         <div class="pd-row"><span class="pd-label">产品编号</span><span class="pd-value">{{ p.id }}</span></div>
         <div class="pd-row"><span class="pd-label">产品类型</span><span class="pd-value">{{ p.type }}</span></div>
         <div class="pd-row"><span class="pd-label">期限类型</span><span class="pd-value">{{ p.termType }} · {{ p.term }}</span></div>
-        <div class="pd-row"><span class="pd-label">风险等级</span><span class="pd-value">{{ p.risk }} · {{ p.riskLabel }}风险</span></div>
-        <div class="pd-row"><span class="pd-label">起购金额</span><span class="pd-value">{{ p.min >= 10000 ? (p.min/10000)+'万' : p.min+p.minUnit }}</span></div>
+        <div class="pd-row"><span class="pd-label">风险等级</span><span class="pd-value">{{ p.risk }} · {{ p.riskLabel }}</span></div>
+        <div class="pd-row"><span class="pd-label">起购金额</span><span class="pd-value">{{ minText }}</span></div>
       </div>
 
       <div class="pd-section">

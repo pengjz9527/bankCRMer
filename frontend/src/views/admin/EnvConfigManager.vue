@@ -118,7 +118,7 @@ const showAddForm = ref(false)
 const deleteTarget = ref<PlatformConfig | null>(null)
 const addForm = ref({ config_key: '', config_value: '', category: 'general', description: '' })
 
-const API_BASE = 'http://localhost:8008'
+const API_BASE = ''
 
 const categoryLabels: Record<string, string> = {
   '金融数据': '金融数据',

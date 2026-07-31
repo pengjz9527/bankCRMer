@@ -12,7 +12,9 @@ const emit = defineEmits<{
 }>()
 
 function minText(p: Product): string {
-  return p.min >= 10000 ? (p.min / 10000) + '万' : p.min + p.minUnit
+  if (p.minUnit === '万') return p.min + '万'
+  if (p.min >= 10000) return (p.min / 10000) + '万'
+  return p.min + p.minUnit
 }
 
 const riskClassMap: Record<string, string> = {
@@ -32,7 +34,7 @@ const riskClassMap: Record<string, string> = {
         <div class="pc-name">{{ product.name }}</div>
         <div class="pc-sub">{{ product.type }} · {{ product.termType }} · {{ product.term }}</div>
         <div class="pc-tags">
-          <span class="pc-tag" :class="riskClassMap[product.risk] || 'risk-r2'">{{ product.risk }} · {{ product.riskLabel }}风险</span>
+          <span class="pc-tag" :class="riskClassMap[product.risk] || 'risk-r2'">{{ product.risk }} · {{ product.riskLabel }}</span>
           <span class="pc-tag pc-tag-min">起购 {{ minText(product) }}</span>
         </div>
         <div class="pc-desc">{{ product.benchmark }}</div>

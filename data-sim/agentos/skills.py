@@ -275,7 +275,7 @@ def query_loans(cust_id: int) -> list[dict]:
     conn = _db()
     try:
         rows = conn.execute(
-            """SELECT product_name, credit_line, used_amount, remaining,
+            """SELECT product_name, credit_line, used_amount, (credit_line-used_amount) as remaining,
                       overdue_count, interest_rate, start_date, maturity_date
                FROM loans WHERE cust_id = ?""",
             (cust_id,),
@@ -601,20 +601,35 @@ def query_tasks_for_schedule(manager_id: str, schedule_date: str = None) -> list
         # ---- 5. 商机待办（Agent 联动：opportunities 表）----
         opp_rows = conn.execute(
             """SELECT opp_id, cust_id, cust_name, title, priority, suggested_action,
-                      generated_at, estimated_value
+                      generated_at, estimated_value, opportunity_type, source
                FROM opportunities
                WHERE manager_id = ? AND status = '待跟进'
                  AND generated_at >= ?
                ORDER BY priority DESC, estimated_value DESC""",
             (manager_id, (sd_date - timedelta(days=7)).isoformat()),
         ).fetchall()
+        # 商机类型反向映射（opportunity_type → type_code, type_name）
+        _opp_reverse_map = {
+            "代发配置": ("opp_salary", "代发配置"),
+            "到期承接": ("opp_due", "到期承接"),
+            "流失预警": ("opp_decline", "流失预警"),
+            "基金意向": ("opp_fund", "基金意向"),
+            "大额配置": ("opp_big_aum", "大额配置"),
+        }
         for r in opp_rows:
             opp_deadline = (date.fromisoformat(r["generated_at"][:10]) + timedelta(days=7)).isoformat()
             priority_map = {"高": 75, "中": 50, "低": 30}
             pw = priority_map.get(r["priority"], 50)
+            # 规则商机：还原子类型；AI 商机：保持 opp
+            opp_type = r["opportunity_type"] or ""
+            src = r["source"] or ""
+            if src == "rule" and opp_type in _opp_reverse_map:
+                tc, tn = _opp_reverse_map[opp_type]
+            else:
+                tc, tn = "opp", "AI挖掘"
             tasks.append({
                 "task_id": f"TK_OPP_{r['opp_id']}",
-                "type": "商机待办", "type_code": "opp",
+                "type": tn, "type_code": tc,
                 "cust_id": r["cust_id"], "cust_name": r["cust_name"],
                 "summary": r["title"] or "",
                 "cust_count": 1, "priority": r["priority"], "priority_weight": pw,
@@ -622,6 +637,143 @@ def query_tasks_for_schedule(manager_id: str, schedule_date: str = None) -> list
                 "deadline_date": opp_deadline,
                 "customer_ids": [r["cust_id"]],
                 "customer_names": [r["cust_name"]],
+                "opp_id": r["opp_id"],
+            })
+
+        # ---- 5b. 规则匹配商机（与 /api/opportunities 使用相同规则，直接从原始数据生成）----
+        # 收集已有商机任务的客户 ID，避免重复生成
+        opp_cust_ids = set(t["cust_id"] for t in tasks if t.get("type_code") == "opp" or (t.get("type_code") or "").startswith("opp_"))
+
+        # 5b-1. 代发到账配置（近 7 天有工资入账）
+        sal_rows = conn.execute(
+            """SELECT DISTINCT t.cust_id, c.name
+               FROM transactions t JOIN customers c ON t.cust_id = c.id
+               WHERE t.summary = '工资' AND t.txn_date >= ?""",
+            ((sd_date - timedelta(days=7)).isoformat(),),
+        ).fetchall()
+        for r in sal_rows:
+            if r["cust_id"] not in mgr_cust_ids:
+                continue
+            if r["cust_id"] in opp_cust_ids:
+                continue
+            opp_cust_ids.add(r["cust_id"])
+            tasks.append({
+                "task_id": f"TK_OPP_SAL_{r['cust_id']}",
+                "type": "代发配置", "type_code": "opp_salary",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": "近7天有代发工资到账，可推荐工资理财配置",
+                "cust_count": 1, "priority": "中", "priority_weight": 60,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=5)).isoformat(),
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # 5b-2. 产品到期承接（8-30 天到期，避免与客户待办「产品到期」7 天窗口重叠）
+        opp_due_rows = conn.execute(
+            """SELECT h.cust_id, c.name, SUM(h.amount) as total
+               FROM holdings h JOIN customers c ON h.cust_id = c.id
+               WHERE h.maturity_date BETWEEN ? AND ?
+               GROUP BY h.cust_id, c.name""",
+            ((sd_date + timedelta(days=8)).isoformat(),
+             (sd_date + timedelta(days=30)).isoformat()),
+        ).fetchall()
+        for r in opp_due_rows:
+            if r["cust_id"] not in mgr_cust_ids:
+                continue
+            if r["cust_id"] in opp_cust_ids:
+                continue
+            opp_cust_ids.add(r["cust_id"])
+            amt = float(r["total"] or 0) / 10000
+            tasks.append({
+                "task_id": f"TK_OPP_DUE_{r['cust_id']}",
+                "type": "到期承接", "type_code": "opp_due",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": f"{amt:.0f}万产品即将到期，提前准备承接方案",
+                "cust_count": 1, "priority": "高", "priority_weight": 70,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=7)).isoformat(),
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # 5b-3. 流失预警挽回（AUM < 5 万且等级低）
+        dec_rows = conn.execute(
+            """SELECT c.id, c.name, c.total_aum
+               FROM customers c
+               WHERE c.total_aum < 50000 AND c.tier IN ('千元以下', '千元户')
+               ORDER BY c.total_aum ASC LIMIT 5""",
+        ).fetchall()
+        for r in dec_rows:
+            if r["id"] not in mgr_cust_ids:
+                continue
+            if r["id"] in opp_cust_ids:
+                continue
+            opp_cust_ids.add(r["id"])
+            aum = float(r["total_aum"] or 0) / 10000
+            tasks.append({
+                "task_id": f"TK_OPP_DEC_{r['id']}",
+                "type": "流失预警", "type_code": "opp_decline",
+                "cust_id": r["id"], "cust_name": r["name"],
+                "summary": f"AUM 仅 {aum:.1f} 万且持续走低，建议联系了解资金去向",
+                "cust_count": 1, "priority": "中", "priority_weight": 55,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=3)).isoformat(),
+                "customer_ids": [r["id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # 5b-4. 基金购买意向（有基金浏览行为但无持仓）
+        fund_rows = conn.execute(
+            """SELECT b.cust_id, c.name, COUNT(*) as cnt
+               FROM behavior_logs b JOIN customers c ON b.cust_id = c.id
+               WHERE b.page_type = '基金'
+                 AND c.id NOT IN (SELECT cust_id FROM holdings WHERE product_type = '基金')
+               GROUP BY b.cust_id
+               HAVING COUNT(*) >= 5 LIMIT 4""",
+        ).fetchall()
+        for r in fund_rows:
+            if r["cust_id"] not in mgr_cust_ids:
+                continue
+            if r["cust_id"] in opp_cust_ids:
+                continue
+            opp_cust_ids.add(r["cust_id"])
+            tasks.append({
+                "task_id": f"TK_OPP_FUND_{r['cust_id']}",
+                "type": "基金意向", "type_code": "opp_fund",
+                "cust_id": r["cust_id"], "cust_name": r["name"],
+                "summary": f"近3月浏览基金 {r['cnt']} 次但无持仓，有基金配置需求",
+                "cust_count": 1, "priority": "中", "priority_weight": 60,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=5)).isoformat(),
+                "customer_ids": [r["cust_id"]],
+                "customer_names": [r["name"]],
+            })
+
+        # 5b-5. 大额配置建议（AUM > 10 万的大客户，随机抽 3 位）
+        big_rows = conn.execute(
+            """SELECT c.id, c.name, c.total_aum
+               FROM customers c
+               WHERE c.total_aum > 100000
+               ORDER BY RANDOM() LIMIT 3""",
+        ).fetchall()
+        for r in big_rows:
+            if r["id"] not in mgr_cust_ids:
+                continue
+            if r["id"] in opp_cust_ids:
+                continue
+            opp_cust_ids.add(r["id"])
+            aum = float(r["total_aum"] or 0) / 10000
+            tasks.append({
+                "task_id": f"TK_OPP_BIG_{r['id']}",
+                "type": "大额配置", "type_code": "opp_big_aum",
+                "cust_id": r["id"], "cust_name": r["name"],
+                "summary": f"客户 AUM {aum:.0f} 万以存款为主，建议引导理财配置",
+                "cust_count": 1, "priority": "中", "priority_weight": 65,
+                "is_opportunity_task": True,
+                "deadline_date": (sd_date + timedelta(days=5)).isoformat(),
+                "customer_ids": [r["id"]],
+                "customer_names": [r["name"]],
             })
 
         # ---- 6. 洞察预警（Agent 联动：customer_insights 表）----
@@ -690,6 +842,48 @@ def query_tasks_for_schedule(manager_id: str, schedule_date: str = None) -> list
 
         for t in tasks:
             t["contact_prefer"] = contact_prefer_map.get(t.get("cust_id", 0), "不限定")
+
+        # ---- 8. 规则商机入库（将规则发现的机会持久化到 opportunities 表）----
+        # 设计原则：商机待办必须来源于 opportunities 表，不允许凭空生成
+        import time as _time
+        now_ts = int(_time.time())
+        opp_type_map = {
+            "opp_salary": "代发配置",
+            "opp_due": "到期承接",
+            "opp_decline": "流失预警",
+            "opp_fund": "基金意向",
+            "opp_big_aum": "大额配置",
+        }
+        for i, t in enumerate(tasks):
+            tc = t.get("type_code", "")
+            if not tc.startswith("opp_"):
+                continue
+
+            opp_type = opp_type_map.get(tc, tc)
+            opp_id = f"OPP_RULE_{t['cust_id']}_{tc}_{now_ts}_{i}"
+
+            # 估算价值（到期承接从 summary 中提取金额）
+            est_value = 0
+            if tc == "opp_due":
+                digits = ''.join(c for c in t.get("summary", "") if c.isdigit())
+                est_value = int(digits) * 10000 if digits else 0
+
+            conn.execute(
+                """INSERT OR IGNORE INTO opportunities
+                   (opp_id, cust_id, cust_name, opportunity_type, title, confidence,
+                    estimated_value, reasoning, suggested_action, priority, source,
+                    source_method, generated_at, manager_id)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (opp_id, t["cust_id"], t["cust_name"], opp_type,
+                 t.get("type", opp_type), 0.65, est_value,
+                 t.get("summary", ""), "", t.get("priority", "中"),
+                 "rule", "schedule_gen", sd, manager_id),
+            )
+
+            # 绑定 opp_id 到任务（保留原 type_code 不变，供 scheduler 使用）
+            t["opp_id"] = opp_id
+
+        conn.commit()
 
         return tasks
     finally:

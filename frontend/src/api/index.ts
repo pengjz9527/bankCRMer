@@ -1,8 +1,8 @@
 /**
- * API 封装层 —— 对接 FastAPI 后端 (http://localhost:8008)
+ * API 封装层 —— 对接 FastAPI 后端（Vite 代理 / Nginx 反向代理）
  */
 
-const API_BASE = 'http://localhost:8008'
+const API_BASE = ''
 
 interface ApiResponse<T = any> {
   code: number
@@ -233,6 +233,9 @@ export const adminApi = {
   getTaskHistory(jobId: string, page = 1, size = 20) {
     return api.get(`/api/admin/scheduled-tasks/${jobId}/history?page=${page}&size=${size}`)
   },
+  getTaskHistoryDetail(historyId: number) {
+    return api.get(`/api/admin/scheduled-tasks/history/${historyId}/detail`)
+  },
   pauseTask(jobId: string) { return api.post(`/api/admin/scheduled-tasks/${jobId}/pause`, {}) },
   resumeTask(jobId: string) { return api.post(`/api/admin/scheduled-tasks/${jobId}/resume`, {}) },
   triggerTask(jobId: string) { return api.post(`/api/admin/scheduled-tasks/${jobId}/trigger`, {}) },
@@ -254,7 +257,7 @@ export const adminApi = {
     const qs = new URLSearchParams()
     if (dateFrom) qs.set('date_from', dateFrom)
     if (dateTo) qs.set('date_to', dateTo)
-    const url = `http://localhost:8008/api/admin/agents/${role}/results/export?${qs.toString()}`
+    const url = `${API_BASE}/api/admin/agents/${role}/results/export?${qs.toString()}`
     const res = await fetch(url, { method: 'POST' })
     if (!res.ok) throw new Error('Export failed')
     const blob = await res.blob()
@@ -270,7 +273,7 @@ export const adminApi = {
     if (status) qs.set('status', status)
     if (dateFrom) qs.set('date_from', dateFrom)
     if (dateTo) qs.set('date_to', dateTo)
-    const url = `http://localhost:8008/api/admin/agents/runs/export?${qs.toString()}`
+    const url = `${API_BASE}/api/admin/agents/runs/export?${qs.toString()}`
     const res = await fetch(url, { method: 'POST' })
     if (!res.ok) throw new Error('Export failed')
     const blob = await res.blob()

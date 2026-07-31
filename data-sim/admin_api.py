@@ -85,10 +85,40 @@ def register_admin_routes(app, scheduler, get_db, aq, ae, harness, reload_config
             items.append({
                 "id": r["id"], "job_id": r["job_id"], "job_name": r["job_name"],
                 "status": r["status"], "result_summary": r["result_summary"],
+                "result_detail": r.get("result_detail", ""),
                 "error_msg": r["error_msg"], "started_at": r["started_at"],
                 "finished_at": r["finished_at"], "duration_ms": r["duration_ms"],
             })
         return ok({"history": items, "total": total, "page": page, "size": size})
+
+    @app.get("/api/admin/scheduled-tasks/history/{history_id}/detail")
+    async def admin_task_history_detail(history_id: int):
+        """获取单条执行历史的详细结果（结构化 JSON）"""
+        row = await aq(
+            "SELECT * FROM task_execution_history WHERE id = ?",
+            (history_id,), one=True
+        )
+        if not row:
+            return err(404, f"历史记录 {history_id} 不存在")
+        detail_str = row.get("result_detail", "")
+        detail_obj = None
+        if detail_str:
+            try:
+                detail_obj = json.loads(detail_str)
+            except (json.JSONDecodeError, TypeError):
+                detail_obj = {"raw": detail_str}
+        return ok({
+            "id": row["id"],
+            "job_id": row["job_id"],
+            "job_name": row["job_name"],
+            "status": row["status"],
+            "result_summary": row["result_summary"],
+            "result_detail": detail_obj,
+            "error_msg": row["error_msg"],
+            "started_at": row["started_at"],
+            "finished_at": row["finished_at"],
+            "duration_ms": row["duration_ms"],
+        })
 
     @app.post("/api/admin/scheduled-tasks/{job_id}/pause")
     async def admin_task_pause(job_id: str):
@@ -119,20 +149,20 @@ def register_admin_routes(app, scheduler, get_db, aq, ae, harness, reload_config
 
     @app.post("/api/admin/scheduled-tasks/{job_id}/trigger")
     async def admin_task_trigger(job_id: str):
-        """手动触发定时任务（立即执行一次）"""
+        """手动触发定时任务（立即执行一次，不改变原有定时计划）"""
+        import asyncio
         try:
             job = scheduler.get_job(job_id)
             if not job:
                 return err(404, f"任务 {job_id} 不存在")
-            # 记录执行开始
             now = datetime.now().isoformat()
-            # 通过 modify_job 设置 next_run_time 为现在来触发立即执行
-            scheduler.modify_job(job_id, next_run_time=datetime.now())
+            # 使用 asyncio.create_task 立即异步执行，不修改 next_run_time
+            asyncio.create_task(job.func())
             await ae(
                 "INSERT INTO audit_logs (action, target_type, target_id, operator, detail, created_at) VALUES (?,?,?,?,?,?)",
                 ("trigger_task", "scheduled_task", job_id, "admin", f"手动触发任务 {job_id}", now)
             )
-            return ok(message=f"任务 {job_id} 已手动触发")
+            return ok(message=f"任务 {job_id} 已手动触发，正在后台执行")
         except Exception as e:
             return err(500, f"触发失败: {str(e)}")
 

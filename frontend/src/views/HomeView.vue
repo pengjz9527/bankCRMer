@@ -579,9 +579,13 @@ async function onOppDetail(taskId: string) {
   }
 }
 
-function deriveOppIdFromTask(taskId: string): string | undefined {
-  // TK_OPP_{opp_id} 格式 — 从 opportunities 表来的商机任务
-  if (taskId.startsWith('TK_OPP_')) {
+function deriveOppIdFromTask(task: TaskItem | null): string | undefined {
+  // 优先使用任务自带的 opp_id（由 query_tasks_for_schedule 步骤8 注入）
+  if (task?.oppId) return task.oppId
+
+  const taskId = task?.taskId || ''
+  // TK_OPP_{opp_id} 格式 — 从 opportunities 表来的 AI 挖掘商机任务
+  if (taskId.startsWith('TK_OPP_') && !taskId.startsWith('TK_OPP_SAL_') && !taskId.startsWith('TK_OPP_DUE_') && !taskId.startsWith('TK_OPP_DEC_') && !taskId.startsWith('TK_OPP_FUND_') && !taskId.startsWith('TK_OPP_BIG_')) {
     return taskId.slice(7)
   }
   return undefined
@@ -610,9 +614,9 @@ async function generateAndViewBattlePackage(custId: number, oppId?: string) {
 }
 
 async function onViewBattlePackage(custId: number) {
-  // 从当前商机任务推导 opp_id（优先按 opp_id 精确匹配）
+  // 从当前商机任务推导 opp_id（优先按任务携带的 oppId 精确匹配）
   const task = currentOppTask.value
-  const oppId = deriveOppIdFromTask(task?.taskId || '')
+  const oppId = deriveOppIdFromTask(task)
 
   try {
     // 优先按 opp_id 查询对应商机的作战包

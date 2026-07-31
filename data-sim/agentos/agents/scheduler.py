@@ -91,10 +91,51 @@ WORK_TYPE_CATALOG: dict[str, WorkTypeCatalog] = {
         is_customer_facing=True, grouping_supported=False, photo_required=False,
     ),
     "opp": WorkTypeCatalog(
-        type_code="opp", type_name="商机待办",
+        type_code="opp", type_name="AI挖掘",
         per_customer_minutes=30,
         recommended_slots=["morning", "afternoon"],
         priority_level="P1", priority_weight=75,
+        contact_methods=["visit", "phone"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    # 商机子类型（与 /api/opportunities 规则匹配一一对应）
+    "opp_due": WorkTypeCatalog(
+        type_code="opp_due", type_name="到期承接",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=70,
+        contact_methods=["visit", "phone"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_salary": WorkTypeCatalog(
+        type_code="opp_salary", type_name="代发配置",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P2", priority_weight=60,
+        contact_methods=["phone", "wechat"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_fund": WorkTypeCatalog(
+        type_code="opp_fund", type_name="基金意向",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P2", priority_weight=60,
+        contact_methods=["phone", "wechat"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_decline": WorkTypeCatalog(
+        type_code="opp_decline", type_name="流失预警",
+        per_customer_minutes=30,
+        recommended_slots=["afternoon"],
+        priority_level="P2", priority_weight=55,
+        contact_methods=["phone"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_big_aum": WorkTypeCatalog(
+        type_code="opp_big_aum", type_name="大额配置",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=65,
         contact_methods=["visit", "phone"],
         is_customer_facing=True, grouping_supported=False, photo_required=True,
     ),
@@ -193,11 +234,14 @@ CARD_GROUP_MAP: dict[str, str] = {
     "due": "customer", "big_move": "customer", "overdue": "customer",
     "birthday": "customer", "contact_lapse": "customer", "credit_card": "customer",
     "post_meeting": "customer", "insight_alert": "customer",
-    # 商机待办
+    # 商机待办（通用 + 5 类规则匹配子类型）
     "opp": "opportunity",
+    "opp_due": "opportunity", "opp_salary": "opportunity",
+    "opp_fund": "opportunity", "opp_decline": "opportunity",
+    "opp_big_aum": "opportunity",
     # 工作待办
     "morning_meeting": "work", "evening_meeting": "work",
-    "report": "work", "report_review": "work",
+    "report": "work", "report_review": "work", "meeting": "work",
 }
 
 # 卡片容量上限
@@ -253,6 +297,7 @@ class ScheduleTask:
     pinned_date: str = ""        # 固定排程日期（不可移动），空串表示可移动
     effective_weight: int = 0    # 动态计算的有效权重（priority_weight + urgency_boost）
     contact_prefer: str = "不限定"  # 客户联系时段偏好：上午优先/下午优先/不限定
+    opp_id: str = ""               # 关联的商机 ID（来源于 opportunities 表）
 
     def to_dict(self) -> dict:
         return {
@@ -276,6 +321,7 @@ class ScheduleTask:
             "deadline_date": self.deadline_date,
             "pinned_date": self.pinned_date,
             "contact_prefer": self.contact_prefer,
+            "opp_id": self.opp_id,
         }
 
 
@@ -514,6 +560,7 @@ class SchedulerAgent(Agent):
                     deadline_date=deadline,
                     pinned_date=pinned,
                     contact_prefer=t.get("contact_prefer", "不限定"),
+                    opp_id=t.get("opp_id", ""),
                 )
             else:
                 cust_count = t.get("cust_count", 1)
@@ -533,13 +580,14 @@ class SchedulerAgent(Agent):
                     estimated_duration_min=duration,
                     contact_methods=wtype.contact_methods,
                     is_customer_facing=wtype.is_customer_facing,
-                    is_opportunity_task=(type_code == "opp"),
+                    is_opportunity_task=(type_code == "opp" or type_code.startswith("opp_")),
                     priority_weight=t.get("priority_weight", wtype.priority_weight),
                     customer_ids=t.get("customer_ids", [t.get("cust_id", 0)]),
                     customer_names=t.get("customer_names", [t.get("cust_name", "")]),
                     deadline_date=deadline,
                     pinned_date=pinned,
                     contact_prefer=t.get("contact_prefer", "不限定"),
+                    opp_id=t.get("opp_id", ""),
                 )
 
             result.append(st)
@@ -552,6 +600,12 @@ class SchedulerAgent(Agent):
             "大额异动": "big_move",
             "贷款逾期": "overdue",
             "商机待办": "opp",
+            "AI挖掘": "opp",
+            "到期承接": "opp_due",
+            "代发配置": "opp_salary",
+            "基金意向": "opp_fund",
+            "流失预警": "opp_decline",
+            "大额配置": "opp_big_aum",
             "生日提醒": "birthday",
             "联络超期": "contact_lapse",
             "信用卡待办": "credit_card",
@@ -1549,7 +1603,7 @@ class SchedulerAgent(Agent):
                 else:
                     all_tasks = []
 
-                has_opp = any(t.get("type_code") == "opp" or t.get("card_type") == "opportunity" for t in all_tasks)
+                has_opp = any(t.get("type_code") == "opp" or (t.get("type_code") or "").startswith("opp_") or t.get("card_type") == "opportunity" for t in all_tasks)
                 has_work = any(t.get("type_code") in ("report", "report_review", "morning_meeting", "evening_meeting")
                               or t.get("card_type") == "work" for t in all_tasks)
 

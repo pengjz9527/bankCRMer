@@ -2,6 +2,14 @@
 易会办 客户洞察 — 全内置运行脚本 (SQLite + FastAPI)
 一键启动: python3 app.py
 """
+# 解决旧版 SQLite 兼容问题：ChromaDB 需要 sqlite3 >= 3.35
+try:
+    __import__('pysqlite3')
+    import sys as _sys
+    _sys.modules['sqlite3'] = _sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 import json, random, sqlite3, os, sys
 from datetime import date, timedelta, datetime
 from pathlib import Path
@@ -121,7 +129,7 @@ CREATE TABLE IF NOT EXISTS loans (
     cust_id INTEGER REFERENCES customers(id),
     product_name TEXT NOT NULL,
     credit_line REAL NOT NULL, used_amount REAL NOT NULL DEFAULT 0,
-    remaining REAL GENERATED ALWAYS AS (credit_line - used_amount) VIRTUAL,
+    remaining REAL NOT NULL DEFAULT 0,
     overdue_count INTEGER DEFAULT 0, interest_rate REAL,
     start_date TEXT, maturity_date TEXT
 );
@@ -453,6 +461,7 @@ CREATE TABLE IF NOT EXISTS task_execution_history (
     job_name TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL CHECK(status IN ('success','error')),
     result_summary TEXT DEFAULT '',
+    result_detail TEXT DEFAULT '',
     error_msg TEXT DEFAULT '',
     started_at TEXT NOT NULL,
     finished_at TEXT,
@@ -698,8 +707,8 @@ def gen_all(db):
                 rate = round(random.uniform(3.5, 6.5), 4)
                 start = (TODAY - timedelta(days=random.randint(180,1825))).isoformat()
                 mat = (TODAY + timedelta(days=random.randint(1825,7300))).isoformat()
-                cur.execute("INSERT INTO loans VALUES (?,?,?,?,?,?,?,?,?)",
-                            (None, cust_id, prod, credit, used, overdue, rate, start, mat))
+                cur.execute("INSERT INTO loans VALUES (?,?,?,?,?,?,?,?,?,?)",
+                            (None, cust_id, prod, credit, used, credit - used, overdue, rate, start, mat))
                 if random.random() < tmpl.get("loan_rejection_prob", 0.1):
                     cur.execute("INSERT INTO loan_rejections VALUES (?,?,?,?,?)",
                                 (None, cust_id, random.choice(["XX信用贷款","ZZ经营贷"]),
@@ -1061,6 +1070,13 @@ def main():
         print("迁移: 已添加 customers.contact_prefer 列")
     except sqlite3.OperationalError:
         pass  # 列已存在
+    # 迁移：确保 task_execution_history.result_detail 列存在
+    try:
+        db.execute("ALTER TABLE task_execution_history ADD COLUMN result_detail TEXT DEFAULT ''")
+        db.commit()
+        print("迁移: 已添加 task_execution_history.result_detail 列")
+    except sqlite3.OperationalError:
+        pass  # 列已存在
     db.commit()
 
     if need_gen:
@@ -1223,7 +1239,7 @@ def main():
 
     @app.get("/api/customers/{cid}/credit/loans")
     async def c_loans(cid: int):
-        rows = await aq("SELECT product_name,credit_line,used_amount,remaining,overdue_count,interest_rate,start_date,maturity_date FROM loans WHERE cust_id=?", (cid,))
+        rows = await aq("SELECT product_name,credit_line,used_amount,(credit_line-used_amount) as remaining,overdue_count,interest_rate,start_date,maturity_date FROM loans WHERE cust_id=?", (cid,))
         if not rows: return ok(None)
         items = [{"product_name":r["product_name"],"credit_line":r["credit_line"],"used":r["used_amount"],"remaining":r["remaining"],"overdue_count":r["overdue_count"]} for r in rows]
         return ok({"loans":items,"total_count":len(items)})
@@ -2576,12 +2592,23 @@ def main():
         try:
             result = daily_tick(TODAY.isoformat(), DB_PATH)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
-            summary = str(result.get("stats", result)) if isinstance(result, dict) else str(result)
+            stats = result.get("stats", {}) if isinstance(result, dict) else {}
+            summary = str(stats) if stats else str(result)
+            detail = json.dumps({
+                "date": TODAY.isoformat(),
+                "transactions": stats.get("transactions", 0),
+                "behaviors": stats.get("behaviors", 0),
+                "communications": stats.get("communications", 0),
+                "holding_updates": stats.get("holding_updates", 0),
+                "events": stats.get("events", 0),
+                "product_updates": stats.get("product_updates", 0),
+                "announcements": stats.get("announcements", 0),
+            }, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {result}")
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
             )
         except Exception as e:
             import traceback
@@ -2589,9 +2616,9 @@ def main():
             print(f"[Scheduler] {job_name}失败: {e}")
             traceback.print_exc()
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
     async def scheduled_schedule_gen():
@@ -2603,6 +2630,7 @@ def main():
         print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
         sd = TODAY.isoformat()
         mgr_count = 0
+        mgr_details = []  # 记录每位经理的详情
         try:
             # 获取所有客户经理
             mgr_rows = await aq("SELECT DISTINCT manager_id FROM cust_manager_rel")
@@ -2614,6 +2642,7 @@ def main():
             for mid in managers:
                 # 使用 skill 函数收集全部待办任务
                 tasks = query_tasks_for_schedule(mid, sd)
+                task_count = len(tasks) if tasks else 0
 
                 if tasks:
                     # 生成 7 日周计划（含 7 天日排程数据）
@@ -2621,15 +2650,21 @@ def main():
                         tasks, manager_id=mid, start_date=sd
                     )
                     # 保存 7 天排程
+                    slot_count = 0
                     for day_schedule in weekly.days:
                         scheduler_agent.save_schedule(day_schedule, get_db())
+                        slot_count += len(day_schedule.slots) if hasattr(day_schedule, 'slots') else 0
+                    mgr_details.append({"manager_id": mid, "task_count": task_count, "slot_count": slot_count})
+                else:
+                    mgr_details.append({"manager_id": mid, "task_count": 0, "slot_count": 0})
 
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            detail = json.dumps({"date": sd, "managers": mgr_details, "manager_count": mgr_count}, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {mgr_count} 位经理")
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success", f"已为 {mgr_count} 位经理生成日程", "", started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", f"已为 {mgr_count} 位经理生成日程", detail, "", started_at, datetime.now().isoformat(), duration_ms)
             )
         except Exception as e:
             import traceback
@@ -2637,9 +2672,9 @@ def main():
             print(f"[Scheduler] {job_name}失败: {e}")
             traceback.print_exc()
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
     async def scheduled_news_fetch():
@@ -2653,11 +2688,23 @@ def main():
             result = fetch_daily_news(TODAY, DB_PATH)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
             summary = f"抓取 {result['count']} 条资讯 (来源: {result.get('sources', {})})"
+            # 查询本次抓取的资讯标题作为详情
+            headline_rows = await aq(
+                "SELECT title, source, category FROM daily_news WHERE fetched_at=? ORDER BY id DESC LIMIT 50",
+                (TODAY.isoformat(),)
+            )
+            headlines = [{"title": r["title"], "source": r["source"], "category": r["category"]} for r in (headline_rows or [])]
+            detail = json.dumps({
+                "date": TODAY.isoformat(),
+                "count": result["count"],
+                "sources": result.get("sources", {}),
+                "headlines": headlines,
+            }, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {result['status']}, {result['count']} 条")
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success" if result["status"] != "error" else "error", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success" if result["status"] != "error" else "error", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
             )
         except Exception as e:
             import traceback
@@ -2665,9 +2712,9 @@ def main():
             print(f"[Scheduler] {job_name}失败: {e}")
             traceback.print_exc()
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
     async def scheduled_review_gen():
@@ -2682,13 +2729,26 @@ def main():
             yesterday = (date.today() - timedelta(days=1)).isoformat()
             results = await content_agent.batch_gen_review(ctx, target_date=yesterday)
             success_count = sum(1 for r in results if r.get("saved"))
+            mgr_list = []
+            for r in results:
+                mgr_list.append({
+                    "manager_id": r.get("manager_id", ""),
+                    "saved": r.get("saved", False),
+                    "error": r.get("error", ""),
+                })
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
             summary = f"已为 {success_count}/{len(results)} 位经理生成昨日回顾"
+            detail = json.dumps({
+                "date": yesterday,
+                "success_count": success_count,
+                "total_count": len(results),
+                "managers": mgr_list,
+            }, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {summary}")
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
             )
         except Exception as e:
             import traceback
@@ -2696,9 +2756,9 @@ def main():
             print(f"[Scheduler] {job_name}失败: {e}")
             traceback.print_exc()
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
     async def scheduled_digest_gen():
@@ -2711,14 +2771,20 @@ def main():
         try:
             ctx = AgentContext(scope="scheduled")
             result = await content_agent.gen_digest(ctx)
-            headline_count = len(result.get("headlines", []))
+            headlines = result.get("headlines", [])
+            headline_count = len(headlines)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
             summary = f"提炼 {headline_count} 条要闻"
+            detail = json.dumps({
+                "date": TODAY.isoformat(),
+                "headline_count": headline_count,
+                "headlines": headlines,
+            }, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {summary}")
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
             )
         except Exception as e:
             import traceback
@@ -2726,9 +2792,9 @@ def main():
             print(f"[Scheduler] {job_name}失败: {e}")
             traceback.print_exc()
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
     # ================================================================
@@ -2750,12 +2816,18 @@ def main():
         try:
             result = await h.invoke("customer_insight", "batch_generate_all", ctx)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            result_dict = result if isinstance(result, dict) else {}
             summary = f"批量洞察完成" if isinstance(result, dict) else str(result)
+            detail = json.dumps({
+                "date": TODAY.isoformat(),
+                "generated_count": result_dict.get("generated", result_dict.get("count", 0)),
+                "customers": result_dict.get("customers", []),
+            }, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {result}")
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success", summary, "", started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
             )
         except Exception as e:
             import traceback
@@ -2763,9 +2835,9 @@ def main():
             print(f"[Scheduler] {job_name}失败: {e}")
             traceback.print_exc()
             await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "error", "", str(e), started_at, datetime.now().isoformat(), duration_ms)
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
     @app.on_event("startup")

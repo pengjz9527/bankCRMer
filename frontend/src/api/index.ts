@@ -57,6 +57,12 @@ export const api = {
   getOpportunities(managerId: string) {
     return this.get(`/api/opportunities?manager_id=${managerId}`)
   },
+  getOpportunityDetail(oppId: string) {
+    return this.get(`/api/opportunity/${oppId}`)
+  },
+  updateOpportunityStatus(oppId: string, status: string) {
+    return this.put(`/api/opportunity/${oppId}/status`, { status })
+  },
 
   /* ── 客户 ── */
   getCustomers(managerId: string, size = 50) {
@@ -115,6 +121,16 @@ export const api = {
     return this.get('/api/activities')
   },
 
+  /* ── 昨日回顾 ── */
+  getDailyReview(managerId: string) {
+    return this.get(`/api/daily-review?manager_id=${managerId}`)
+  },
+
+  /* ── 资讯摘要 ── */
+  getDailyDigest() {
+    return this.get('/api/daily-digest')
+  },
+
   /* ── 客户洞察 ── */
   getCustomerInsights(managerId: string) {
     return this.get(`/api/customer-insights?manager_id=${managerId}`)
@@ -141,10 +157,12 @@ export const api = {
   },
 
   /* ── 作战包 ── */
-  getBattlePackages(params?: { cust_id?: number; opp_id?: string }) {
+  getBattlePackages(params?: { cust_id?: number; opp_id?: string; task_id?: string; status?: string }) {
     const parts: string[] = []
     if (params?.cust_id) parts.push(`cust_id=${params.cust_id}`)
     if (params?.opp_id) parts.push(`opp_id=${params.opp_id}`)
+    if (params?.task_id) parts.push(`task_id=${params.task_id}`)
+    if (params?.status) parts.push(`status=${params.status}`)
     const q = parts.length > 0 ? `?${parts.join('&')}` : ''
     return this.get(`/api/battle-packages${q}`)
   },
@@ -154,14 +172,21 @@ export const api = {
   getBattlePackageClues(bpid: string) {
     return this.get(`/api/battle-packages/${bpid}/clues`)
   },
+  getLinkedBattlePackages(oppIds: string[]) {
+    return this.get(`/api/battle-packages/linked?opp_ids=${oppIds.join(',')}`)
+  },
   useBattlePackage(bpid: string, body: Record<string, any>) {
     return this.post(`/api/battle-packages/${bpid}/use`, body)
   },
   generateBattlePackage(body: {
     cust_id: string | number
     mode: string
-    opp_id?: string
-    opportunity_info?: Record<string, any>
+    visit_context?: {
+      task_id?: string
+      opp_ids?: string[]
+      care_items?: { type_code: string; type_name: string; summary: string }[]
+    }
+    force?: boolean
   }) {
     return this.post('/api/ai/battle-package/generate', body)
   },
@@ -192,6 +217,14 @@ export const api = {
   }) {
     return this.post(`/api/schedule/${date}/process-task`, body)
   },
+  confirmCompleteScheduleTask(date: string, body: {
+    manager_id: string
+    task_id: string
+    cust_id: number
+    cust_name: string
+  }) {
+    return this.post(`/api/schedule/${date}/confirm-complete`, body)
+  },
   returnTaskToPool(date: string, body: { manager_id: string; task_id: string }) {
     return this.post(`/api/schedule/${date}/return-to-pool`, body)
   },
@@ -209,20 +242,101 @@ export const api = {
   aiMineStream(managerId: string) {
     return sseRequest('/api/ai/opportunity/mining/stream', { manager_id: managerId })
   },
-  aiGetOpportunityList(managerId: string) {
-    return this.get(`/api/ai/opportunity/list?manager_id=${managerId}`)
+  aiGetOpportunityList(managerId?: string, custId?: number) {
+    const params = new URLSearchParams()
+    if (managerId) params.set('manager_id', managerId)
+    if (custId) params.set('cust_id', String(custId))
+    return this.get(`/api/ai/opportunity/list?${params.toString()}`)
   },
-  aiGenerateBattlePackage(customerId: string, mode: string) {
-    return this.post('/api/ai/battle-package/generate', { customer_id: customerId, mode })
+  aiGenerateBattlePackage(customerId: string | number, visitContext?: {
+    task_id?: string
+    opp_ids?: string[]
+    care_items?: { type_code: string; type_name: string; summary: string }[]
+  }) {
+    return this.post('/api/ai/battle-package/generate', {
+      cust_id: customerId,
+      mode: '标准版',
+      visit_context: visitContext,
+    })
   },
-  aiBattlePackageStream(customerId: string, mode: string) {
-    return sseRequest('/api/ai/battle-package/generate/stream', { customer_id: customerId, mode })
+  aiBattlePackageStream(customerId: string | number, visitContext?: Record<string, any>) {
+    return sseRequest('/api/ai/battle-package/generate/stream', {
+      cust_id: customerId,
+      mode: '标准版',
+      visit_context: visitContext,
+    })
   },
   aiGenerateCustomerInsight(customerId: string) {
     return this.post('/api/ai/customer-insight/generate', { customer_id: customerId })
   },
   aiQaAsk(question: string, managerId: string) {
     return this.post('/api/ai/qa/ask', { question, manager_id: managerId })
+  },
+
+  /* ── 面谈口述转写 ── */
+  async aiTranscribeDictation(audioBlob: Blob, managerId: string, opts?: {
+    custName?: string
+    custId?: string | number
+    bpId?: string
+    oppId?: string
+    meetingId?: number
+  }) {
+    const formData = new FormData()
+    formData.append('audio', audioBlob, 'dictation.webm')
+    formData.append('manager_id', managerId)
+    if (opts?.custName) formData.append('cust_name', opts.custName)
+    if (opts?.custId) formData.append('cust_id', String(opts.custId))
+    if (opts?.bpId) formData.append('bp_id', opts.bpId)
+    if (opts?.oppId) formData.append('opp_id', opts.oppId)
+    if (opts?.meetingId) formData.append('meeting_id', String(opts.meetingId))
+    const url = API_BASE + '/api/ai/dictation/transcribe'
+    const res = await fetch(url, { method: 'POST', body: formData })
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`)
+    return res.json()
+  },
+
+  /* ── 面谈记录查询 ── */
+  getMeetingRecords(params?: {
+    manager_id?: string
+    cust_name?: string
+    cust_id?: number
+    status?: string
+    page?: number
+    page_size?: number
+  }) {
+    const q = new URLSearchParams()
+    if (params?.manager_id) q.set('manager_id', params.manager_id)
+    if (params?.cust_name) q.set('cust_name', params.cust_name)
+    if (params?.cust_id) q.set('cust_id', String(params.cust_id))
+    if (params?.status) q.set('status', params.status)
+    if (params?.page) q.set('page', String(params.page))
+    if (params?.page_size) q.set('page_size', String(params.page_size))
+    const qs = q.toString()
+    return this.get(`/api/meeting/records${qs ? '?' + qs : ''}`)
+  },
+  getMeetingRecordDetail(id: number) {
+    return this.get(`/api/meeting/records/${id}`)
+  },
+  createMeetingRecord(opts: {
+    manager_id?: string
+    cust_name?: string
+    cust_id?: string | number
+    bp_id?: string
+    opp_id?: string
+  }) {
+    const formData = new FormData()
+    if (opts.manager_id) formData.append('manager_id', opts.manager_id)
+    if (opts.cust_name) formData.append('cust_name', opts.cust_name)
+    if (opts.cust_id) formData.append('cust_id', String(opts.cust_id))
+    if (opts.bp_id) formData.append('bp_id', opts.bp_id)
+    if (opts.opp_id) formData.append('opp_id', opts.opp_id)
+    const url = API_BASE + '/api/meeting/records'
+    return fetch(url, { method: 'POST', body: formData }).then(r => r.json())
+  },
+
+  /* ── AI 对话路由 (RouterAgent) — 统一对话入口 ── */
+  aiChat(question: string, managerId: string, channel = 'home', history: any[] = []) {
+    return this.post('/api/ai/chat', { question, manager_id: managerId, channel, history })
   },
 }
 

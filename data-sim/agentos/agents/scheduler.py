@@ -179,6 +179,103 @@ WORK_TYPE_CATALOG: dict[str, WorkTypeCatalog] = {
         contact_methods=["phone"],
         is_customer_facing=True, grouping_supported=False, photo_required=False,
     ),
+    # 新增商机子类型（信号挖掘产出）
+    "opp_overdue": WorkTypeCatalog(
+        type_code="opp_overdue", type_name="贷后管理",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=70,
+        contact_methods=["phone"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_big_move": WorkTypeCatalog(
+        type_code="opp_big_move", type_name="资金异动",
+        per_customer_minutes=20,
+        recommended_slots=["morning"],
+        priority_level="P1", priority_weight=70,
+        contact_methods=["phone"],
+        is_customer_facing=True, grouping_supported=False, photo_required=False,
+    ),
+    "opp_lapse": WorkTypeCatalog(
+        type_code="opp_lapse", type_name="关系维护",
+        per_customer_minutes=15,
+        recommended_slots=["afternoon"],
+        priority_level="P2", priority_weight=50,
+        contact_methods=["phone", "wechat"],
+        is_customer_facing=True, grouping_supported=False, photo_required=False,
+    ),
+    "opp_idle": WorkTypeCatalog(
+        type_code="opp_idle", type_name="资金效率",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=65,
+        contact_methods=["phone", "visit"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_wealth": WorkTypeCatalog(
+        type_code="opp_wealth", type_name="理财推荐",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P2", priority_weight=55,
+        contact_methods=["phone", "wechat"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_loan": WorkTypeCatalog(
+        type_code="opp_loan", type_name="信贷推荐",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P2", priority_weight=55,
+        contact_methods=["phone"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_insure": WorkTypeCatalog(
+        type_code="opp_insure", type_name="保险推荐",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P2", priority_weight=60,
+        contact_methods=["phone", "visit"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_rebalance": WorkTypeCatalog(
+        type_code="opp_rebalance", type_name="调仓建议",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=70,
+        contact_methods=["phone", "wechat"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_insight": WorkTypeCatalog(
+        type_code="opp_insight", type_name="综合跟进",
+        per_customer_minutes=25,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=75,
+        contact_methods=["phone", "wechat", "visit"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "opp_risk": WorkTypeCatalog(
+        type_code="opp_risk", type_name="风险干预",
+        per_customer_minutes=20,
+        recommended_slots=["morning"],
+        priority_level="P0", priority_weight=85,
+        contact_methods=["phone", "visit"],
+        is_customer_facing=True, grouping_supported=False, photo_required=False,
+    ),
+    "opp_plan": WorkTypeCatalog(
+        type_code="opp_plan", type_name="综合规划",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=70,
+        contact_methods=["phone", "wechat", "visit"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
+    "customer_synthesis": WorkTypeCatalog(
+        type_code="customer_synthesis", type_name="客户综合待办",
+        per_customer_minutes=30,
+        recommended_slots=["morning", "afternoon"],
+        priority_level="P1", priority_weight=75,
+        contact_methods=["phone", "wechat", "visit"],
+        is_customer_facing=True, grouping_supported=False, photo_required=True,
+    ),
     # ======== 非触客型工作（2 类）========
     "report": WorkTypeCatalog(
         type_code="report", type_name="报告编写",
@@ -225,39 +322,37 @@ WORK_TYPE_CATALOG: dict[str, WorkTypeCatalog] = {
 
 
 # ============================================================
-# 三卡片分组映射
+# 二卡片分组映射
 # ============================================================
 
-# 任务类型 → 卡片类型映射
+# 任务类型 → 卡片类型映射（统一为客户待办+工作待办两组）
 CARD_GROUP_MAP: dict[str, str] = {
-    # 客户待办
+    # 客户待办（含原商机待办：opp/opp_* 类型归入客户维度）
     "due": "customer", "big_move": "customer", "overdue": "customer",
     "birthday": "customer", "contact_lapse": "customer", "credit_card": "customer",
     "post_meeting": "customer", "insight_alert": "customer",
-    # 商机待办（通用 + 5 类规则匹配子类型）
-    "opp": "opportunity",
-    "opp_due": "opportunity", "opp_salary": "opportunity",
-    "opp_fund": "opportunity", "opp_decline": "opportunity",
-    "opp_big_aum": "opportunity",
+    "opp": "customer",
+    "opp_due": "customer", "opp_salary": "customer",
+    "opp_fund": "customer", "opp_decline": "customer",
+    "opp_big_aum": "customer",
+    "customer_synthesis": "customer",
     # 工作待办
     "morning_meeting": "work", "evening_meeting": "work",
     "report": "work", "report_review": "work", "meeting": "work",
 }
 
-# 卡片容量上限
+# 卡片容量上限（按客户数/任务数）
 CARD_CAPACITY: dict[str, int] = {
-    "customer": 10,
-    "opportunity": 4,
-    "work": 4,  # 早晚会固定占 2，其他工作 ≤ 2
+    "customer": 7,   # 客户待办（一个客户一条综合待办）
+    "work": 4,       # 早晚会固定占 2，其他工作 ≤ 2
 }
 
-# 客户待办卡片上下午分时上限
-CUSTOMER_MORNING_MAX = 5
+# 客户待办卡片上下午分时上限（按客户数）
+CUSTOMER_MORNING_MAX = 7
 CUSTOMER_AFTERNOON_MAX = 5
 
 CARD_NAMES: dict[str, str] = {
     "customer": "客户待办",
-    "opportunity": "商机待办",
     "work": "工作待办",
 }
 
@@ -285,19 +380,21 @@ class ScheduleTask:
     estimated_duration_min: int = 0  # 预估总耗时（分钟）
     contact_methods: list = field(default_factory=list)
     is_customer_facing: bool = True
-    is_opportunity_task: bool = False
     assigned_slot: str = ""      # "morning" / "afternoon"
     order_in_slot: int = 0       # 在时段内的序号
     priority_weight: int = 30
     customer_ids: list = field(default_factory=list)  # 子客户 ID 列表
     customer_names: list = field(default_factory=list)  # 子客户名称列表
     status: str = "pending"      # pending / adjusted / completed / skipped
+    completed_at: str = ""       # ISO 时间戳，标记完成时记录
     # 7 日排程扩展字段
     deadline_date: str = ""      # 最晚处理日期 "2026-07-20"
     pinned_date: str = ""        # 固定排程日期（不可移动），空串表示可移动
     effective_weight: int = 0    # 动态计算的有效权重（priority_weight + urgency_boost）
     contact_prefer: str = "不限定"  # 客户联系时段偏好：上午优先/下午优先/不限定
     opp_id: str = ""               # 关联的商机 ID（来源于 opportunities 表）
+    sub_items: list = field(default_factory=list)   # 子事件列表 [{type_code, type_name, summary, priority_weight}]
+    opp_ids: list = field(default_factory=list)     # 关联的所有商机 ID 列表
 
     def to_dict(self) -> dict:
         return {
@@ -311,29 +408,31 @@ class ScheduleTask:
             "estimated_duration_min": self.estimated_duration_min,
             "contact_methods": self.contact_methods,
             "is_customer_facing": self.is_customer_facing,
-            "is_opportunity_task": self.is_opportunity_task,
             "assigned_slot": self.assigned_slot,
             "order_in_slot": self.order_in_slot,
             "priority_weight": self.priority_weight,
             "customer_ids": self.customer_ids,
             "customer_names": self.customer_names,
             "status": self.status,
+            "completed_at": self.completed_at,
             "deadline_date": self.deadline_date,
             "pinned_date": self.pinned_date,
             "contact_prefer": self.contact_prefer,
             "opp_id": self.opp_id,
+            "sub_items": self.sub_items,
+            "opp_ids": self.opp_ids,
         }
 
 
 # ============================================================
-# 三卡片数据类
+# 二卡片数据类
 # ============================================================
 
 @dataclass
 class ScheduleCard:
-    """日程卡片 — 客户待办 / 商机待办 / 工作待办"""
-    card_type: str               # "customer" | "opportunity" | "work"
-    card_name: str               # "客户待办" | "商机待办" | "工作待办"
+    """日程卡片 — 客户待办 / 工作待办"""
+    card_type: str               # "customer" | "work"
+    card_name: str               # "客户待办" | "工作待办"
     morning: list = field(default_factory=list)    # 上午任务列表
     afternoon: list = field(default_factory=list)  # 下午任务列表
 
@@ -345,8 +444,8 @@ class ScheduleCard:
 
     @property
     def max_capacity(self) -> int:
-        caps = {"customer": 10, "opportunity": 4, "work": 4}
-        return caps.get(self.card_type, 10)
+        caps = {"customer": 7, "work": 4}
+        return caps.get(self.card_type, 7)
 
     def to_dict(self) -> dict:
         return {
@@ -365,7 +464,7 @@ class ScheduleCard:
 
 @dataclass
 class DailySchedule:
-    """日排程 — 某一天的完整工作日程（三卡片结构）"""
+    """日排程 — 某一天的完整工作日程（二卡片结构）"""
     date: str                    # "2026-07-18"
     manager_id: str
     cards: list = field(default_factory=list)       # [ScheduleCard]
@@ -434,8 +533,6 @@ class WeeklyPlan:
 SLOT_MORNING = "morning"
 SLOT_AFTERNOON = "afternoon"
 
-# 跨卡片约束：商机 + 工作 ≤ 6
-MAX_OPP_PLUS_WORK = 6
 
 
 # ============================================================
@@ -487,7 +584,7 @@ class SchedulerAgent(Agent):
         schedule_date: str = None,
     ) -> DailySchedule:
         """
-        规则引擎生成当日日程（三卡片结构）
+        规则引擎生成当日日程（二卡片结构）
 
         Args:
             tasks: 待办列表 [{task_id, type, cust_id, cust_name, summary, cust_count, ...}]
@@ -495,7 +592,7 @@ class SchedulerAgent(Agent):
             schedule_date: 排程日期
 
         Returns:
-            DailySchedule 排程结果（含三卡片 + deferred_tasks）
+            DailySchedule 排程结果（含二卡片 + deferred_tasks）
         """
         sd = schedule_date or date.today().isoformat()
 
@@ -508,7 +605,7 @@ class SchedulerAgent(Agent):
         # Step 3: 按优先级排序
         schedule_tasks.sort(key=lambda t: (-t.priority_weight, -t.estimated_duration_min))
 
-        # Step 4: 按三卡片分组
+        # Step 4: 按二卡片分组
         grouped = self._group_into_cards(schedule_tasks)
 
         # Step 5: 容量截断 + 溢出推迟（内部已含时段分配，见 _apply_card_capacity L714）
@@ -530,7 +627,7 @@ class SchedulerAgent(Agent):
         )
 
     def _classify_tasks(self, tasks: list[dict]) -> list[ScheduleTask]:
-        """将原始待办按工作分类目录归类，计算耗时"""
+        """将原始待办按工作分类目录归类，计算耗时（customer_synthesis 按子事件数计算时长）"""
         result = []
         for t in tasks:
             task_type = t.get("type", "")
@@ -541,6 +638,8 @@ class SchedulerAgent(Agent):
             # 提取 deadline 和 pinned 信息
             deadline = t.get("deadline_date", "")
             pinned = t.get("pinned_date", "")
+            sub_items = t.get("sub_items", [])
+            opp_ids = t.get("opp_ids", [])
 
             if not wtype:
                 log.warning(f"Unknown task type: {task_type}, using defaults")
@@ -561,10 +660,15 @@ class SchedulerAgent(Agent):
                     pinned_date=pinned,
                     contact_prefer=t.get("contact_prefer", "不限定"),
                     opp_id=t.get("opp_id", ""),
+                    sub_items=sub_items,
+                    opp_ids=opp_ids,
                 )
             else:
                 cust_count = t.get("cust_count", 1)
-                if wtype.is_customer_facing:
+                # customer_synthesis: 按子事件数计算时长（基础 20min + 每个子事件 10min）
+                if type_code == "customer_synthesis" and sub_items:
+                    duration = 20 + len(sub_items) * 10
+                elif wtype.is_customer_facing:
                     duration = wtype.per_customer_minutes * cust_count
                 else:
                     duration = wtype.per_customer_minutes
@@ -580,7 +684,6 @@ class SchedulerAgent(Agent):
                     estimated_duration_min=duration,
                     contact_methods=wtype.contact_methods,
                     is_customer_facing=wtype.is_customer_facing,
-                    is_opportunity_task=(type_code == "opp" or type_code.startswith("opp_")),
                     priority_weight=t.get("priority_weight", wtype.priority_weight),
                     customer_ids=t.get("customer_ids", [t.get("cust_id", 0)]),
                     customer_names=t.get("customer_names", [t.get("cust_name", "")]),
@@ -588,6 +691,8 @@ class SchedulerAgent(Agent):
                     pinned_date=pinned,
                     contact_prefer=t.get("contact_prefer", "不限定"),
                     opp_id=t.get("opp_id", ""),
+                    sub_items=sub_items,
+                    opp_ids=opp_ids,
                 )
 
             result.append(st)
@@ -596,6 +701,7 @@ class SchedulerAgent(Agent):
     def _map_type_to_code(self, type_name: str) -> str:
         """将中文类型名映射为 type_code"""
         mapping = {
+            "客户综合待办": "customer_synthesis",
             "产品到期": "due",
             "大额异动": "big_move",
             "贷款逾期": "overdue",
@@ -643,7 +749,6 @@ class SchedulerAgent(Agent):
                 estimated_duration_min=wtype.per_customer_minutes,
                 contact_methods=[],
                 is_customer_facing=False,
-                is_opportunity_task=False,
                 assigned_slot=ft.get("assigned_slot", ""),
                 priority_weight=wtype.priority_weight,
                 deadline_date=schedule_date,
@@ -653,16 +758,15 @@ class SchedulerAgent(Agent):
         return result
 
     # ================================================================
-    # 三卡片分组
+    # 二卡片分组
     # ================================================================
 
     def _group_into_cards(
         self, tasks: list[ScheduleTask]
     ) -> dict[str, list[ScheduleTask]]:
-        """将任务按三卡片类型分组"""
+        """将任务按二卡片类型分组（客户待办 / 工作待办）"""
         grouped: dict[str, list[ScheduleTask]] = {
             "customer": [],
-            "opportunity": [],
             "work": [],
         }
         for t in tasks:
@@ -684,10 +788,8 @@ class SchedulerAgent(Agent):
         按卡片容量上限截断，溢出任务标记为 deferred。
 
         规则：
-        - customer ≤ 10
-        - opportunity ≤ 4
+        - customer ≤ 7（按客户数，上午 ≤ 4，下午 ≤ 3）
         - work: 早会(上午固定) + 晚会(下午固定) + 其他 ≤ 2
-        - opportunity + work ≤ 6
         """
         deferred: list[ScheduleTask] = []
 
@@ -705,42 +807,17 @@ class SchedulerAgent(Agent):
 
         kept_work = fixed_work + kept_optional
 
-        # 2. 处理客户待办：≤ 10
+        # 2. 处理客户待办：≤ 7
         cust_tasks = grouped.get("customer", [])
         cust_tasks.sort(key=lambda t: -t.priority_weight)
         kept_cust = cust_tasks[:CARD_CAPACITY["customer"]]
         deferred.extend(cust_tasks[CARD_CAPACITY["customer"]:])
 
-        # 3. 处理商机待办：≤ 4
-        opp_tasks = grouped.get("opportunity", [])
-        opp_tasks.sort(key=lambda t: -t.priority_weight)
-        kept_opp = opp_tasks[:CARD_CAPACITY["opportunity"]]
-        deferred.extend(opp_tasks[CARD_CAPACITY["opportunity"]:])
-
-        # 4. 跨卡片约束：opportunity + work ≤ 6
-        if len(kept_opp) + len(kept_work) > MAX_OPP_PLUS_WORK:
-            # 从 work 的非固定任务中移除
-            excess = (len(kept_opp) + len(kept_work)) - MAX_OPP_PLUS_WORK
-            removable = [t for t in kept_work
-                         if t.type_code not in ("morning_meeting", "evening_meeting")]
-            # 从低权重开始移除
-            removable.sort(key=lambda t: t.priority_weight)
-            to_defer = removable[:excess]
-            for t in to_defer:
-                kept_work.remove(t)
-                deferred.append(t)
-
-        # 5. 构建三卡片
+        # 3. 构建二卡片
         cards = [
             ScheduleCard(
                 card_type="customer",
                 card_name=CARD_NAMES["customer"],
-                morning=[],
-                afternoon=[],
-            ),
-            ScheduleCard(
-                card_type="opportunity",
-                card_name=CARD_NAMES["opportunity"],
                 morning=[],
                 afternoon=[],
             ),
@@ -752,24 +829,19 @@ class SchedulerAgent(Agent):
             ),
         ]
 
-        # 将 kept 任务分配到卡片中（此处只创建卡片，时段在 _allocate_slots 中分配）
-        # 实际上 _allocate_slots 在 _group_into_cards 之后调用，所以这里返回的是
-        # 容量内的任务列表，外面会再次调用 _allocate_slots 分配时段
-        # 这里直接构建带时段的卡片
         kept_all = {
             "customer": kept_cust,
-            "opportunity": kept_opp,
             "work": kept_work,
         }
 
-        # 对每组重新分配时段
+        # 对每组分配时段
         for card in cards:
             ct = card.card_type
             slot_result = self._allocate_slots(kept_all.get(ct, []))
             card.morning = slot_result["morning"]
             card.afternoon = slot_result["afternoon"]
 
-            # 客户待办卡片：上下午分时容量约束（上午 ≤ 5，下午 ≤ 5）
+            # 客户待办卡片：上下午分时容量约束（上午 ≤ 7，下午 ≤ 7）
             if ct == "customer":
                 for slot_name, slot_max in [("morning", CUSTOMER_MORNING_MAX),
                                             ("afternoon", CUSTOMER_AFTERNOON_MAX)]:
@@ -839,8 +911,13 @@ class SchedulerAgent(Agent):
                     afternoon.append(t)
                     cust_prefer_slot[t.cust_id] = "afternoon"
                 else:
-                    t.assigned_slot = "morning"
-                    morning.append(t)
+                    # 上下午均衡：交替分配到上午和下午
+                    if len(morning) <= len(afternoon):
+                        t.assigned_slot = "morning"
+                        morning.append(t)
+                    else:
+                        t.assigned_slot = "afternoon"
+                        afternoon.append(t)
             elif "morning" in slots:
                 t.assigned_slot = "morning"
                 morning.append(t)
@@ -980,7 +1057,8 @@ class SchedulerAgent(Agent):
                   "summary": t.summary, "cust_count": t.cust_count,
                   "priority_weight": t.priority_weight,
                   "deadline_date": t.deadline_date, "pinned_date": t.pinned_date,
-                  "customer_ids": t.customer_ids, "customer_names": t.customer_names}
+                  "customer_ids": t.customer_ids, "customer_names": t.customer_names,
+                  "sub_items": t.sub_items, "opp_ids": t.opp_ids}
                  for t in day_tasks],
                 manager_id=manager_id,
                 schedule_date=day_date,
@@ -1025,7 +1103,7 @@ class SchedulerAgent(Agent):
         """
         log.info(f"ai_refine_schedule: date={base_schedule.date}")
 
-        # 收集所有任务涉及的客户 ID（从三卡片中收集）
+        # 收集所有任务涉及的客户 ID（从二卡片中收集）
         all_tasks = []
         for card in base_schedule.cards:
             all_tasks.extend(card.morning)
@@ -1068,7 +1146,7 @@ class SchedulerAgent(Agent):
     def _build_refine_prompt(
         self, schedule: DailySchedule, customer_summaries: list[dict]
     ) -> str:
-        """构建 LLM 微调的 user prompt（三卡片结构）"""
+        """构建 LLM 微调的 user prompt（二卡片结构）"""
         tasks_json = []
         for card in schedule.cards:
             for t in card.morning + card.afternoon:
@@ -1087,7 +1165,7 @@ class SchedulerAgent(Agent):
 
 **当前日期**：{schedule.date}
 **生成来源**：规则引擎自动排程
-**卡片结构**：客户待办、商机待办、工作待办（仅分上下午，不精确到小时）
+**卡片结构**：客户待办、工作待办（仅分上下午，不精确到小时）
 **总计**：{schedule.total_minutes} 分钟
 
 **当前排程**：
@@ -1103,7 +1181,7 @@ class SchedulerAgent(Agent):
 **调整建议方向**（仅当有明确依据时才调整）：
 1. 同一客户有多个待办时，合并到同一时段处理
 2. 高 AUM 客户的待办可适度提前
-3. 商机待办优先安排在客户方便的时间
+3. 客户综合待办优先安排在客户方便的时间
 4. 长任务（≥60min）尽量不连续排布
 
 请输出调整后的排程（JSON 格式），如果不需要调整，返回空 changes 数组。
@@ -1119,7 +1197,7 @@ class SchedulerAgent(Agent):
     def _parse_refine_result(
         self, result: dict, base_schedule: DailySchedule
     ) -> DailySchedule:
-        """解析 LLM 微调结果，应用到基准日程（三卡片结构）"""
+        """解析 LLM 微调结果，应用到基准日程（二卡片结构）"""
         if not result.get("has_changes") or not result.get("changes"):
             return base_schedule
 
@@ -1192,6 +1270,7 @@ class SchedulerAgent(Agent):
             for t in card.morning + card.afternoon:
                 if t.task_id == task_id:
                     t.status = "completed"
+                    t.completed_at = datetime.now().isoformat()
                     log.info(f"Task completed: {task_id} in card {card.card_type}")
                     return True
         return False
@@ -1259,16 +1338,7 @@ class SchedulerAgent(Agent):
             if len(slot_tasks) >= slot_max:
                 return False, f"{target_card.card_name}{slot_label}已达上限({slot_max})，无法添加"
 
-        # 4. 跨卡片约束校验
-        if card_type in ("opportunity", "work"):
-            opp_card = next((c for c in schedule.cards if c.card_type == "opportunity"), None)
-            work_card = next((c for c in schedule.cards if c.card_type == "work"), None)
-            opp_count = opp_card.total_count if opp_card else 0
-            work_count = work_card.total_count if work_card else 0
-            if opp_count + work_count + 1 > MAX_OPP_PLUS_WORK:
-                return False, f"商机待办+工作待办已达上限({MAX_OPP_PLUS_WORK})，无法添加"
-
-        # 5. 添加到卡片
+        # 4. 添加到卡片
         target_task.status = "pending"
         if target_task.assigned_slot == "morning":
             target_card.morning.append(target_task)
@@ -1358,11 +1428,11 @@ class SchedulerAgent(Agent):
     # ================================================================
 
     def save_schedule(self, schedule: DailySchedule, db) -> bool:
-        """将日排程保存到数据库（三卡片结构）"""
+        """将日排程保存到数据库（二卡片结构）"""
         cur = db.cursor()
         now = datetime.now().isoformat()
 
-        # 序列化三卡片
+        # 序列化二卡片
         cards_json = json.dumps([c.to_dict() for c in schedule.cards], ensure_ascii=False)
         deferred_json = json.dumps(
             [t.to_dict() for t in schedule.deferred_tasks], ensure_ascii=False
@@ -1390,7 +1460,7 @@ class SchedulerAgent(Agent):
         return True
 
     def load_schedule(self, manager_id: str, schedule_date: str, db) -> Optional[DailySchedule]:
-        """从数据库加载日排程（三卡片结构）"""
+        """从数据库加载日排程（二卡片结构）"""
         cur = db.cursor()
         row = cur.execute(
             """SELECT * FROM daily_schedules
@@ -1451,13 +1521,13 @@ class SchedulerAgent(Agent):
     def _parse_legacy_schedule(
         self, morning_json: str, afternoon_json: str
     ) -> list[ScheduleCard]:
-        """兼容旧格式：将旧版 morning/afternoon 任务数组转为三卡片"""
+        """兼容旧格式：将旧版 morning/afternoon 任务数组转为二卡片"""
         morning_tasks = self._parse_tasks_from_json(morning_json)
         afternoon_tasks = self._parse_tasks_from_json(afternoon_json)
         all_tasks = morning_tasks + afternoon_tasks
 
         # 按类型分组
-        grouped: dict[str, list] = {"customer": [], "opportunity": [], "work": []}
+        grouped: dict[str, list] = {"customer": [], "work": []}
         for t in all_tasks:
             ct = CARD_GROUP_MAP.get(t.type_code, "customer")
             if ct in grouped:
@@ -1466,7 +1536,7 @@ class SchedulerAgent(Agent):
                 grouped["customer"].append(t)
 
         cards = []
-        for ct in ["customer", "opportunity", "work"]:
+        for ct in ["customer", "work"]:
             tasks = grouped[ct]
             morning = [t for t in tasks if t.assigned_slot == "morning"]
             afternoon = [t for t in tasks if t.assigned_slot == "afternoon"]
@@ -1505,16 +1575,19 @@ class SchedulerAgent(Agent):
                 estimated_duration_min=t.get("estimated_duration_min", 0),
                 contact_methods=t.get("contact_methods", []),
                 is_customer_facing=t.get("is_customer_facing", True),
-                is_opportunity_task=t.get("is_opportunity_task", False),
                 assigned_slot=t.get("assigned_slot", ""),
                 order_in_slot=t.get("order_in_slot", 0),
                 priority_weight=t.get("priority_weight", 30),
                 customer_ids=t.get("customer_ids", []),
                 customer_names=t.get("customer_names", []),
                 status=t.get("status", "pending"),
+                completed_at=t.get("completed_at", ""),
                 deadline_date=t.get("deadline_date", ""),
                 pinned_date=t.get("pinned_date", ""),
                 contact_prefer=t.get("contact_prefer", "不限定"),
+                opp_id=t.get("opp_id", ""),
+                sub_items=t.get("sub_items", []),
+                opp_ids=t.get("opp_ids", []),
             )
             tasks.append(st)
         return tasks
@@ -1538,16 +1611,19 @@ class SchedulerAgent(Agent):
                     estimated_duration_min=t.get("estimated_duration_min", 0),
                     contact_methods=t.get("contact_methods", []),
                     is_customer_facing=t.get("is_customer_facing", True),
-                    is_opportunity_task=t.get("is_opportunity_task", False),
                     assigned_slot=t.get("assigned_slot", ""),
                     order_in_slot=t.get("order_in_slot", 0),
                     priority_weight=t.get("priority_weight", 30),
                     customer_ids=t.get("customer_ids", []),
                     customer_names=t.get("customer_names", []),
                     status=t.get("status", "pending"),
+                    completed_at=t.get("completed_at", ""),
                     deadline_date=t.get("deadline_date", ""),
                     pinned_date=t.get("pinned_date", ""),
                     contact_prefer=t.get("contact_prefer", "不限定"),
+                    opp_id=t.get("opp_id", ""),
+                    sub_items=t.get("sub_items", []),
+                    opp_ids=t.get("opp_ids", []),
                 )
                 tasks.append(st)
             return tasks
@@ -1603,7 +1679,7 @@ class SchedulerAgent(Agent):
                 else:
                     all_tasks = []
 
-                has_opp = any(t.get("type_code") == "opp" or (t.get("type_code") or "").startswith("opp_") or t.get("card_type") == "opportunity" for t in all_tasks)
+                has_opp = any(t.get("type_code") == "opp" or (t.get("type_code") or "").startswith("opp_") for t in all_tasks)
                 has_work = any(t.get("type_code") in ("report", "report_review", "morning_meeting", "evening_meeting")
                               or t.get("card_type") == "work" for t in all_tasks)
 

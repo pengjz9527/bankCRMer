@@ -2,7 +2,22 @@
   <div class="home-root">
   <div class="scroll-content">
     <!-- Block 1: AI 智能摘要 -->
-    <AiSummaryBanner :task-count="totalTaskCount" :total-hours="totalHours" />
+    <AiSummaryBanner :task-count="totalTaskCount" :total-hours="totalHours" :review-tips="reviewTips" />
+
+    <!-- Block 1.5: 资讯早报 -->
+    <div v-if="digestBriefing" class="digest-teaser" @click="$router.push('/digest')">
+      <div class="digest-teaser-header">
+        <span class="digest-teaser-icon">📰</span>
+        <span class="digest-teaser-title">资讯早报</span>
+        <span class="digest-teaser-more">查看全部 &gt;</span>
+      </div>
+      <div class="digest-teaser-briefing">{{ digestBriefing }}</div>
+      <div v-if="digestHeadlines.length > 0" class="digest-teaser-headlines">
+        <div v-for="(h, i) in digestHeadlines.slice(0, 2)" :key="i" class="digest-teaser-hl">
+          <span class="digest-teaser-dot"></span>{{ h.title }}
+        </div>
+      </div>
+    </div>
 
     <!-- Block 2: 今日日程 -->
     <div>
@@ -26,7 +41,6 @@
               @complete="onCompleteTask"
               @add-task="onAddTaskClick"
               @process-task="onProcessTask"
-              @opp-detail="onOppDetail"
             />
           </van-swipe-item>
         </van-swipe>
@@ -50,11 +64,18 @@
         </span>
         <span style="font-size:12px;color:var(--color-primary);cursor:pointer" @click="$router.push('/opportunity')">详情 ›</span>
       </div>
-      <OppBoardCard @ai-mine="onAiMine" />
+      <OppBoardCard />
     </div>
 
-    <!-- Block 4: 新客拓展 -->
-    <NewCustomerCard state="normal" />
+    <!-- Block 4: 商机挖掘 -->
+    <div>
+      <div class="section-header">
+        <span class="title">
+          <svg viewBox="0 0 24 24" class="ico ico--md"><use href="#ico-lightning" /></svg> 商机挖掘
+        </span>
+      </div>
+      <OppMiningCard @ai-mine="onAiMine" />
+    </div>
 
     <div class="bottom-spacer"></div>
   </div>
@@ -88,11 +109,15 @@
               class="pending-task"
             >
               <div class="pending-task-row">
-                <span class="task-type-tag" :class="getTypeTagClass(task.typeCode)">{{ task.typeName }}</span>
-                <span class="pending-task-text">
-                  <template v-if="task.custName">{{ task.custName }} · </template>
-                  {{ task.summary }}
-                </span>
+                <span class="task-cust-name">{{ task.custName || '-' }}</span>
+                <span
+                  v-for="(si, siIdx) in (task.subItems || []).slice(0, 2)"
+                  :key="siIdx"
+                  class="task-sub-tag"
+                  :class="getTypeTagClass(si.typeCode)"
+                >{{ si.typeName }}</span>
+                <span v-if="(task.subItems || []).length > 2" class="task-sub-more">+{{ task.subItems!.length - 2 }}</span>
+                <span class="pending-task-text">{{ task.summary }}</span>
               </div>
               <div class="pending-task-action">
                 <button
@@ -115,130 +140,6 @@
       </div>
     </div>
   </van-popup>
-
-  <!-- 客户待办处理面板 -->
-  <van-popup v-model:show="processPanelVisible" position="bottom" round teleport=".phone-frame" :style="{ height: '65vh' }">
-    <div class="process-panel">
-      <div class="process-panel-hd">
-        <span class="process-panel-title">处理面板</span>
-        <span class="process-panel-close" @click="closeProcessPanel">关闭</span>
-      </div>
-      <div class="process-panel-body" v-if="currentProcessTask">
-        <!-- 任务摘要 -->
-        <div class="process-task-summary">
-          <span class="task-type-tag" :class="getTypeTagClass(currentProcessTask.typeCode)">{{ currentProcessTask.typeName }}</span>
-          <span class="process-task-desc">{{ currentProcessTask.summary }}</span>
-        </div>
-
-        <div class="process-section-label">── 客户待办列表 ──</div>
-
-        <!-- 客户列表 -->
-        <div
-          v-for="pc in processCustomers"
-          :key="pc.custId"
-          class="process-customer-card"
-          :class="{ 'cust-processed': pc.processed }"
-        >
-          <div class="cust-info-row">
-            <span class="cust-dot" :class="pc.processed ? 'dot-done' : 'dot-pending'">{{ pc.processed ? '✓' : '○' }}</span>
-            <span class="cust-name">{{ pc.custName }}</span>
-            <template v-if="pc.info">
-              <span class="cust-meta">· {{ pc.info.gender }}</span>
-              <span class="cust-meta">· {{ pc.info.age }}岁</span>
-              <span class="cust-meta" v-if="pc.info.industry">· {{ pc.info.industry }}</span>
-            </template>
-            <span v-if="pc.infoLoading" class="cust-meta" style="color:#999">加载中...</span>
-          </div>
-          <div class="cust-detail-row" v-if="currentProcessTask">
-            {{ currentProcessTask.summary }}
-          </div>
-          <div class="cust-actions" v-if="!pc.processed">
-            <button
-              class="act-btn act-btn--phone"
-              :disabled="pc.actionLoading"
-              @click="onProcessCustomer(pc, '电话联系')"
-            >
-              {{ pc.actionLoading ? '处理中...' : '📞 电话' }}
-            </button>
-            <button
-              class="act-btn act-btn--wechat"
-              :disabled="pc.actionLoading"
-              @click="onProcessCustomer(pc, '微信联系')"
-            >
-              {{ pc.actionLoading ? '处理中...' : '✉️ 微信' }}
-            </button>
-            <button
-              class="act-btn act-btn--pool"
-              :disabled="pc.actionLoading"
-              @click="onReturnToPool"
-            >
-              ✓ 放入待办池
-            </button>
-            <button
-              class="act-btn act-btn--profile"
-              :disabled="pc.actionLoading"
-              @click="onViewProfile(pc.custId)"
-            >
-              🟣 画像
-            </button>
-          </div>
-          <div class="cust-done-hint" v-else>✓ 已处理</div>
-        </div>
-
-        <div class="process-all-done" v-if="allCustomersProcessed">
-          ✅ 全部客户已处理完成
-        </div>
-      </div>
-    </div>
-  </van-popup>
-
-  <!-- 商机待办详情面板 -->
-  <van-popup v-model:show="oppDetailVisible" position="bottom" round teleport=".phone-frame" :style="{ height: '65vh' }">
-    <div class="process-panel">
-      <div class="process-panel-hd">
-        <span class="process-panel-title">商机详情</span>
-        <span class="process-panel-close" @click="oppDetailVisible = false">关闭</span>
-      </div>
-      <div class="process-panel-body" v-if="currentOppTask">
-        <!-- 商机分组标题 -->
-        <div class="opp-group-header">
-          <span class="opp-group-icon">📥</span>
-          <span>{{ currentOppTask.typeName }} · 来源：系统推送</span>
-        </div>
-
-        <!-- 客户卡片 -->
-        <div
-          v-for="oc in oppCustomers"
-          :key="oc.custId"
-          class="opp-customer-card"
-        >
-          <div class="cust-info-row">
-            <span class="cust-name">{{ oc.custName }}</span>
-            <template v-if="oc.info">
-              <span class="cust-meta">· {{ oc.info.gender }}</span>
-              <span class="cust-meta">· {{ oc.info.age }}岁</span>
-              <span class="cust-meta" v-if="oc.info.industry">· {{ oc.info.industry }}</span>
-            </template>
-            <span v-if="oc.infoLoading" class="cust-meta" style="color:#999">加载中...</span>
-          </div>
-          <div class="cust-detail-row" v-if="currentOppTask">
-            {{ currentOppTask.summary }}
-          </div>
-          <div class="cust-actions">
-            <button class="act-btn act-btn--profile" @click="onViewProfile(oc.custId)">
-              查看画像
-            </button>
-            <button class="act-btn act-btn--battle" :disabled="bpGenerating" @click="onViewBattlePackage(oc.custId)">
-              {{ bpGenerating ? '生成中...' : '查看作战包' }}
-            </button>
-            <button class="act-btn act-btn--pool" @click="onOppReturnToPool">
-              放入待办池
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </van-popup>
   </div>
 </template>
 
@@ -255,8 +156,9 @@ import { api } from '../api'
 import AiSummaryBanner from '../components/business/AiSummaryBanner.vue'
 import ScheduleCard from '../components/business/ScheduleCard.vue'
 import OppBoardCard from '../components/business/OppBoardCard.vue'
-import NewCustomerCard from '../components/business/NewCustomerCard.vue'
+import OppMiningCard from '../components/business/OppMiningCard.vue'
 import FabButton from '../components/business/FabButton.vue'
+import SensitiveText from '../components/SensitiveText.vue'
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -276,7 +178,7 @@ const pendingPopupTitle = computed(() => {
     const count = scheduleStore.pendingTasks.filter(
       t => getTargetCardType(t.typeCode) === pendingFilterCardType.value
     ).length
-    const nameMap: Record<string, string> = { customer: '客户', opportunity: '商机', work: '工作' }
+    const nameMap: Record<string, string> = { customer: '客户', work: '工作' }
     return `${nameMap[pendingFilterCardType.value] || ''}待办 (${count})`
   }
   return `未安排待办 (${scheduleStore.pendingCount})`
@@ -284,7 +186,7 @@ const pendingPopupTitle = computed(() => {
 
 const scheduleCards = computed(() => scheduleStore.cards)
 
-// 总任务数（三卡片合计，用于 AI 摘要）
+// 总任务数（二卡片合计，用于 AI 摘要）
 const totalTaskCount = computed(() =>
   scheduleStore.cards.reduce((sum, c) => sum + c.totalCount, 0)
 )
@@ -323,14 +225,14 @@ const groupedPending = computed(() => {
     if (filter && targetCard !== filter) continue
     if (!groups[targetCard]) {
       const card = cardMap[targetCard]
-      const maxCap = card?.maxCapacity ?? (targetCard === 'opportunity' ? 4 : targetCard === 'work' ? 4 : 10)
+      const maxCap = card?.maxCapacity ?? (targetCard === 'work' ? 4 : 7)
       const total = card?.totalCount ?? 0
 
       // 上下午分时统计（仅客户待办有限制）
       const morningUsed = card ? card.morning.filter((t: TaskItem) => t.status !== 'completed').length : 0
       const afternoonUsed = card ? card.afternoon.filter((t: TaskItem) => t.status !== 'completed').length : 0
-      const morningMax = targetCard === 'customer' ? 5 : 99
-      const afternoonMax = targetCard === 'customer' ? 5 : 99
+      const morningMax = targetCard === 'customer' ? 4 : 99
+      const afternoonMax = targetCard === 'customer' ? 3 : 99
 
       // canAdd: 客户待办需同时满足总容量和分时容量
       let canAdd = false
@@ -342,7 +244,7 @@ const groupedPending = computed(() => {
 
       groups[targetCard] = {
         cardType: targetCard,
-        cardName: card?.cardName || (targetCard === 'customer' ? '客户待办' : targetCard === 'opportunity' ? '商机待办' : '工作待办'),
+        cardName: card?.cardName || (targetCard === 'customer' ? '客户待办' : '工作待办'),
         maxCapacity: maxCap,
         remaining: maxCap - total,
         canAdd,
@@ -364,11 +266,25 @@ function getTargetCardType(typeCode: string): string {
     due: 'customer', big_move: 'customer', overdue: 'customer',
     birthday: 'customer', contact_lapse: 'customer', credit_card: 'customer',
     post_meeting: 'customer', insight_alert: 'customer',
-    opp: 'opportunity',
+    opp: 'customer', customer_synthesis: 'customer',
     report: 'work', report_review: 'work',
     morning_meeting: 'work', evening_meeting: 'work',
   }
   return m[typeCode] || 'customer'
+}
+
+function priLabel(weight: number): string {
+  if (weight >= 80) return 'P0'
+  if (weight >= 60) return 'P1'
+  if (weight >= 40) return 'P2'
+  return 'P3'
+}
+
+function priClass(weight: number): string {
+  if (weight >= 80) return 'pri-p0'
+  if (weight >= 60) return 'pri-p1'
+  if (weight >= 40) return 'pri-p2'
+  return 'pri-p3'
 }
 
 function getTypeTagClass(typeCode: string): string {
@@ -422,236 +338,60 @@ async function onAddPendingTask(taskId: string, cardType: string) {
   }
 }
 
-// ======================== 客户处理面板 ========================
-interface ProcessCustomer {
-  custId: number
-  custName: string
-  info: Record<string, any> | null
-  infoLoading: boolean
-  processed: boolean
-  actionLoading: boolean
-}
+// ======================== 客户处理（路由跳转） ========================
 
-const processPanelVisible = ref(false)
-const currentProcessTaskId = ref('')
-const processCustomers = ref<ProcessCustomer[]>([])
-
-const currentProcessTask = computed<TaskItem | null>(() => {
-  if (!currentProcessTaskId.value) return null
-  return findTask(currentProcessTaskId.value)
-})
-
-const allCustomersProcessed = computed(() =>
-  processCustomers.value.length > 0 && processCustomers.value.every(c => c.processed)
-)
-
-function findTask(taskId: string): TaskItem | null {
-  for (const card of scheduleStore.cards) {
-    for (const t of [...card.morning, ...card.afternoon]) {
-      if (t.taskId === taskId) return t
-    }
-  }
-  return null
-}
-
-async function onProcessTask(taskId: string) {
-  const task = findTask(taskId)
-  if (!task) return
-
-  currentProcessTaskId.value = taskId
-
-  // 初始化客户列表
-  const ids = task.customerIds || []
-  const names = task.customerNames || []
-  processCustomers.value = ids.map((cid, i) => ({
-    custId: cid,
-    custName: names[i] || `客户${cid}`,
-    info: null,
-    infoLoading: true,
-    processed: false,
-    actionLoading: false,
-  }))
-
-  processPanelVisible.value = true
-
-  // 异步加载客户基本信息
-  for (const pc of processCustomers.value) {
-    try {
-      const res = await api.getCustomerBasic(String(pc.custId))
-      pc.info = res.data || {}
-    } catch {
-      pc.info = null
-    } finally {
-      pc.infoLoading = false
-    }
-  }
-}
-
-function closeProcessPanel() {
-  processPanelVisible.value = false
-  currentProcessTaskId.value = ''
-  processCustomers.value = []
-}
-
-async function onProcessCustomer(pc: ProcessCustomer, action: string) {
-  pc.actionLoading = true
-  const mgrId = managerStore.currentId
-  const taskId = currentProcessTaskId.value
-  const ok = await scheduleStore.processCustomerTask(mgrId, taskId, pc.custId, pc.custName, action)
-  if (ok) {
-    pc.processed = true
-    appStore.showToast(`已记录: ${action}`)
-
-    // 全部处理完 → 自动标记任务完成
-    if (allCustomersProcessed.value) {
-      await scheduleStore.completeTask(mgrId, taskId)
-      nextTick(() => {
-        setTimeout(() => closeProcessPanel(), 800)
-      })
-    }
-  } else {
-    appStore.showToast('操作失败，请重试')
-  }
-  pc.actionLoading = false
-}
-
-async function onReturnToPool() {
-  const taskId = currentProcessTaskId.value
-  if (!taskId) return
-  const ok = await scheduleStore.returnTaskToPool(managerStore.currentId, taskId)
-  if (ok) {
-    appStore.showToast('已放回待办池')
-    closeProcessPanel()
-  } else {
-    appStore.showToast('操作失败，请重试')
-  }
-}
-
-function onViewProfile(custId: number) {
-  router.push(`/customer/${custId}`)
-}
-
-// ======================== 商机详情面板 ========================
-interface OppCustomer {
-  custId: number
-  custName: string
-  info: Record<string, any> | null
-  infoLoading: boolean
-}
-
-const oppDetailVisible = ref(false)
-const currentOppTaskId = ref('')
-const oppCustomers = ref<OppCustomer[]>([])
-const bpGenerating = ref(false)
-
-const currentOppTask = computed<TaskItem | null>(() => {
-  if (!currentOppTaskId.value) return null
-  return findTask(currentOppTaskId.value)
-})
-
-async function onOppDetail(taskId: string) {
-  const task = findTask(taskId)
-  if (!task) return
-
-  currentOppTaskId.value = taskId
-  oppDetailVisible.value = true
-
-  // 初始化客户列表
-  const ids = task.customerIds || []
-  const names = task.customerNames || []
-  oppCustomers.value = ids.map((cid, i) => ({
-    custId: cid,
-    custName: names[i] || `客户${cid}`,
-    info: null,
-    infoLoading: true,
-  }))
-
-  // 异步加载客户信息
-  for (const oc of oppCustomers.value) {
-    try {
-      const res = await api.getCustomerBasic(String(oc.custId))
-      oc.info = res.data || {}
-    } catch {
-      oc.info = null
-    } finally {
-      oc.infoLoading = false
-    }
-  }
-}
-
-function deriveOppIdFromTask(task: TaskItem | null): string | undefined {
-  // 优先使用任务自带的 opp_id（由 query_tasks_for_schedule 步骤8 注入）
-  if (task?.oppId) return task.oppId
-
-  const taskId = task?.taskId || ''
-  // TK_OPP_{opp_id} 格式 — 从 opportunities 表来的 AI 挖掘商机任务
-  if (taskId.startsWith('TK_OPP_') && !taskId.startsWith('TK_OPP_SAL_') && !taskId.startsWith('TK_OPP_DUE_') && !taskId.startsWith('TK_OPP_DEC_') && !taskId.startsWith('TK_OPP_FUND_') && !taskId.startsWith('TK_OPP_BIG_')) {
-    return taskId.slice(7)
-  }
-  return undefined
-}
-
-async function generateAndViewBattlePackage(custId: number, oppId?: string) {
-  bpGenerating.value = true
-  try {
-    const res = await api.generateBattlePackage({
-      cust_id: custId,
-      mode: '标准版',
-      opp_id: oppId || '',
-    })
-    const bpId = res?.data?.bp_id
-    if (bpId) {
-      appStore.showToast('作战包生成成功！')
-      router.push({ name: 'battle-package', params: { id: bpId } })
-    } else {
-      appStore.showToast('作战包生成失败')
-    }
-  } catch (e: any) {
-    appStore.showToast('生成失败: ' + (e?.message || '未知错误'))
-  } finally {
-    bpGenerating.value = false
-  }
-}
-
-async function onViewBattlePackage(custId: number) {
-  // 从当前商机任务推导 opp_id（优先按任务携带的 oppId 精确匹配）
-  const task = currentOppTask.value
-  const oppId = deriveOppIdFromTask(task)
-
-  try {
-    // 优先按 opp_id 查询对应商机的作战包
-    const res = oppId
-      ? await api.getBattlePackages({ opp_id: oppId })
-      : await api.getBattlePackages({ cust_id: custId })
-    const pkgs = res.data?.packages || []
-    if (pkgs.length > 0) {
-      router.push({ name: 'battle-package', params: { id: pkgs[0].bp_id } })
-    } else {
-      // 无作战包 → 触发 AI 生成（与商机管理页行为一致）
-      await generateAndViewBattlePackage(custId, oppId)
-    }
-  } catch {
-    // 查询失败也尝试生成
-    await generateAndViewBattlePackage(custId, oppId)
-  }
-}
-
-async function onOppReturnToPool() {
-  const taskId = currentOppTaskId.value
-  if (!taskId) return
-  const ok = await scheduleStore.returnTaskToPool(managerStore.currentId, taskId)
-  if (ok) {
-    appStore.showToast('已放回待办池')
-    oppDetailVisible.value = false
-    currentOppTaskId.value = ''
-    oppCustomers.value = []
-  } else {
-    appStore.showToast('操作失败，请重试')
-  }
+function onProcessTask(taskId: string) {
+  router.push({ name: 'customer-process', query: { taskId } })
 }
 
 function onAiMine() {
-  router.push('/ai/chat')
+  opportunityStore.loadOpportunities(managerStore.currentId)
+}
+
+const reviewTips = ref<string[]>([])
+
+// 从昨日回顾中提取提示文本
+async function loadReviewTips() {
+  try {
+    const res = await api.getDailyReview(managerStore.currentId)
+    const data = res.data
+    if (data.has_review && data.sections) {
+      const tips: string[] = []
+      for (const sec of data.sections) {
+        const content = sec.content || ''
+        if (content && content.length > 5) {
+          // 截取每条 section 的前 18 个字符作为提示
+          const tip = content.length > 18 ? content.slice(0, 18) + '…' : content
+          tips.push(tip)
+          if (tips.length >= 2) break
+        }
+      }
+      reviewTips.value = tips
+    }
+  } catch {
+    reviewTips.value = []
+  }
+}
+
+// 资讯早报数据
+const digestBriefing = ref('')
+const digestHeadlines = ref<{ title: string }[]>([])
+
+async function loadDigestCard() {
+  try {
+    const res = await api.getDailyDigest()
+    const data = res.data
+    if (data.has_digest) {
+      digestBriefing.value = data.briefing || ''
+      digestHeadlines.value = data.headlines || []
+    } else {
+      digestBriefing.value = ''
+      digestHeadlines.value = []
+    }
+  } catch {
+    digestBriefing.value = ''
+    digestHeadlines.value = []
+  }
 }
 
 onMounted(() => {
@@ -659,6 +399,8 @@ onMounted(() => {
   scheduleStore.loadTasks(managerStore.currentId)
   opportunityStore.loadOpportunities(managerStore.currentId)
   kpiStore.loadKpi(managerStore.currentId)
+  loadReviewTips()
+  loadDigestCard()
 })
 
 // 监听经理切换，重新加载数据
@@ -666,6 +408,8 @@ watch(() => managerStore.currentId, (newId) => {
   scheduleStore.loadTasks(newId)
   opportunityStore.loadOpportunities(newId)
   kpiStore.loadKpi(newId)
+  loadReviewTips()
+  loadDigestCard()
 })
 </script>
 
@@ -675,6 +419,30 @@ watch(() => managerStore.currentId, (newId) => {
   display: flex;
   flex-direction: column;
 }
+
+/* ── 资讯早报卡片 ── */
+.digest-teaser {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.digest-teaser-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.digest-teaser-icon { font-size: 16px; }
+.digest-teaser-title { font-size: 13px; font-weight: 700; color: #fff; flex: 1; }
+.digest-teaser-more { font-size: 11px; color: rgba(255,255,255,0.6); }
+.digest-teaser-briefing { font-size: 12px; color: rgba(255,255,255,0.85); line-height: 1.6; margin-bottom: 8px; }
+.digest-teaser-headlines { border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px; }
+.digest-teaser-hl { font-size: 11px; color: rgba(255,255,255,0.7); padding: 3px 0; display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; }
+.digest-teaser-dot { width: 5px; height: 5px; border-radius: 50%; background: #f59e0b; margin-top: 5px; flex-shrink: 0; }
+
 .schedule-block {
   background: var(--color-card); border-radius: var(--radius-md);
   box-shadow: var(--shadow-card); overflow: hidden;
@@ -753,6 +521,34 @@ watch(() => managerStore.currentId, (newId) => {
   gap: 6px;
   margin-bottom: 6px;
 }
+
+/* 客户名（pending 列表 / 卡片复用） */
+.task-cust-name {
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 子事件标签（小号，pending 列表 / 卡片复用） */
+.task-sub-tag {
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.task-sub-more {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
 .pending-task-text {
   flex: 1;
   font-size: var(--fs-small);
@@ -790,165 +586,6 @@ watch(() => managerStore.currentId, (newId) => {
   text-align: center;
   color: var(--color-text-tertiary);
   font-size: var(--fs-small);
-}
-
-/* ======== 处理面板通用样式 ======== */
-.process-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-.process-panel-hd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-md);
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-.process-panel-title {
-  font-size: var(--fs-body);
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-}
-.process-panel-close {
-  font-size: var(--fs-small);
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-}
-.process-panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--sp-md);
-}
-
-/* 任务摘要 */
-.process-task-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: var(--sp-sm);
-  background: var(--color-bg);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--sp-md);
-}
-.process-task-desc {
-  font-size: var(--fs-small);
-  color: var(--color-text-secondary);
-}
-.process-section-label {
-  text-align: center;
-  font-size: var(--fs-caption);
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--sp-sm);
-}
-
-/* 客户卡片 */
-.process-customer-card,
-.opp-customer-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--sp-sm) var(--sp-md);
-  margin-bottom: var(--sp-sm);
-  transition: opacity 0.3s;
-}
-.process-customer-card.cust-processed {
-  opacity: 0.5;
-  background: #F5FFF5;
-}
-.cust-info-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-.cust-dot {
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.dot-pending { color: var(--color-text-tertiary); }
-.dot-done { color: var(--color-success); font-weight: var(--fw-bold); }
-.cust-name {
-  font-size: var(--fs-body);
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-}
-.cust-meta {
-  font-size: var(--fs-caption);
-  color: var(--color-text-tertiary);
-}
-.cust-detail-row {
-  font-size: var(--fs-caption);
-  color: var(--color-text-secondary);
-  padding: 4px 0;
-  margin-bottom: 6px;
-  border-bottom: 1px dashed var(--color-border);
-}
-.cust-done-hint {
-  text-align: right;
-  font-size: var(--fs-small);
-  color: var(--color-success);
-  font-weight: var(--fw-bold);
-  padding: 4px 0;
-}
-
-/* 操作按钮行 */
-.cust-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.act-btn {
-  height: 30px;
-  padding: 0 10px;
-  font-size: 12px;
-  font-weight: var(--fw-bold);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all var(--duration-fast);
-}
-.act-btn:active {
-  opacity: 0.7;
-  transform: scale(0.96);
-}
-.act-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.act-btn--phone {
-  border-color: #27AE60;
-  color: #27AE60;
-}
-.act-btn--wechat {
-  border-color: #27AE60;
-  color: #27AE60;
-}
-.act-btn--pool {
-  border-color: #E67E22;
-  color: #E67E22;
-}
-.act-btn--profile {
-  border-color: #8E44AD;
-  color: #8E44AD;
-}
-.act-btn--battle {
-  border-color: var(--color-ai, #6C5CE7);
-  color: var(--color-ai, #6C5CE7);
-}
-
-/* 全部完成提示 */
-.process-all-done {
-  text-align: center;
-  padding: var(--sp-md);
-  font-size: var(--fs-body);
-  font-weight: var(--fw-bold);
-  color: var(--color-success);
 }
 
 /* 商机分组标题 */

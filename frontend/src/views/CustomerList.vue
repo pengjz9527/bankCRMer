@@ -6,6 +6,7 @@ import { useCustomerStore, customerData, useCustomerFilters } from '@/stores/cus
 import { useManagerStore } from '@/stores/manager'
 import CustomerCard from '@/components/business/CustomerCard.vue'
 import NewCustomerCard from '@/components/business/NewCustomerCard.vue'
+import SensitiveText from '@/components/SensitiveText.vue'
 import type { Customer } from '@/stores/customer'
 
 const router = useRouter()
@@ -33,6 +34,19 @@ function goAiChat() {
 
 function claimCustomer(name: string) {
   appStore.showToast(`已认领客户：${name}`)
+}
+
+// AUM 金额转区间（列表页脱敏展示）
+function aumToRange(aum: number | undefined): string {
+  if (aum === undefined || aum === null) return '--'
+  const v = Number(aum)
+  if (v < 1) return '1万以下'
+  if (v < 5) return '1-5万'
+  if (v < 20) return '5-20万'
+  if (v < 100) return '20-100万'
+  if (v < 300) return '100-300万'
+  if (v < 600) return '300-600万'
+  return '600万+'
 }
 
 onMounted(() => {
@@ -66,7 +80,7 @@ const sorts = [
       <span class="cl-insight-link" @click="$router.push('/customer-insights')">洞察</span>
     </div>
 
-    <!-- Desktop Filter & Sort Rows (hidden on mobile overlay) -->
+    <!-- Filter & Sort Row -->
     <div class="cl-filters">
       <select v-model="levelFilter" class="cl-filter-select">
         <option v-for="f in customerData.filters" :key="f" :value="f">{{ f }}</option>
@@ -74,9 +88,7 @@ const sorts = [
       <select v-model="riskFilter" class="cl-filter-select">
         <option v-for="f in customerData.riskFilters" :key="f" :value="f">{{ f }}</option>
       </select>
-    </div>
-    <div class="cl-sort-row">
-      <select v-model="sortBy" class="cl-sort-select">
+      <select v-model="sortBy" class="cl-filter-select">
         <option v-for="s in sorts" :key="s.k" :value="s.k">{{ s.l }}</option>
       </select>
     </div>
@@ -113,7 +125,9 @@ const sorts = [
         <div class="cl-nc-match">
           <span v-for="i in 3" :key="i">★</span> 匹配度 {{ c.match }}%
         </div>
-        <div class="cl-nc-info">{{ c.name }} · {{ c.gender }} · {{ c.age }}岁 · AUM {{ c.aum }}万 · 无客户经理 · 距支行 {{ c.distance }}</div>
+        <div class="cl-nc-info">
+          <SensitiveText :value="c.name" type="name" /> · {{ c.gender }} · {{ c.age }}岁 · AUM {{ aumToRange(c.aum) }} · 无客户经理 · 距支行 {{ c.distance }}
+        </div>
         <div class="cl-nc-reason">AI 分析：{{ c.reason }}</div>
         <div class="cl-nc-actions">
           <button class="cl-nc-btn claim" @click="claimCustomer(c.name)">认领为客户</button>
@@ -168,8 +182,7 @@ const sorts = [
   gap: 8px;
   margin-bottom: 8px;
 }
-.cl-filter-select,
-.cl-sort-select {
+.cl-filter-select {
   flex: 1;
   padding: 6px 10px;
   border: 1px solid #e0e0e0;
@@ -180,7 +193,6 @@ const sorts = [
   outline: none;
   appearance: auto;
 }
-.cl-sort-row { margin-bottom: 8px; }
 .cl-result-summary {
   font-size: 12px;
   color: var(--color-text-tertiary, #999);

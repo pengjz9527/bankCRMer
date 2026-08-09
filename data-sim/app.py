@@ -1,7 +1,50 @@
 """
 易会办 客户洞察 — 全内置运行脚本 (SQLite + FastAPI)
-一键启动: python3 app.py
+一键启动: .venv/bin/python app.py
 """
+
+import sys
+
+# ═══════════════════════════════════════════════════════════════
+# Python 版本与运行环境校验
+# ═══════════════════════════════════════════════════════════════
+_MIN_PY = (3, 11)
+_MAX_PY = (3, 14)  # Python 3.14+ 部分原生依赖(chromadb)不兼容
+_cur_ver = (sys.version_info.major, sys.version_info.minor)
+
+if _cur_ver < _MIN_PY:
+    sys.exit(
+        f"\n{'='*60}\n"
+        f"  ❌ Python 版本过低: {sys.version.split()[0]}\n"
+        f"  项目需要 Python >= 3.11\n"
+        f"  请使用虚拟环境: .venv/bin/python app.py\n"
+        f"{'='*60}\n"
+    )
+
+if _cur_ver >= _MAX_PY:
+    sys.exit(
+        f"\n{'='*60}\n"
+        f"  ❌ Python {sys.version_info.major}.{sys.version_info.minor} 不兼容\n"
+        f"  部分原生依赖(如 chromadb)不支持 Python 3.14+\n"
+        f"  请使用虚拟环境: cd data-sim && .venv/bin/python app.py\n"
+        f"{'='*60}\n"
+    )
+
+# 检测是否在虚拟环境中运行
+_in_venv = (
+    hasattr(sys, "real_prefix")
+    or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+)
+if not _in_venv:
+    print(
+        f"\n{'='*60}\n"
+        f"  ⚠️  建议在虚拟环境中运行\n"
+        f"  当前解释器: {sys.executable}\n"
+        f"  正确启动: cd data-sim && .venv/bin/python app.py\n"
+        f"{'='*60}\n",
+        file=sys.stderr,
+    )
+
 # 解决旧版 SQLite 兼容问题：ChromaDB 需要 sqlite3 >= 3.35
 try:
     __import__('pysqlite3')
@@ -24,6 +67,7 @@ from agentos.agents.customer_insight import create_customer_insight_agent
 from agentos.agents.scheduler import create_scheduler_agent
 from agentos.agents.qa_assistant import create_qa_agent
 from agentos.agents.content_agent import create_content_agent
+from agentos.agents.router import create_router_agent
 from agentos.harness import AgentContext
 from agentos.skills import query_customer_insight, query_customer_insights_by_manager, query_customers_by_insight_filter, query_tasks_for_schedule
 from agentos.news_fetcher import fetch_daily_news
@@ -196,11 +240,39 @@ CREATE TABLE IF NOT EXISTS risk_assessment_history (
 );
 
 CREATE TABLE IF NOT EXISTS product_catalog (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_code TEXT NOT NULL UNIQUE, product_name TEXT NOT NULL,
-    product_type TEXT NOT NULL, risk_level TEXT,
-    yield_rate REAL, min_amount REAL DEFAULT 1,
-    manager TEXT, status TEXT DEFAULT '在售'
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id          TEXT NOT NULL UNIQUE,
+    product_code        TEXT,
+    product_name        TEXT NOT NULL,
+    short_name          TEXT,
+    bank_name           TEXT,
+    issuer              TEXT,
+    category            TEXT NOT NULL,
+    sub_category        TEXT,
+    risk_level          TEXT,
+    risk_name           TEXT,
+    term_days           INTEGER,
+    term_desc           TEXT,
+    min_amount          REAL DEFAULT 1,
+    min_amount_desc     TEXT,
+    expected_return_min REAL,
+    expected_return_max REAL,
+    yield_rate          REAL,
+    return_type         TEXT,
+    return_benchmark    TEXT,
+    currency            TEXT DEFAULT 'CNY',
+    invest_direction    TEXT,
+    subscription_fee    TEXT,
+    redemption_fee      TEXT,
+    redemption_days     TEXT,
+    selling_points      TEXT,
+    scenario_tags       TEXT,
+    applicable_customer TEXT,
+    source_url          TEXT,
+    data_source         TEXT,
+    data_date           TEXT,
+    manager             TEXT,
+    status              TEXT DEFAULT '在售'
 );
 
 CREATE TABLE IF NOT EXISTS customer_benefits (
@@ -232,8 +304,10 @@ CREATE TABLE IF NOT EXISTS battle_packages (
     bp_id TEXT NOT NULL UNIQUE, opp_id TEXT NOT NULL,
     cust_id INTEGER REFERENCES customers(id),
     mode TEXT NOT NULL, status TEXT DEFAULT '未使用',
+    task_id TEXT DEFAULT '',              -- Phase3: 关联的客户聚合待办ID
     customer_overview TEXT NOT NULL,  -- JSON
     agenda TEXT, risk_warnings TEXT NOT NULL DEFAULT '[]',
+    care_items TEXT NOT NULL DEFAULT '[]', -- Phase3: 非商机关怀事项 JSON
     post_visit_actions TEXT NOT NULL DEFAULT '[]',
     generated_at TEXT NOT NULL, expires_at TEXT NOT NULL, used_at TEXT
 );
@@ -241,6 +315,7 @@ CREATE TABLE IF NOT EXISTS battle_packages (
 CREATE TABLE IF NOT EXISTS battle_package_clues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     clue_id TEXT NOT NULL UNIQUE, bp_id TEXT REFERENCES battle_packages(bp_id),
+    opp_id TEXT DEFAULT '',             -- Phase3: 该线索关联的商机ID
     priority TEXT NOT NULL, title TEXT NOT NULL,
     discovery_basis TEXT NOT NULL, strategy TEXT NOT NULL,
     opening_script TEXT NOT NULL, products TEXT NOT NULL DEFAULT '[]',
@@ -269,6 +344,38 @@ CREATE TABLE IF NOT EXISTS opportunities (
 
 CREATE INDEX IF NOT EXISTS idx_opp_cust ON opportunities(cust_id);
 CREATE INDEX IF NOT EXISTS idx_opp_gen ON opportunities(generated_at);
+
+-- 客户信号表（统一收集所有客户事件/信号，作为商机挖掘的输入源）
+CREATE TABLE IF NOT EXISTS customer_signals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    signal_id TEXT NOT NULL UNIQUE,
+    cust_id INTEGER NOT NULL REFERENCES customers(id),
+    signal_type TEXT NOT NULL,
+    signal_data TEXT NOT NULL DEFAULT '{}',
+    strategy_tags TEXT NOT NULL DEFAULT '[]',
+    priority_weight INTEGER NOT NULL DEFAULT 50,
+    valid_from TEXT NOT NULL,
+    valid_until TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    consumed_by_opp TEXT,
+    consumed_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sig_cust ON customer_signals(cust_id);
+CREATE INDEX IF NOT EXISTS idx_sig_type ON customer_signals(signal_type);
+CREATE INDEX IF NOT EXISTS idx_sig_status ON customer_signals(status);
+CREATE INDEX IF NOT EXISTS idx_sig_valid ON customer_signals(valid_from, valid_until);
+
+-- 商机-面谈关联表（一个商机可关联多次面谈）
+CREATE TABLE IF NOT EXISTS opp_meeting_rel (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    opp_id TEXT NOT NULL,
+    meeting_id INTEGER NOT NULL REFERENCES meeting_records(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(opp_id, meeting_id)
+);
+CREATE INDEX IF NOT EXISTS idx_omr_opp ON opp_meeting_rel(opp_id);
+CREATE INDEX IF NOT EXISTS idx_omr_meeting ON opp_meeting_rel(meeting_id);
 
 CREATE INDEX IF NOT EXISTS idx_cust_tier ON customers(tier);
 CREATE INDEX IF NOT EXISTS idx_h_cust ON holdings(cust_id);
@@ -436,13 +543,21 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     action TEXT NOT NULL,
     target_type TEXT NOT NULL,
     target_id TEXT DEFAULT '',
+    customer_id TEXT DEFAULT '',
     operator TEXT DEFAULT 'admin',
+    manager_name TEXT DEFAULT '',
     detail TEXT DEFAULT '',
+    endpoint TEXT DEFAULT '',
+    result_count INTEGER DEFAULT 0,
+    sensitive_level TEXT DEFAULT '',
     ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_al_action ON audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_al_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_al_operator ON audit_logs(operator);
+-- idx_al_customer 由迁移脚本在确保列存在后创建
 
 -- 平台环境配置（可视化管理 .env 中的可变配置项）
 CREATE TABLE IF NOT EXISTS platform_configs (
@@ -459,7 +574,7 @@ CREATE TABLE IF NOT EXISTS task_execution_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id TEXT NOT NULL,
     job_name TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL CHECK(status IN ('success','error')),
+    status TEXT NOT NULL CHECK(status IN ('success','error','skipped')),
     result_summary TEXT DEFAULT '',
     result_detail TEXT DEFAULT '',
     error_msg TEXT DEFAULT '',
@@ -500,10 +615,29 @@ CREATE TABLE IF NOT EXISTS daily_news (
 CREATE INDEX IF NOT EXISTS idx_dn_date ON daily_news(fetched_at);
 CREATE INDEX IF NOT EXISTS idx_dn_category ON daily_news(category);
 
--- 面谈记录 + PDCA
+-- 数据导出审批记录
+CREATE TABLE IF NOT EXISTS data_export_approvals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    requester_id TEXT NOT NULL,
+    requester_name TEXT DEFAULT '',
+    export_type TEXT NOT NULL DEFAULT 'customers',
+    export_scope TEXT DEFAULT '',
+    reason TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected','executed')),
+    approver_id TEXT DEFAULT '',
+    approved_at TEXT,
+    file_path TEXT DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ea_status ON data_export_approvals(status);
+CREATE INDEX IF NOT EXISTS idx_ea_requester ON data_export_approvals(requester_id);
+
+-- 面谈记录 + PDCA（v2：支持追加口述、摘要合并、状态流转）
 CREATE TABLE IF NOT EXISTS meeting_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     cust_id INTEGER NOT NULL REFERENCES customers(id),
+    cust_name TEXT DEFAULT '',
     bp_id TEXT,
     opp_id TEXT,
     manager_id TEXT NOT NULL,
@@ -512,11 +646,17 @@ CREATE TABLE IF NOT EXISTS meeting_records (
     deviation_note TEXT,
     customer_feedback TEXT,
     action_items TEXT,
-    dictation_raw TEXT,
-    generated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    dictation_raw TEXT DEFAULT '[]',
+    summary TEXT DEFAULT '',
+    meeting_status TEXT DEFAULT 'drafting',
+    profile_changes_json TEXT DEFAULT '[]',
+    todos_json TEXT DEFAULT '[]',
+    generated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_mr_cust ON meeting_records(cust_id);
 CREATE INDEX IF NOT EXISTS idx_mr_mgr ON meeting_records(manager_id, meeting_date);
+CREATE INDEX IF NOT EXISTS idx_mr_cust_date ON meeting_records(cust_id, meeting_date DESC);
 
 -- 画像变更追踪
 CREATE TABLE IF NOT EXISTS profile_change_log (
@@ -573,19 +713,74 @@ def gen_all(db):
     cur = db.cursor()
     cust_id = 1
 
-    # 全局产品目录
-    pid = 1
-    for ptype, items in PRODUCTS.items():
-        for name, code in items:
-            cur.execute(
-                "INSERT INTO product_catalog VALUES (?,?,?,?,?,?,?,?,?)",
-                (pid, code, name, ptype,
-                 random.choice(RISK_LEVELS[:2]) if ptype in ("存款","保险") else random.choice(RISK_LEVELS[1:4]),
-                 round(random.uniform(0.5, 5.5), 4),
-                 random.choice([1, 1000, 10000]),
-                 random.choice(["徽银","兴银","杭银","南银","平安","博时","易方达"]),
-                 "在售"))
-            pid += 1
+    # 全局产品目录 — 从 product_database.json 导入真实数据（仅首次，幂等）
+    if cur.execute("SELECT COUNT(*) FROM product_catalog").fetchone()[0] > 0:
+        print(f"  产品目录: 已有数据，跳过导入 ({cur.execute('SELECT COUNT(*) FROM product_catalog').fetchone()[0]} 款)")
+    else:
+        import json as _json
+        from pathlib import Path as _Path
+        json_path = _Path(__file__).parent / "data" / "product_database.json"
+        if json_path.exists():
+            with open(json_path, "r", encoding="utf-8") as f:
+                prod_db = _json.load(f)
+            products = prod_db.get("products", [])
+            insert_sql = """
+                INSERT INTO product_catalog (
+                    product_id, product_code, product_name, short_name,
+                    bank_name, issuer, category, sub_category,
+                    risk_level, risk_name, term_days, term_desc,
+                    min_amount, min_amount_desc,
+                    expected_return_min, expected_return_max,
+                    yield_rate, return_type, return_benchmark,
+                    currency, invest_direction, subscription_fee,
+                    redemption_fee, redemption_days,
+                    selling_points, scenario_tags, applicable_customer,
+                    source_url, data_source, data_date, manager, status
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?
+                )
+            """
+            for p in products:
+                cur.execute(insert_sql, (
+                    p.get("product_id", ""),
+                    p.get("product_code", ""),
+                    p.get("product_name", ""),
+                    p.get("short_name", ""),
+                    p.get("bank_name", ""),
+                    p.get("issuer", ""),
+                    p.get("category", ""),
+                    p.get("sub_category", ""),
+                    p.get("risk_level", ""),
+                    p.get("risk_name", ""),
+                    p.get("term_days"),
+                    p.get("term_desc", ""),
+                    p.get("min_amount", 1),
+                    p.get("min_amount_desc", ""),
+                    p.get("expected_return_min"),
+                    p.get("expected_return_max"),
+                    p.get("expected_return_max"),
+                    p.get("return_type", ""),
+                    p.get("return_benchmark", ""),
+                    p.get("currency", "CNY"),
+                    p.get("invest_direction", ""),
+                    p.get("subscription_fee", ""),
+                    p.get("redemption_fee", ""),
+                    p.get("redemption_days", ""),
+                    _json.dumps(p.get("selling_points", []), ensure_ascii=False),
+                    _json.dumps(p.get("scenario_tags", []), ensure_ascii=False),
+                    _json.dumps(p.get("applicable_customer", {}), ensure_ascii=False),
+                    p.get("source_url", ""),
+                    p.get("data_source", ""),
+                    p.get("data_date", ""),
+                    p.get("issuer", ""),
+                    p.get("status", "在售"),
+                ))
+            print(f"  产品目录: 从 JSON 导入 {len(products)} 款")
+        else:
+            print("  ⚠ product_database.json 未找到，产品表为空")
 
     occupations_map = {
         "在职": ["工程师","教师","公务员","销售经理","会计","IT项目经理","医生","护士","企业中层","银行职员"],
@@ -1070,6 +1265,19 @@ def main():
         print("迁移: 已添加 customers.contact_prefer 列")
     except sqlite3.OperationalError:
         pass  # 列已存在
+    # 迁移：opportunities 表新增字段（新架构）
+    try:
+        db.execute("ALTER TABLE opportunities ADD COLUMN updated_at TEXT")
+        db.commit()
+        print("迁移: 已添加 opportunities.updated_at 列")
+    except sqlite3.OperationalError:
+        pass  # 列已存在
+    try:
+        db.execute("ALTER TABLE opportunities ADD COLUMN status_history TEXT DEFAULT '[]'")
+        db.commit()
+        print("迁移: 已添加 opportunities.status_history 列")
+    except sqlite3.OperationalError:
+        pass  # 列已存在
     # 迁移：确保 task_execution_history.result_detail 列存在
     try:
         db.execute("ALTER TABLE task_execution_history ADD COLUMN result_detail TEXT DEFAULT ''")
@@ -1077,7 +1285,168 @@ def main():
         print("迁移: 已添加 task_execution_history.result_detail 列")
     except sqlite3.OperationalError:
         pass  # 列已存在
+    # 迁移：审计日志表扩展字段（客户隐私保护方案）
+    audit_new_cols = [
+        ("customer_id", "TEXT DEFAULT ''"),
+        ("manager_name", "TEXT DEFAULT ''"),
+        ("endpoint", "TEXT DEFAULT ''"),
+        ("result_count", "INTEGER DEFAULT 0"),
+        ("sensitive_level", "TEXT DEFAULT ''"),
+        ("user_agent", "TEXT DEFAULT ''"),
+    ]
+    for col_name, col_def in audit_new_cols:
+        try:
+            db.execute(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_def}")
+            db.commit()
+            print(f"迁移: 已添加 audit_logs.{col_name} 列")
+        except sqlite3.OperationalError:
+            pass  # 列已存在
+    # 确保新增索引存在
+    try:
+        db.execute("CREATE INDEX IF NOT EXISTS idx_al_operator ON audit_logs(operator)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_al_customer ON audit_logs(customer_id)")
+        db.commit()
+    except Exception:
+        pass
+    # 迁移：客户表增加数据保留截止日期（数据生命周期管理）
+    try:
+        db.execute("ALTER TABLE customers ADD COLUMN data_retain_until TEXT DEFAULT ''")
+        db.commit()
+        print("迁移: 已添加 customers.data_retain_until 列")
+    except sqlite3.OperationalError:
+        pass
+    # 迁移：管户关系表增加解绑日期（客户经理离职/调岗）
+    try:
+        db.execute("ALTER TABLE cust_manager_rel ADD COLUMN unassigned_date TEXT DEFAULT ''")
+        db.commit()
+        print("迁移: 已添加 cust_manager_rel.unassigned_date 列")
+    except sqlite3.OperationalError:
+        pass
+    # 迁移：确保 task_execution_history.status CHECK 约束包含 'skipped'
+    try:
+        # SQLite 不支持直接修改 CHECK 约束，通过重建表实现
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS task_execution_history_v2 "
+            "(id INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL, job_name TEXT NOT NULL DEFAULT '', "
+            "status TEXT NOT NULL CHECK(status IN ('success','error','skipped')), result_summary TEXT DEFAULT '', "
+            "result_detail TEXT DEFAULT '', error_msg TEXT DEFAULT '', started_at TEXT NOT NULL, "
+            "finished_at TEXT, duration_ms INTEGER DEFAULT 0)"
+        )
+        db.execute(
+            "INSERT INTO task_execution_history_v2 SELECT * FROM task_execution_history"
+        )
+        db.execute("DROP TABLE task_execution_history")
+        db.execute("ALTER TABLE task_execution_history_v2 RENAME TO task_execution_history")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_teh_job ON task_execution_history(job_id)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_teh_started ON task_execution_history(started_at)")
+        db.commit()
+        print("迁移: 已更新 task_execution_history 状态约束（新增 skipped）")
+    except Exception as e:
+        print(f"迁移: task_execution_history status 约束可能已是最新 ({e})")
+    # 迁移：重建 meeting_records 表（v2：支持追加口述、摘要合并）
+    try:
+        cur_cols = [r[1] for r in db.execute("PRAGMA table_info(meeting_records)").fetchall()]
+        if 'summary' not in cur_cols or 'meeting_status' not in cur_cols:
+            db.execute("DROP TABLE IF EXISTS meeting_records")
+            db.execute("DROP TABLE IF EXISTS profile_change_log")
+            db.execute("""
+                CREATE TABLE meeting_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cust_id INTEGER NOT NULL REFERENCES customers(id),
+                    cust_name TEXT DEFAULT '',
+                    bp_id TEXT, opp_id TEXT,
+                    manager_id TEXT NOT NULL,
+                    meeting_date TEXT NOT NULL,
+                    plan_result TEXT, deviation_note TEXT,
+                    customer_feedback TEXT, action_items TEXT,
+                    dictation_raw TEXT DEFAULT '[]',
+                    summary TEXT DEFAULT '',
+                    meeting_status TEXT DEFAULT 'drafting',
+                    profile_changes_json TEXT DEFAULT '[]',
+                    todos_json TEXT DEFAULT '[]',
+                    generated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                )
+            """)
+            db.execute("CREATE INDEX IF NOT EXISTS idx_mr_cust ON meeting_records(cust_id)")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_mr_mgr ON meeting_records(manager_id, meeting_date)")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_mr_cust_date ON meeting_records(cust_id, meeting_date DESC)")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_mr_status ON meeting_records(meeting_status)")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_mr_opp ON meeting_records(opp_id)")
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS profile_change_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cust_id INTEGER NOT NULL REFERENCES customers(id),
+                    field_name TEXT NOT NULL,
+                    old_value TEXT, new_value TEXT,
+                    source TEXT DEFAULT 'dictation',
+                    meeting_id INTEGER REFERENCES meeting_records(id),
+                    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+                )
+            """)
+            db.execute("CREATE INDEX IF NOT EXISTS idx_pcl_cust ON profile_change_log(cust_id, changed_at)")
+            db.commit()
+            print("迁移: 已重建 meeting_records 表（v2 新增 summary/meeting_status/dictation JSON）")
+    except Exception as e:
+        print(f"迁移: meeting_records 重建跳过 ({e})")
     db.commit()
+
+    # 迁移：给 opportunities 表移除 meeting_status/meeting_id（改用 opp_meeting_rel 关联表）
+    try:
+        opp_cols = [r[1] for r in db.execute("PRAGMA table_info(opportunities)").fetchall()]
+        if 'meeting_status' in opp_cols or 'meeting_id' in opp_cols:
+            # 创建 opp_meeting_rel 关联表
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS opp_meeting_rel (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    opp_id TEXT NOT NULL,
+                    meeting_id INTEGER NOT NULL REFERENCES meeting_records(id),
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    UNIQUE(opp_id, meeting_id)
+                )
+            """)
+            db.execute("CREATE INDEX IF NOT EXISTS idx_omr_opp ON opp_meeting_rel(opp_id)")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_omr_meeting ON opp_meeting_rel(meeting_id)")
+            # 重建 opportunities 表，移除多余字段
+            db.execute("""
+                CREATE TABLE opportunities_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    opp_id TEXT NOT NULL UNIQUE,
+                    cust_id INTEGER REFERENCES customers(id),
+                    cust_name TEXT NOT NULL,
+                    opportunity_type TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    confidence REAL NOT NULL DEFAULT 0,
+                    estimated_value REAL NOT NULL DEFAULT 0,
+                    reasoning TEXT NOT NULL,
+                    suggested_action TEXT,
+                    priority TEXT DEFAULT '常规',
+                    source TEXT NOT NULL DEFAULT 'AI-opp_mining',
+                    source_method TEXT,
+                    trigger_signals TEXT,
+                    status TEXT DEFAULT '待跟进',
+                    generated_at TEXT NOT NULL,
+                    manager_id TEXT
+                )
+            """)
+            db.execute("""
+                INSERT INTO opportunities_new
+                (id,opp_id,cust_id,cust_name,opportunity_type,title,confidence,estimated_value,
+                 reasoning,suggested_action,priority,source,source_method,trigger_signals,
+                 status,generated_at,manager_id)
+                SELECT id,opp_id,cust_id,cust_name,opportunity_type,title,confidence,estimated_value,
+                       reasoning,suggested_action,priority,source,source_method,trigger_signals,
+                       status,generated_at,manager_id
+                FROM opportunities
+            """)
+            db.execute("DROP TABLE opportunities")
+            db.execute("ALTER TABLE opportunities_new RENAME TO opportunities")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_opp_cust ON opportunities(cust_id)")
+            db.execute("CREATE INDEX IF NOT EXISTS idx_opp_gen ON opportunities(generated_at)")
+            db.commit()
+            print("迁移: 已重建 opportunities 表（移除 meeting_status/meeting_id，新增 opp_meeting_rel 关联表）")
+    except Exception as e:
+        print(f"迁移: opportunities 重建跳过 ({e})")
 
     if need_gen:
         gen_all(db)
@@ -1093,7 +1462,7 @@ def main():
     print("API 文档: http://localhost:8008/docs\n")
 
     import uvicorn
-    from fastapi import FastAPI, Query, HTTPException, Body
+    from fastapi import FastAPI, Query, HTTPException, Body, Request, UploadFile, File, Form
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import StreamingResponse
     import asyncio
@@ -1104,8 +1473,10 @@ def main():
     pool = ThreadPoolExecutor(max_workers=4)
 
     def get_db():
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=10)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
         return conn
 
     def q(sql, params=(), one=False):
@@ -1138,6 +1509,36 @@ def main():
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(pool, lambda: ex(sql, params))
 
+    def _has_common_substring(a: str, b: str, min_len: int = 10) -> bool:
+        """检查两个字符串是否有长度 ≥ min_len 的公共子串（中文按字符计）"""
+        if not a or not b:
+            return False
+        shorter = a if len(a) <= len(b) else b
+        longer = b if len(a) <= len(b) else a
+        for i in range(len(shorter) - min_len + 1):
+            if shorter[i:i + min_len] in longer:
+                return True
+        return False
+
+    async def _check_dup_opp(cust_id: int, opportunity_type: str, title: str) -> bool:
+        """检查同一客户是否已有相似待跟进商机（类型匹配 或 标题子串重叠≥10字）"""
+        # 1. 精确类型匹配
+        dup = await aq(
+            "SELECT 1 FROM opportunities WHERE cust_id=? AND status='待跟进' AND opportunity_type=?",
+            (cust_id, opportunity_type), one=True
+        )
+        if dup:
+            return True
+        # 2. 标题子串重叠检查（防御 LLM 类型名/措辞漂移）
+        existing = await aq(
+            "SELECT title FROM opportunities WHERE cust_id=? AND status='待跟进'",
+            (cust_id,)
+        )
+        for row in (existing or []):
+            if _has_common_substring(title, row['title'] or '', 10):
+                return True
+        return False
+
     def ok(data=None, message="ok"):
         return {"code": 0, "data": data, "message": message}
 
@@ -1147,9 +1548,156 @@ def main():
     def _n(row):
         return None if row is None or all(v is None for v in row.values()) else row
 
+    def _signal_type_label(stype: str) -> str:
+        """信号类型的中文标签"""
+        labels = {
+            "due": "产品到期",
+            "overdue": "产品逾期",
+            "fund_browse": "浏览基金产品",
+            "insurance_browse": "浏览保险产品",
+            "loan_browse": "浏览贷款产品",
+            "high_aum_idle": "大额资金闲置",
+            "insight_change": "客户画像变更",
+            "insight_risk": "风险信号预警",
+        }
+        return labels.get(stype, stype)
+
+    # ================================================================
+    # 审计日志工具函数（含实时异常检测）
+    # ================================================================
+
+    # 高频/IP跟踪内存字典（重启后重置）
+    _operator_query_log: dict = {}  # operator -> [(timestamp, cust_id), ...]
+    _operator_ip_log: dict = {}     # operator -> [(timestamp, ip), ...]
+    # 高频阈值（可通过管理后台修改 platform_configs 调整）
+    _high_freq_window_min = 5   # 时间窗口（分钟）
+    _high_freq_max_queries = 30  # 最大查询不同客户数
+
+    def _get_thresholds():
+        """从 platform_configs 读取高频阈值配置"""
+        nonlocal _high_freq_window_min, _high_freq_max_queries
+        try:
+            conn = get_db()
+            for key, default in [('audit_high_freq_window', 5), ('audit_high_freq_max', 30)]:
+                row = conn.execute(
+                    "SELECT config_value FROM platform_configs WHERE config_key=?", (key,)
+                ).fetchone()
+                if row and row[0]:
+                    val = int(row[0])
+                    if key == 'audit_high_freq_window':
+                        _high_freq_window_min = val
+                    else:
+                        _high_freq_max_queries = val
+            conn.close()
+        except Exception:
+            pass  # 表不存在时忽略，使用默认值
+
+    def reload_audit_thresholds():
+        """热加载审计高频阈值（供 admin API 调用的同步版本）"""
+        _get_thresholds()
+        return {"window_min": _high_freq_window_min, "max_queries": _high_freq_max_queries}
+
+    def get_audit_thresholds():
+        """获取当前审计高频阈值"""
+        return {"window_min": _high_freq_window_min, "max_queries": _high_freq_max_queries}
+
+    # 启动时加载阈值
+    _get_thresholds()
+
+    def log_asset_access(action, manager_id, manager_name, cust_id, endpoint,
+                         result_count=0, sensitive_level='', detail='', request=None):
+        """记录客户资产查询审计日志（含实时异常检测）"""
+        import datetime as _dt
+        now_dt = _dt.datetime.now()
+        now = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        # 提取 IP 和 User-Agent
+        ip = ''
+        ua = ''
+        if request:
+            try:
+                ip = request.client.host if request.client else ''
+                ua = request.headers.get('user-agent', '')[:500]
+            except Exception:
+                pass
+
+        # --- 实时异常检测 ---
+
+        # 规则1：管户关系校验
+        if cust_id and manager_id:
+            try:
+                conn = get_db()
+                row = conn.execute(
+                    "SELECT 1 FROM cust_manager_rel WHERE cust_id=? AND manager_id=?",
+                    (int(cust_id), manager_id)
+                ).fetchone()
+                conn.close()
+                if not row:
+                    detail = f"[⚠ 非管户] {detail}".strip()
+            except Exception:
+                pass
+
+        # 规则2：高频查询检测
+        if manager_id and cust_id:
+            ts = now_dt.timestamp()
+            if manager_id not in _operator_query_log:
+                _operator_query_log[manager_id] = []
+            # 清理过期记录
+            cutoff = ts - _high_freq_window_min * 60
+            _operator_query_log[manager_id] = [
+                (t, c) for t, c in _operator_query_log[manager_id] if t > cutoff
+            ]
+            # 记录本次查询
+            _operator_query_log[manager_id].append((ts, str(cust_id)))
+            # 统计窗口内不同客户数
+            unique_custs = set(c for _, c in _operator_query_log[manager_id])
+            if len(unique_custs) > _high_freq_max_queries:
+                if '⚠ 高频' not in detail:
+                    detail = f"{detail} [⚠ 高频]"
+
+        # 规则3：深夜查询（00:00-06:00 + C2）
+        hour = now_dt.hour
+        if 0 <= hour < 6 and sensitive_level == 'C2':
+            if '⚠ 深夜' not in detail:
+                detail = f"[⚠ 深夜] {detail}".strip()
+
+        # 规则4：IP突变检测（同一operator 10分钟内≥2个不同城市级IP）
+        if manager_id and ip:
+            ts = now_dt.timestamp()
+            if manager_id not in _operator_ip_log:
+                _operator_ip_log[manager_id] = []
+            # 清理10分钟前的记录
+            ip_cutoff = ts - 600
+            _operator_ip_log[manager_id] = [
+                (t, i) for t, i in _operator_ip_log[manager_id] if t > ip_cutoff
+            ]
+            _operator_ip_log[manager_id].append((ts, ip))
+            unique_ips = set(i for _, i in _operator_ip_log[manager_id])
+            if len(unique_ips) >= 2:
+                if '⚠ IP异常' not in detail:
+                    detail = f"{detail} [⚠ IP异常]"
+
+        # --- 写入审计日志 ---
+        try:
+            conn = get_db()
+            conn.execute(
+                """INSERT INTO audit_logs
+                   (action, target_type, target_id, customer_id, operator, manager_name,
+                    detail, endpoint, result_count, sensitive_level,
+                    ip_address, user_agent, created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (action, 'customer', str(cust_id) if cust_id else '', str(cust_id) if cust_id else '',
+                 manager_id, manager_name, detail, endpoint,
+                 result_count, sensitive_level, ip, ua, now)
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[审计日志写入失败] {e}")
+
     # ---- 26 API endpoints ----
     @app.get("/api/customers")
-    async def cust_list(keyword: str = Query(None), tier: str = Query(None), manager_id: str = Query(None), page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100)):
+    async def cust_list(keyword: str = Query(None), tier: str = Query(None), manager_id: str = Query(None), page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), request: Request = None):
         w, p = ["1=1"], []
         from_clause = "FROM customers"
         if manager_id:
@@ -1163,10 +1711,13 @@ def main():
         select_fields = "c.id,c.cust_no,c.name,c.age,c.gender,c.occupation,c.city,c.tier,c.total_aum,c.employment_status" if manager_id else "id,cust_no,name,age,gender,occupation,city,tier,total_aum,employment_status"
         rows = await aq(f"SELECT {select_fields} {from_clause} WHERE {where} ORDER BY total_aum DESC LIMIT ? OFFSET ?", p + [size, (page-1)*size])
         items = [{"id":r["id"],"cust_no":r["cust_no"],"name":r["name"],"age":r["age"],"gender":"男" if r["gender"]=="M" else "女","city":r["city"],"tier":r["tier"],"total_aum":r["total_aum"],"employment_status":r["employment_status"]} for r in (rows or [])]
+        # 审计日志
+        log_asset_access('list_customers', manager_id or '', '', '', '/api/customers',
+                         len(items), 'C3', f'查询客户列表,返回{len(items)}条', request)
         return ok({"customers":items,"total":total,"page":page,"size":size})
 
     @app.get("/api/customers/{cid}/profile")
-    async def profile(cid: int):
+    async def profile(cid: int, request: Request = None):
         basic, fam, biz, wth, credit, beh, emp = await asyncio.gather(
             aq("SELECT * FROM customers WHERE id=?", (cid,), True),
             aq("SELECT * FROM family_info WHERE cust_id=?", (cid,), True),
@@ -1178,7 +1729,10 @@ def main():
         if not basic: raise HTTPException(404)
         loaded = ["basic"]
         risk_r = await aq("SELECT test_result FROM risk_assessments WHERE cust_id=?", (cid,), True)
-        return ok({"loaded_modules":loaded, "basic":{"name":basic["name"],"age":basic["age"],"gender":"男" if basic["gender"]=="M" else "女","tier":basic["tier"],"employment_status":basic["employment_status"],"occupation":basic["occupation"],"city":basic["city"]},
+        # 审计日志
+        log_asset_access('view_profile', '', '', str(cid), f'/api/customers/{cid}/profile',
+                         1, 'C2', f'查看客户{basic["name"]}({cid})完整画像', request)
+        return ok({"loaded_modules":loaded, "basic":{"name":basic["name"],"age":basic["age"],"gender":"男" if basic["gender"]=="M" else "女","tier":basic["tier"],"employment_status":basic["employment_status"],"occupation":basic["occupation"],"city":basic["city"],"education":basic.get("education", "—")},
             "family":{k:fam[k] for k in ["marriage","children","child_count","child_age","child_education","study_abroad_intent","study_abroad_target_country"]} if fam else None,
             "business":{k:biz[k] for k in ["business_name","duration_years","share_ratio","reg_capital","address","scope","verified","verified_source"]} if biz else None,
             "wealth_summary":{"total_aum":wth["total_aum"],"tier":wth["tier"],"wealth_score":None,"yoy_return":None},
@@ -1187,9 +1741,12 @@ def main():
             "employment_detail":{k:emp[k] for k in ["status","unemployment_benefits","benefit_amount","verified"]} if emp else None})
 
     @app.get("/api/customers/{cid}/basic")
-    async def basic(cid: int):
+    async def basic(cid: int, request: Request = None):
         r = await aq("SELECT * FROM customers WHERE id=?", (cid,), True)
         if not r: raise HTTPException(404)
+        # 审计日志
+        log_asset_access('view_basic', '', '', str(cid), f'/api/customers/{cid}/basic',
+                         1, 'C3', f'查看客户{r["name"]}({cid})基本信息', request)
         return ok({"id":r["id"],"name":r["name"],"age":r["age"],"gender":"男" if r["gender"]=="M" else "女","tier":r["tier"],"total_aum":r["total_aum"],"phone_masked":r["phone_masked"],"employment_status":r["employment_status"],"occupation":r["occupation"],"industry":r["industry"],"city":r["city"],"education":r["education"]})
 
     @app.get("/api/customers/{cid}/family")
@@ -1200,7 +1757,7 @@ def main():
     async def business(cid: int): r = await aq("SELECT business_name,duration_years,share_ratio,reg_capital,address,scope,verified,verified_source FROM business_info WHERE cust_id=?", (cid,), True); return ok(_n(r))
 
     @app.get("/api/customers/{cid}/wealth/summary")
-    async def w_summary(cid: int):
+    async def w_summary(cid: int, request: Request = None):
         r = await aq("SELECT total_aum,tier FROM customers WHERE id=?", (cid,), True)
         if not r: raise HTTPException(404)
         risk = await aq("SELECT wealth_score,score_time,dimension_asset,dimension_income,dimension_social FROM risk_assessments WHERE cust_id=?", (cid,), True)
@@ -1208,33 +1765,45 @@ def main():
         if hc >= 5: tags.append("多元配置")
         if risk and risk.get("wealth_score"):
             tags.append("优质客户" if risk["wealth_score"]>=70 else ("成长客户" if risk["wealth_score"]>=40 else "待培养"))
+        # 审计日志
+        log_asset_access('view_wealth_summary', '', '', str(cid), f'/api/customers/{cid}/wealth/summary',
+                         1, 'C2', f'查看客户{cid}财富摘要(total_aum={r["total_aum"]})', request)
         return ok({"total_aum":r["total_aum"],"tier":r["tier"],"tier_label":r["tier"],"tags":tags,"wealth_score":risk["wealth_score"] if risk else None,"score_time":_d(risk["score_time"]) if risk else None,"score_dimensions":None})
 
     @app.get("/api/customers/{cid}/wealth/holdings")
-    async def w_holdings(cid: int):
+    async def w_holdings(cid: int, request: Request = None):
         rows = await aq("SELECT * FROM holdings WHERE cust_id=? ORDER BY amount DESC", (cid,))
         if not rows: return ok(None)
         dist, total = {}, 0; details = []
         for r in rows:
             a = r["amount"]; total += a; dist[r["product_type"]] = dist.get(r["product_type"],0)+a
             details.append({"product_name":r["product_name"],"product_type":r["product_type"],"amount":a,"yield_rate":r["yield_rate"],"risk_level":r["risk_level"],"maturity_date":_d(r["maturity_date"]),"status":r["status"]})
+        # 审计日志
+        log_asset_access('view_holdings', '', '', str(cid), f'/api/customers/{cid}/wealth/holdings',
+                         len(details), 'C2', f'查看客户{cid}持仓明细,{len(details)}条产品', request)
         return ok({"total_scale":total,"distribution":{"deposit":dist.get("存款",0),"wealth_mgmt":dist.get("理财",0),"fund":dist.get("基金",0),"precious_metal":dist.get("贵金属",0)},"details":details})
 
     @app.get("/api/customers/{cid}/wealth/fund-flow")
-    async def w_fundflow(cid: int, months: int = Query(12)):
+    async def w_fundflow(cid: int, months: int = Query(12), request: Request = None):
         since = (TODAY - timedelta(days=months*30)).isoformat()
         rows = await aq("SELECT txn_type,amount,summary FROM transactions WHERE cust_id=? AND txn_date>=?", (cid, since))
         if not rows: return ok(None)
         inflow = sum(r["amount"] for r in rows if r["txn_type"]=="in")
         outflow = sum(r["amount"] for r in rows if r["txn_type"]=="out")
+        # 审计日志
+        log_asset_access('view_fund_flow', '', '', str(cid), f'/api/customers/{cid}/wealth/fund-flow',
+                         len(rows), 'C2', f'查看客户{cid}资金流水,{len(rows)}条', request)
         return ok({"yearly_inflow":round(inflow,2),"yearly_outflow":round(outflow,2),"retention_desc":"资金留存率较高" if inflow>outflow*0.8 else "资金流出现象需关注"})
 
     @app.get("/api/customers/{cid}/wealth/salary")
-    async def w_salary(cid: int):
+    async def w_salary(cid: int, request: Request = None):
         since = (TODAY - timedelta(days=210)).isoformat()
         rows = await aq("SELECT txn_date,amount FROM transactions WHERE cust_id=? AND summary='工资' AND txn_date>=? ORDER BY txn_date DESC", (cid, since))
         if not rows: return ok(None)
         amts = [r["amount"] for r in rows]; avg6 = round(sum(amts[:6])/min(6,len(amts)),2)
+        # 审计日志
+        log_asset_access('view_salary', '', '', str(cid), f'/api/customers/{cid}/wealth/salary',
+                         1, 'C2', f'查看客户{cid}代发薪资', request)
         return ok({"current_month_amount":amts[0],"avg_6m":avg6,"salary_level":"高收入" if avg6>15000 else ("中等收入" if avg6>8000 else "入门收入")})
 
     @app.get("/api/customers/{cid}/credit/loans")
@@ -1305,25 +1874,33 @@ def main():
         keyword: str = Query(None),
     ):
         """
-        获取产品列表（从 product_database.json 读取）
+        获取产品列表（从 product_catalog 表读取）
         支持按类型、风险等级、关键词筛选
         """
-        # 读取产品数据库
         import json as _json
-        prod_db_path = Path(__file__).parent / "data" / "product_database.json"
-        if not prod_db_path.exists():
-            return ok({"products": [], "total": 0})
 
-        with open(prod_db_path, "r", encoding="utf-8") as f:
-            prod_db = _json.load(f)
-
-        all_products = prod_db.get("products", [])
+        # 从数据库查询在售产品
+        rows = await aq(
+            "SELECT * FROM product_catalog WHERE status = '在售' ORDER BY category, product_id"
+        )
 
         # 转换为前端预期格式
         def map_product(p: dict) -> dict:
             cat = p.get("category", "")
             icon_map = {"理财": "📊", "基金": "📈", "存款": "🏦", "保险": "🛡️"}
             risk_label_map = {"R1": "低风险", "R2": "中低风险", "R3": "中风险", "R4": "中高风险", "R5": "高风险"}
+
+            # 解析 JSON 序列化字段（DB 存储为 TEXT）
+            def _parse_json(val, default):
+                if isinstance(val, str):
+                    try:
+                        return _json.loads(val)
+                    except Exception:
+                        return default
+                return val if val else default
+
+            selling_points = _parse_json(p.get("selling_points"), [])
+            scenario_tags = _parse_json(p.get("scenario_tags"), [])
 
             # 构建 benchmark/收益文本
             er_min = p.get("expected_return_min", "")
@@ -1340,7 +1917,6 @@ def main():
                 hist_yield = ""
 
             # 构建亮点文本
-            selling_points = p.get("selling_points", [])
             highlights = " · ".join(selling_points[:3]) if selling_points else ""
 
             # min_amount 格式
@@ -1352,6 +1928,9 @@ def main():
                 min_unit = "元"
                 min_val = min_amt
 
+            # 解析适用客群
+            applicable_customer = _parse_json(p.get("applicable_customer"), {})
+
             return {
                 "id": p.get("product_id", ""),
                 "type": cat,
@@ -1360,26 +1939,42 @@ def main():
                 "icon": icon_map.get(cat, "📋"),
                 "risk": p.get("risk_level", "R2"),
                 "riskLabel": risk_label_map.get(p.get("risk_level", "R2"), "中低风险"),
+                "riskName": p.get("risk_name", ""),
                 "min": min_val,
                 "minUnit": min_unit,
+                "minAmountDesc": p.get("min_amount_desc", ""),
                 "term": p.get("term_desc", ""),
                 "termType": p.get("sub_category", ""),
+                "termDays": p.get("term_days"),
                 "benchmark": benchmark,
                 "histYield": hist_yield,
+                "expectedReturnMin": er_min,
+                "expectedReturnMax": er_max,
+                "returnType": return_type,
+                "returnBenchmark": p.get("return_benchmark", ""),
                 "manager": p.get("issuer", p.get("bank_name", "")),
-                "scale": "",  # product_database 无此字段
+                "issuer": p.get("issuer", ""),
+                "scale": "",
                 "investScope": p.get("invest_direction", ""),
                 "redeem": p.get("redemption_days", ""),
                 "fee": p.get("subscription_fee", "") or "无",
+                "redemptionFee": p.get("redemption_fee", ""),
                 "highlights": highlights,
-                "scenario_tags": p.get("scenario_tags", []),
+                "sellingPoints": selling_points,
+                "scenario_tags": scenario_tags,
+                "applicableCustomer": applicable_customer,
                 "aiFit": 5,  # 默认 AI 推荐分
                 "aiReason": "",
                 "bank_name": p.get("bank_name", ""),
+                "currency": p.get("currency", "CNY"),
+                "productCode": p.get("product_code", ""),
+                "dataDate": p.get("data_date", ""),
+                "dataSource": p.get("data_source", ""),
+                "sourceUrl": p.get("source_url", ""),
                 "status": p.get("status", "在售"),
             }
 
-        products = [map_product(p) for p in all_products if p.get("status") == "在售"]
+        products = [map_product(dict(r)) for r in (rows or [])]
 
         # 筛选
         if type_:
@@ -1392,6 +1987,88 @@ def main():
                         kw in p["name"].lower() or kw in p.get("full_name", "").lower()]
 
         return ok({"products": products, "total": len(products)})
+
+    # ============================================================
+    # 昨日回顾 API
+    # ============================================================
+
+    @app.get("/api/daily-review")
+    async def daily_review(manager_id: str = Query("")):
+        """
+        获取客户经理最近一日回顾数据。
+        返回最近一条回顾的完整内容（含 sections），以及统计数据摘要。
+        """
+        if not manager_id:
+            return err("缺少 manager_id 参数")
+
+        row = await aq(
+            "SELECT * FROM daily_reviews WHERE manager_id = ? ORDER BY review_date DESC LIMIT 1",
+            [manager_id]
+        )
+        if not row:
+            return ok({"has_review": False, "message": "暂无昨日回顾数据"})
+
+        r = dict(row[0])
+        # 解析 content JSON
+        content = {}
+        try:
+            content = json.loads(r.get("content", "{}"))
+        except Exception:
+            content = {"sections": [{"title": "回顾内容", "content": r.get("content", "")}]}
+
+        # 提取统计数据
+        sections = content.get("sections", [])
+        summary_text = ""
+        stats = []
+        for sec in sections:
+            title = sec.get("title", "")
+            text = sec.get("content", "")
+            if "概要" in title or "概览" in title:
+                summary_text = text
+            elif title:
+                stats.append({"title": title, "content": text})
+
+        return ok({
+            "has_review": True,
+            "review_date": r["review_date"],
+            "generated_at": r["generated_at"],
+            "is_read": bool(r["is_read"]),
+            "summary": summary_text,
+            "sections": sections,
+            "stats": stats,
+        })
+
+    @app.get("/api/daily-digest")
+    async def daily_digest():
+        """
+        获取最近一次资讯摘要（从定时任务执行历史中读取）。
+        返回 AI 提炼的要闻列表和综合解读。
+        """
+        row = await aq(
+            "SELECT * FROM task_execution_history WHERE job_id = 'daily_digest_gen' AND status = 'success' ORDER BY started_at DESC LIMIT 1"
+        )
+        if not row:
+            return ok({"has_digest": False, "message": "暂无资讯摘要数据"})
+
+        r = dict(row[0])
+        detail = {}
+        try:
+            detail = json.loads(r.get("result_detail", "{}"))
+        except Exception:
+            detail = {}
+
+        headlines = detail.get("headlines", [])
+        briefing = detail.get("briefing", "")
+        digest_date = detail.get("date", "")
+
+        return ok({
+            "has_digest": True,
+            "date": digest_date,
+            "generated_at": r["finished_at"] or r["started_at"],
+            "headline_count": len(headlines),
+            "headlines": headlines,
+            "briefing": briefing,
+        })
 
     # ============================================================
     # KPI 业绩看板 API
@@ -1613,23 +2290,23 @@ def main():
         due = await aq("SELECT h.cust_id,c.name,COUNT(*) as cnt,MIN(h.maturity_date) as nearest,SUM(h.amount) as total FROM holdings h JOIN customers c ON h.cust_id=c.id WHERE h.maturity_date BETWEEN ? AND ? GROUP BY h.cust_id,c.name", (td.isoformat(), (td+timedelta(days=7)).isoformat()))
         for r in (due or []):
             if mgr_cust_ids and r['cust_id'] not in mgr_cust_ids: continue
-            tasks.append({"task_id":f"TK_DUE_{r['cust_id']}","type":"产品到期","cust_id":r["cust_id"],"cust_name":r["name"],"summary":f"{r['cnt']}笔产品即将到期, 合计{float(r['total'])/10000:.0f}万","priority":"高","is_opportunity_task":True})
+            tasks.append({"task_id":f"TK_DUE_{r['cust_id']}","type":"产品到期","cust_id":r["cust_id"],"cust_name":r["name"],"summary":f"{r['cnt']}笔产品即将到期, 合计{float(r['total'])/10000:.0f}万","priority":"高"})
         # 2. 贷款逾期
         overdue = await aq("SELECT l.cust_id,c.name,l.overdue_count FROM loans l JOIN customers c ON l.cust_id=c.id WHERE l.overdue_count>0")
         for r in (overdue or []):
             if mgr_cust_ids and r['cust_id'] not in mgr_cust_ids: continue
-            tasks.append({"task_id":f"TK_OD_{r['cust_id']}","type":"贷款逾期","cust_id":r["cust_id"],"cust_name":r["name"],"summary":f"贷款逾期{r['overdue_count']}期, 需跟进","priority":"高","is_opportunity_task":False})
+            tasks.append({"task_id":f"TK_OD_{r['cust_id']}","type":"贷款逾期","cust_id":r["cust_id"],"cust_name":r["name"],"summary":f"贷款逾期{r['overdue_count']}期, 需跟进","priority":"高"})
         # 3. 大额异动(昨日)
         big = await aq("SELECT t.cust_id,c.name,t.amount FROM transactions t JOIN customers c ON t.cust_id=c.id WHERE t.txn_date=? AND t.amount>30000 AND t.txn_type='out' ORDER BY t.amount DESC LIMIT 3", (td.isoformat(),))
         for r in (big or []):
             if mgr_cust_ids and r['cust_id'] not in mgr_cust_ids: continue
-            tasks.append({"task_id":f"TK_BIG_{r['cust_id']}","type":"大额异动","cust_id":r["cust_id"],"cust_name":r["name"],"summary":f"昨日大额转出{float(r['amount'])/10000:.1f}万","priority":"高","is_opportunity_task":True})
+            tasks.append({"task_id":f"TK_BIG_{r['cust_id']}","type":"大额异动","cust_id":r["cust_id"],"cust_name":r["name"],"summary":f"昨日大额转出{float(r['amount'])/10000:.1f}万","priority":"高"})
         # 4. 联络超期(>14天未联系)
         old = await aq("SELECT c.id,c.name,MAX(cm.comm_date) as last_date FROM customers c LEFT JOIN communications cm ON c.id=cm.cust_id GROUP BY c.id HAVING MAX(cm.comm_date) IS NULL OR MAX(cm.comm_date) < ? LIMIT 8", ((td-timedelta(days=14)).isoformat(),))
         for r in (old or []):
             if mgr_cust_ids and r['id'] not in mgr_cust_ids: continue
             days = '从未联络' if not r['last_date'] else f"超期{(td - date.fromisoformat(r['last_date'])).days}天"
-            tasks.append({"task_id":f"TK_CT_{r['id']}","type":"联络超期","cust_id":r["id"],"cust_name":r["name"],"summary":days,"priority":"中","is_opportunity_task":True})
+            tasks.append({"task_id":f"TK_CT_{r['id']}","type":"联络超期","cust_id":r["id"],"cust_name":r["name"],"summary":days,"priority":"中"})
         return ok({"tasks":tasks,"total":len(tasks)})
 
     @app.post("/api/tasks/processing-records")
@@ -1649,36 +2326,15 @@ def main():
 
     @app.get("/api/opportunities")
     async def opps(manager_id: str = Query(None)):
-        opps = []
-        # 规则匹配: 代发到账
-        sal = await aq("SELECT DISTINCT t.cust_id,c.name FROM transactions t JOIN customers c ON t.cust_id=c.id WHERE t.summary='工资' AND t.txn_date>=?", ((TODAY-timedelta(days=7)).isoformat(),))
-        for r in (sal or []):
-            opps.append({"opp_id":f"OPP_SAL_{r['cust_id']}","source":"规则匹配","cust_id":r["cust_id"],"cust_name":r["name"],"type":"代发到账配置","estimated_value":20000,"confidence":0.75,"reasoning":"近7天有代发工资到账, 可推荐工资理财配置","status":"待跟进"})
-        # 规则匹配: 产品到期
-        due = await aq("SELECT h.cust_id,c.name,SUM(h.amount) as total FROM holdings h JOIN customers c ON h.cust_id=c.id WHERE h.maturity_date BETWEEN ? AND ? GROUP BY h.cust_id,c.name", (TODAY.isoformat(), (TODAY+timedelta(days=30)).isoformat()))
-        for r in (due or []):
-            opps.append({"opp_id":f"OPP_DUE_{r['cust_id']}","source":"规则匹配","cust_id":r["cust_id"],"cust_name":r["name"],"type":"产品到期承接","estimated_value":float(r["total"]),"confidence":0.85,"reasoning":f"30天内{float(r['total'])/10000:.0f}万产品到期, 建议提前联系客户做好承接方案","status":"待跟进"})
-        # 流失预警: AUM<5万 且 tier 较低
-        decline = await aq("SELECT c.id,c.name,c.total_aum FROM customers c WHERE c.total_aum<50000 AND c.tier IN ('千元以下','千元户') ORDER BY c.total_aum ASC LIMIT 5")
-        for r in (decline or []):
-            opps.append({"opp_id":f"OPP_DEC_{r['id']}","source":"AI挖掘","cust_id":r["id"],"cust_name":r["name"],"type":"流失预警挽回","estimated_value":5000,"confidence":0.55,"reasoning":f"AUM仅{float(r['total_aum'])/10000:.1f}万且持续走低, 近2月无交易, 建议联系了解资金去向","status":"待跟进"})
-        # AI挖掘: 有基金浏览行为但无基金持仓
-        ai_rows = await aq("SELECT b.cust_id,c.name,COUNT(*) as cnt FROM behavior_logs b JOIN customers c ON b.cust_id=c.id WHERE b.page_type='基金' AND c.id NOT IN (SELECT cust_id FROM holdings WHERE product_type='基金') GROUP BY b.cust_id HAVING COUNT(*)>=5 LIMIT 4")
-        for r in (ai_rows or []):
-            opps.append({"opp_id":f"OPP_AI_{r['cust_id']}","source":"AI挖掘","cust_id":r["cust_id"],"cust_name":r["name"],"type":"基金购买意向","estimated_value":30000,"confidence":0.65,"reasoning":f"近3月浏览基金{r['cnt']}次但无持仓, 判断有基金配置需求","status":"待跟进"})
-        # 手动创建: 模拟客户经理标记的商机
-        manual_pool = await aq("SELECT c.id,c.name,c.total_aum FROM customers c WHERE c.total_aum>100000 ORDER BY RANDOM() LIMIT 3")
-        for r in (manual_pool or []):
-            opps.append({"opp_id":f"OPP_MAN_{r['id']}","source":"手动创建","cust_id":r["id"],"cust_name":r["name"],"type":"大额配置建议","estimated_value":float(r["total_aum"])*0.3,"confidence":0.5,"reasoning":f"客户AUM{float(r['total_aum'])/10000:.0f}万, 资产以存款为主, 建议引导理财配置","status":"待跟进"})
-
-        # AI 智能挖掘: 从 opportunities 表读取已入库的 AI 商机
+        # 从 opportunities 表读取已入库商机（规则引擎在日程排程时生成）
         ai_opps = await aq(
-            "SELECT * FROM opportunities WHERE source='AI-opp_mining' AND status='待跟进' ORDER BY confidence DESC, generated_at DESC LIMIT 10"
+            "SELECT * FROM opportunities WHERE source IN ('AI-opp_mining','规则挖掘') ORDER BY confidence DESC, generated_at DESC"
         )
+        opps = []
         for r in (ai_opps or []):
             opps.append({
                 "opp_id": r["opp_id"],
-                "source": "AI挖掘",
+                "source": "AI挖掘" if r["source"] == "AI-opp_mining" else "规则挖掘",
                 "cust_id": r["cust_id"],
                 "cust_name": r["cust_name"],
                 "type": r["opportunity_type"],
@@ -1698,16 +2354,17 @@ def main():
             ) or []))
             opps = [o for o in opps if o["cust_id"] in mgr_cust_ids]
 
-        # 查询已有的作战包，建立 opp_id -> bp_id 映射
-        bp_rows = await aq("SELECT bp_id, opp_id FROM battle_packages")
+        # Phase3: 查询已有的作战包，通过 clues 表建立 opp_id -> bp_id 映射（一个商机可能对应多个作战包，取最新）
+        bp_rows = await aq("SELECT bpc.opp_id, bp.bp_id FROM battle_package_clues bpc JOIN battle_packages bp ON bpc.bp_id = bp.bp_id ORDER BY bp.generated_at DESC")
         opp_bp_map = {}
         for r in (bp_rows or []):
-            opp_bp_map[r["opp_id"]] = r["bp_id"]
+            if r["opp_id"] and r["opp_id"] not in opp_bp_map:
+                opp_bp_map[r["opp_id"]] = r["bp_id"]
         for o in opps:
             if o["opp_id"] in opp_bp_map:
                 o["bp_id"] = opp_bp_map[o["opp_id"]]
 
-        return ok({"opportunities":opps,"summary":{"total_count":len(opps),"total_value":sum(o["estimated_value"] for o in opps),"rule_based_count":sum(1 for o in opps if o["source"]=="规则匹配"),"ai_mined_count":sum(1 for o in opps if o["source"]=="AI挖掘"),"manual_count":sum(1 for o in opps if o["source"]=="手动创建")}})
+        return ok({"opportunities":opps,"summary":{"total_count":len(opps),"total_value":sum(o["estimated_value"] for o in opps),"ai_mined_count":sum(1 for o in opps if o["source"]=="AI挖掘"),"rule_mined_count":sum(1 for o in opps if o["source"]=="规则挖掘")}})
 
     @app.get("/api/battle-packages")
     async def bp_list(cust_id: int = Query(None), opp_id: str = Query(None), status: str = Query(None)):
@@ -1727,12 +2384,31 @@ def main():
         ag = json.loads(row["agenda"]) if row["agenda"] and isinstance(row["agenda"],str) else row["agenda"]
         rw = json.loads(row["risk_warnings"]) if isinstance(row["risk_warnings"],str) else row["risk_warnings"]
         pa = json.loads(row["post_visit_actions"]) if isinstance(row["post_visit_actions"],str) else row["post_visit_actions"]
+        # Phase3: care_items / opening_speech (兼容新旧格式)
+        care_items_val = row.get("care_items", "[]")
+        if isinstance(care_items_val, str):
+            try:
+                parsed = json.loads(care_items_val)
+            except Exception:
+                parsed = care_items_val
+        else:
+            parsed = care_items_val or []
+        # 新格式：opening_speech 为字符串；旧格式：care_items 为数组
+        if isinstance(parsed, str):
+            opening_speech = parsed
+            cis = []
+        elif isinstance(parsed, list):
+            opening_speech = ""
+            cis = parsed
+        else:
+            opening_speech = ""
+            cis = []
         ci = []
         for cl in (clues or []):
             p = json.loads(cl["products"]) if isinstance(cl["products"],str) else cl["products"]
             d = json.loads(cl["deviation_branches"]) if cl["deviation_branches"] and isinstance(cl["deviation_branches"],str) else cl["deviation_branches"]
-            ci.append({"clue_id":cl["clue_id"],"priority":cl["priority"],"title":cl["title"],"discovery_basis":cl["discovery_basis"],"strategy":cl["strategy"],"opening_script":cl["opening_script"],"products":p,"deviation_branches":d})
-        return ok({"bp_id":row["bp_id"],"opp_id":row["opp_id"],"cust_id":row["cust_id"],"cust_name":row["cn"],"mode":row["mode"],"status":row["status"],"customer_overview":ov,"agenda":ag,"clues":ci,"risk_warnings":rw,"post_visit_actions":pa,"generated_at":row["generated_at"],"expires_at":row["expires_at"],"used_at":row["used_at"]})
+            ci.append({"clue_id":cl["clue_id"],"opp_id":cl.get("opp_id",""),"priority":cl["priority"],"title":cl["title"],"discovery_basis":cl["discovery_basis"],"strategy":cl["strategy"],"opening_script":cl["opening_script"],"products":p,"deviation_branches":d})
+        return ok({"bp_id":row["bp_id"],"opp_id":row["opp_id"],"cust_id":row["cust_id"],"cust_name":row["cn"],"mode":row["mode"],"status":row["status"],"task_id":row.get("task_id",""),"customer_overview":ov,"agenda":ag,"care_items":cis,"opening_speech":opening_speech,"clues":ci,"risk_warnings":rw,"post_visit_actions":pa,"generated_at":row["generated_at"],"expires_at":row["expires_at"],"used_at":row.get("used_at")})
 
     @app.get("/api/battle-packages/{bpid}/clues")
     async def bp_clues(bpid: str):
@@ -1748,6 +2424,31 @@ def main():
     async def bp_use(bpid: str):
         await ae("UPDATE battle_packages SET status='已使用',used_at=? WHERE bp_id=?", (datetime.now().isoformat(), bpid))
         return ok(message="作战包已标记为使用中")
+
+    @app.get("/api/battle-packages/linked")
+    async def bp_linked(opp_ids: str = Query("")):
+        """
+        Phase3: 查询关联到指定商机的作战包
+        GET /api/battle-packages/linked?opp_ids=OPP_001,OPP_002
+        Returns: { packages: [{bp_id, opp_id, cust_id, cust_name, status, generated_at}] }
+        """
+        if not opp_ids.strip():
+            return ok({"packages": [], "total": 0})
+        ids = [o.strip() for o in opp_ids.split(",") if o.strip()]
+        if not ids:
+            return ok({"packages": [], "total": 0})
+        # 通过 clues 表的 opp_id 字段查询关联作战包
+        placeholders = ",".join(["?" for _ in ids])
+        rows = await aq(
+            f"SELECT DISTINCT bp.bp_id, bp.opp_id, bp.cust_id, c.name as cust_name, bp.mode, bp.status, bp.generated_at "
+            f"FROM battle_packages bp "
+            f"JOIN battle_package_clues bpc ON bp.bp_id = bpc.bp_id "
+            f"JOIN customers c ON bp.cust_id = c.id "
+            f"WHERE bpc.opp_id IN ({placeholders}) "
+            f"ORDER BY bp.generated_at DESC",
+            ids
+        )
+        return ok({"packages": [dict(r) for r in (rows or [])], "total": len(rows or [])})
 
     @app.post("/api/battle-packages/generate")
     async def bp_gen(body: dict):
@@ -1823,6 +2524,8 @@ def main():
     from agentos.harness import harness as h
     # 设置 DB 回调（同步 ex，用于 _log_run / _log_token）
     h.set_db_callback(ex)
+    # 设置技能审计日志回调（客户隐私保护）
+    h.set_skill_audit_callback(log_asset_access)
     # 同步 harness 的 adapter 为 DB 初始化后的实例（否则 last_usage 取不到 token）
     h.adapter = adapter
 
@@ -1854,6 +2557,11 @@ def main():
     content_agent = create_content_agent()
     print(f"AI Agent loaded: {content_agent.meta.name} (model={content_agent.adapter.config.model_name})")
 
+    # 初始化 RouterAgent（AI 对话路由）
+    router_agent = create_router_agent()
+    router_agent.set_db_callbacks(aq, ae)
+    print(f"AI Agent loaded: {router_agent.meta.name} (model={router_agent.adapter.config.model_name})")
+
     @app.post("/api/ai/opportunity/mining")
     async def ai_opportunity_mining(body: dict):
         """
@@ -1871,11 +2579,17 @@ def main():
         # 异步执行挖掘（通过 harness.invoke 自动记录运行日志和 token）
         result = await h.invoke("opportunity_miner", "mine_on_demand", ctx, manager_id=manager_id)
 
-        # 入库商机信号
+        # 入库商机信号（去重：同一客户同一类型只保留一条活跃商机）
         if result.get("all_signals"):
             now = datetime.now().isoformat()
             ts = int(datetime.now().timestamp())
+            inserted = 0
+            skipped = 0
             for i, s in enumerate(result["all_signals"]):
+                # 去重：类型匹配 或 标题子串重叠≥15字 → 视为重复商机
+                if await _check_dup_opp(s["customer_id"], s["opportunity_type"], s.get("title", "")):
+                    skipped += 1
+                    continue
                 opp_id = f"OPP_AI_{s['customer_id']}_{ts}_{i}"
                 await ae(
                     """INSERT OR IGNORE INTO opportunities
@@ -1889,12 +2603,13 @@ def main():
                      s.get("source_method", ""), json.dumps(s.get("trigger_signals", []), ensure_ascii=False),
                      now, manager_id),
                 )
+                inserted += 1
 
             return ok({
                 "status": result["status"],
                 "total_customers": result["total_customers"],
-                "skipped": result.get("skipped", 0),
-                "signals": result["signals"],
+                "skipped": result.get("skipped", 0) + skipped,
+                "signals": inserted,
                 "high_confidence": result.get("high_confidence", 0),
                 "highlights": result.get("highlights", []),
             })
@@ -1934,10 +2649,16 @@ def main():
                         ctx, manager_id=manager_id,
                         progress_callback=push_event,
                     )
-                    # 入库商机信号
+                    # 入库商机信号（去重：类型匹配 + 标题前缀匹配）
                     if result.get("all_signals"):
                         now = datetime.now().isoformat()
+                        inserted = 0
+                        skipped = 0
                         for i, s in enumerate(result["all_signals"]):
+                            # 去重：类型匹配 或 标题子串重叠≥15字
+                            if await _check_dup_opp(s["customer_id"], s["opportunity_type"], s.get("title", "")):
+                                skipped += 1
+                                continue
                             opp_id = f"OPP_AI_{s['customer_id']}_{start_ts}_{i}"
                             await ae(
                                 """INSERT OR IGNORE INTO opportunities
@@ -1951,6 +2672,8 @@ def main():
                                  s.get("source_method", ""), json.dumps(s.get("trigger_signals", []), ensure_ascii=False),
                                  now, manager_id),
                             )
+                            inserted += 1
+                        log.info(f"SSE mining: inserted={inserted}, skipped={skipped}")
                 except Exception as e:
                     log.error(f"SSE mining error: {e}")
                     await queue.put(("error", {"message": f"挖掘异常: {str(e)}"}))
@@ -2010,6 +2733,145 @@ def main():
                 "trigger_signals": ts, "status": r["status"], "generated_at": r["generated_at"],
             })
         return ok({"opportunities": items, "total": len(items)})
+
+    @app.get("/api/opportunity/{opp_id}")
+    async def opportunity_detail(opp_id: str):
+        """
+        获取单个商机详情（按 opp_id 精确查询）
+        用于日程卡片点击"详情"时展示完整商机信息
+        """
+        rows = await aq("SELECT * FROM opportunities WHERE opp_id = ?", (opp_id,))
+        if not rows:
+            return {"code": 404, "data": None, "message": "商机不存在"}
+        r = rows[0]
+        ts = json.loads(r["trigger_signals"]) if r.get("trigger_signals") and isinstance(r["trigger_signals"], str) else r.get("trigger_signals")
+        # Phase3: 查询关联的作战包（通过 battle_package_clues 表）
+        bp_row = await aq(
+            "SELECT bpc.bp_id FROM battle_package_clues bpc "
+            "JOIN battle_packages bp ON bpc.bp_id = bp.bp_id "
+            "WHERE bpc.opp_id = ? ORDER BY bp.generated_at DESC LIMIT 1",
+            (opp_id,)
+        )
+        bp_id = bp_row[0]["bp_id"] if bp_row else None
+        # 查询关联的面谈记录
+        meeting_rows = await aq(
+            "SELECT m.id, m.meeting_date, m.meeting_status, m.summary, m.dictation_raw "
+            "FROM opp_meeting_rel r JOIN meeting_records m ON r.meeting_id=m.id "
+            "WHERE r.opp_id=? ORDER BY m.meeting_date DESC",
+            (opp_id,)
+        )
+        meetings = []
+        for m in (meeting_rows or []):
+            try:
+                d_raw = json.loads(m.get("dictation_raw", "[]") or "[]") if m.get("dictation_raw") else []
+            except (json.JSONDecodeError, TypeError):
+                d_raw = []
+            meetings.append({
+                "meeting_id": m["id"],
+                "meeting_date": m["meeting_date"],
+                "meeting_status": m.get("meeting_status", ""),
+                "summary": m.get("summary", "") or "",
+                "dictation_count": len(d_raw) if isinstance(d_raw, list) else 0,
+            })
+        # 查询关联的信号详情（从 customer_signals 表中）
+        signal_rows = await aq(
+            "SELECT signal_id, signal_type, strategy_tags, priority_weight, signal_data, valid_from, valid_until, consumed_at "
+            "FROM customer_signals WHERE consumed_by_opp = ? ORDER BY priority_weight DESC",
+            (opp_id,)
+        )
+        signals = []
+        for s in (signal_rows or []):
+            try:
+                stags = json.loads(s["strategy_tags"]) if isinstance(s["strategy_tags"], str) else (s["strategy_tags"] or [])
+            except (json.JSONDecodeError, TypeError):
+                stags = []
+            try:
+                sdata = json.loads(s["signal_data"]) if isinstance(s["signal_data"], str) else (s["signal_data"] or {})
+            except (json.JSONDecodeError, TypeError):
+                sdata = {}
+            signals.append({
+                "signal_id": s["signal_id"],
+                "signal_type": s["signal_type"],
+                "signal_type_label": _signal_type_label(s["signal_type"]),
+                "strategy_tags": stags,
+                "priority_weight": s["priority_weight"],
+                "signal_data": sdata,
+                "valid_from": s.get("valid_from", ""),
+                "valid_until": s.get("valid_until", ""),
+                "consumed_at": s.get("consumed_at", ""),
+            })
+        return ok({
+            "opp_id": r["opp_id"], "cust_id": r["cust_id"], "cust_name": r["cust_name"],
+            "opportunity_type": r["opportunity_type"], "title": r["title"],
+            "confidence": r["confidence"], "estimated_value": r["estimated_value"],
+            "reasoning": r["reasoning"], "suggested_action": r.get("suggested_action", ""),
+            "priority": r["priority"], "source": r["source"], "source_method": r.get("source_method", ""),
+            "trigger_signals": ts, "status": r["status"],
+            "bp_id": bp_id,
+            "meetings": meetings,
+            "signals": signals,
+            "generated_at": r["generated_at"],
+        })
+
+    @app.put("/api/opportunity/{opp_id}/status")
+    async def opportunity_update_status(opp_id: str, body: dict):
+        """
+        更新商机状态（含状态流转历史）
+
+        状态流转规则：
+          待跟进 → 处理中
+          处理中 → 处理中（可多次，表示持续跟进）
+          处理中 → 已转化
+          处理中 → 已关闭
+          已关闭 → 处理中（重新打开）
+
+        Request: { "status": "处理中" | "已转化" | "已关闭" }
+        """
+        new_status = (body.get("status") or "").strip()
+        valid_statuses = ["待跟进", "处理中", "已转化", "已关闭"]
+        if new_status not in valid_statuses:
+            return {"code": 400, "data": None, "message": f"无效状态，允许: {', '.join(valid_statuses)}"}
+
+        row = await aq("SELECT opp_id, status, status_history FROM opportunities WHERE opp_id = ?", (opp_id,), one=True)
+        if not row:
+            return {"code": 404, "data": None, "message": "商机不存在"}
+
+        old_status = row.get("status") or "待跟进"
+
+        # 校验状态流转合法性
+        allowed_transitions = {
+            "待跟进": ["处理中"],
+            "处理中": ["处理中", "已转化", "已关闭"],
+            "已关闭": ["处理中"],
+            "已转化": [],  # 终态，不可再流转
+        }
+        if new_status not in allowed_transitions.get(old_status, []):
+            return {"code": 400, "data": None,
+                    "message": f"不允许从「{old_status}」直接流转到「{new_status}」"}
+
+        # 更新状态历史
+        try:
+            history = json.loads(row.get("status_history") or "[]")
+        except (json.JSONDecodeError, TypeError):
+            history = []
+        history.append({
+            "from": old_status,
+            "to": new_status,
+            "at": datetime.now().isoformat(),
+        })
+
+        now = datetime.now().isoformat()
+        await ae(
+            "UPDATE opportunities SET status = ?, status_history = ?, updated_at = ? WHERE opp_id = ?",
+            (new_status, json.dumps(history, ensure_ascii=False), now, opp_id)
+        )
+
+        return ok({
+            "opp_id": opp_id,
+            "old_status": old_status,
+            "new_status": new_status,
+            "updated_at": now,
+        }, f"商机状态已从「{old_status}」更新为「{new_status}」")
 
     @app.get("/api/ai/agent/health")
     async def ai_agent_health():
@@ -2094,22 +2956,46 @@ def main():
     # 作战包生成 API
     # ================================================================
 
+    # Phase3: 作战包去重检查（同一客户+任务，7天内已有一个未使用的作战包）
+    def check_existing_bp(cust_id: int, task_id: str = "") -> dict | None:
+        db = get_db()
+        try:
+            cutoff = (datetime.now() - timedelta(days=7)).isoformat()
+            if task_id:
+                row = db.execute(
+                    "SELECT bp_id, status, generated_at FROM battle_packages WHERE cust_id=? AND task_id=? AND status='未使用' AND generated_at>=? ORDER BY generated_at DESC LIMIT 1",
+                    (cust_id, task_id, cutoff)
+                ).fetchone()
+            else:
+                row = db.execute(
+                    "SELECT bp_id, status, generated_at FROM battle_packages WHERE cust_id=? AND status='未使用' AND generated_at>=? ORDER BY generated_at DESC LIMIT 1",
+                    (cust_id, cutoff)
+                ).fetchone()
+            if row:
+                return {"bp_id": row["bp_id"], "status": row["status"], "generated_at": row["generated_at"]}
+            return None
+        finally:
+            db.close()
+
     @app.post("/api/ai/battle-package/generate")
     async def ai_battle_package_generate(body: dict):
         """
-        生成作战包（同步）
+        生成作战包（同步，Phase3：支持多商机+关怀事项）
 
         Request:
           {
             "cust_id": 1,
-            "mode": "标准版",           // 标准版
-            "opportunity_info": {        // 可选：关联的商机信息
-              "type": "产品到期承接",
-              "title": "定存到期",
-              "reasoning": "30天内50万定存到期",
-              "estimated_value": 250000,
-              "confidence": 0.85
-            }
+            "mode": "标准版",
+            "visit_context": {          // 拜访上下文
+              "task_id": "TASK_...",     // 客户聚合待办ID
+              "opp_ids": ["OPP_..."],    // 待推进商机列表
+              "care_items": [{           // 非商机关怀事项
+                "type_code": "birthday",
+                "type_name": "客户生日",
+                "summary": "3天后生日"
+              }]
+            },
+            "force": false               // 是否强制重新生成（跳过去重检查）
           }
 
         Response:
@@ -2119,7 +3005,7 @@ def main():
               "bp_id": "BP_AI_...",
               "cust_id": 1,
               "cust_name": "王建国",
-              "mode": "面谈版",
+              "mode": "标准版",
               "status": "未使用",
               "bp_data": { ... },
               "generated_at": "...",
@@ -2128,14 +3014,22 @@ def main():
           }
         """
         cust_id = body.get("cust_id")
-        mode = body.get("mode", "电话版")
-        opportunity_info = body.get("opportunity_info")
-        opp_id = body.get("opp_id", "")
+        mode = body.get("mode", "标准版")
+        visit_context = body.get("visit_context") or {}
+        force = body.get("force", False)
+        task_id = visit_context.get("task_id", "")
+        opp_ids = visit_context.get("opp_ids", []) or []
 
         if not cust_id:
             raise HTTPException(400, "缺少 cust_id")
-        if mode not in ("电话版", "面谈版", "标准版"):
+        if mode != "标准版":
             raise HTTPException(400, "mode 必须为'标准版'")
+
+        # Phase3: 去重检查（非 force 模式下）
+        if not force:
+            existing = check_existing_bp(cust_id, task_id)
+            if existing:
+                return {"code": 409, "data": existing, "message": "该客户/任务在7天内已有未使用的作战包，请使用 force=true 强制重新生成"}
 
         ctx = AgentContext(scope="on_demand")
 
@@ -2147,7 +3041,7 @@ def main():
         # 生成作战包（通过 harness.invoke 自动记录运行日志和 token）
         bp_result = await h.invoke(
             "battle_package_maker", "generate_battle_package",
-            ctx, cust_id=cust_id, mode=mode, opportunity_info=opportunity_info,
+            ctx, cust_id=cust_id, mode=mode, visit_context=visit_context,
             insight_data=insight_data
         )
 
@@ -2156,7 +3050,7 @@ def main():
 
         # 保存到数据库（含异常保护：写入失败不应让整个请求 500）
         try:
-            saved = battle_pkg_agent.save_battle_package(bp_result, get_db(), opp_id=opp_id)
+            saved = battle_pkg_agent.save_battle_package(bp_result, get_db(), task_id=task_id, opp_ids=opp_ids)
         except Exception as save_err:
             import traceback
             print(f"[BP] 保存作战包失败: {save_err}")
@@ -2172,9 +3066,9 @@ def main():
     @app.post("/api/ai/battle-package/generate/stream")
     async def ai_battle_package_generate_stream(body: dict):
         """
-        SSE 流式生成作战包：实时推送进度事件
+        SSE 流式生成作战包：实时推送进度事件（Phase3）
 
-        Request: { "cust_id": 1, "mode": "面谈版", "opportunity_info": {...} }
+        Request: { "cust_id": 1, "mode": "标准版", "visit_context": {...}, "force": false }
         SSE Events:
           event: phase       → {"phase":"loading_data","message":"..."}
           event: phase       → {"phase":"matching_products","customer_name":"..."}
@@ -2183,14 +3077,25 @@ def main():
           event: error       → {"message":"..."}
         """
         cust_id = body.get("cust_id")
-        mode = body.get("mode", "电话版")
-        opportunity_info = body.get("opportunity_info")
-        opp_id = body.get("opp_id", "")
+        mode = body.get("mode", "标准版")
+        visit_context = body.get("visit_context") or {}
+        force = body.get("force", False)
+        task_id = visit_context.get("task_id", "")
+        opp_ids = visit_context.get("opp_ids", []) or []
 
         if not cust_id:
             raise HTTPException(400, "缺少 cust_id")
-        if mode not in ("电话版", "面谈版", "标准版"):
+        if mode != "标准版":
             raise HTTPException(400, "mode 必须为'标准版'")
+
+        # Phase3: 去重检查（非 force 模式下）
+        if not force:
+            existing = check_existing_bp(cust_id, task_id)
+            if existing:
+                async def conflict_stream():
+                    yield f"event: error\ndata: {json.dumps({'code': 409, 'message': '该客户/任务在7天内已有未使用的作战包', 'existing': existing}, ensure_ascii=False)}\n\n"
+                return StreamingResponse(conflict_stream(), media_type="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
 
         ctx = AgentContext(scope="on_demand")
 
@@ -2208,7 +3113,7 @@ def main():
                     result = await h.invoke(
                         "battle_package_maker", "generate_battle_package",
                         ctx, cust_id=cust_id, mode=mode,
-                        opportunity_info=opportunity_info,
+                        visit_context=visit_context,
                         insight_data=stream_insight_data,
                         progress_callback=push_event,
                     )
@@ -2216,7 +3121,7 @@ def main():
                     if result.get("status") == "completed":
                         # 保存到数据库（含异常保护）
                         try:
-                            saved = battle_pkg_agent.save_battle_package(result, get_db(), opp_id=opp_id)
+                            saved = battle_pkg_agent.save_battle_package(result, get_db(), task_id=task_id, opp_ids=opp_ids)
                         except Exception as save_err:
                             print(f"[BP-Stream] 保存作战包失败: {save_err}")
                             await queue.put(("error", {"message": f"保存失败: {str(save_err)}"}))
@@ -2300,6 +3205,434 @@ def main():
         except Exception as e:
             log.error(f"QAAgent error: {e}")
             return {"code": 500, "data": None, "message": f"问答处理失败: {str(e)}"}
+
+    # ================================================================
+    # 面谈口述转写 API (ContentAgent.transcribe_dictation) v2
+    # 支持：首次录音创建记录、追加录音合并摘要
+    # ================================================================
+
+    @app.post("/api/ai/dictation/transcribe")
+    async def ai_dictation_transcribe(
+        audio: UploadFile = File(..., description="语音录音文件 (wav/mp3/m4a)"),
+        manager_id: str = Form("M001"),
+        cust_name: str = Form(""),
+        cust_id: str = Form(""),
+        bp_id: str = Form(""),
+        opp_id: str = Form(""),
+        meeting_id: str = Form(""),
+    ):
+        """
+        面谈口述转写 v2：客户经理面访结束后口述 1-2 分钟，AI 转写提取
+        PDCA 结构化信息、客户画像变更、待办事项。
+
+        支持追加录音：传入 meeting_id 后，新转写内容将与已有摘要合并。
+
+        Request: multipart/form-data
+          - audio: 音频文件 (必填)
+          - manager_id: 客户经理 ID
+          - cust_name: 客户姓名
+          - cust_id: 客户 ID（可选）
+          - bp_id: 关联作战包 ID（可选）
+          - opp_id: 关联商机 ID（可选）
+          - meeting_id: 已有面谈记录 ID（追加录音时传入）
+        """
+        # 验证文件类型
+        allowed_types = ["audio/wav", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/webm",
+                         "audio/ogg", "audio/x-wav", "audio/wave"]
+        if audio.content_type and audio.content_type not in allowed_types:
+            if not audio.content_type.startswith("audio/"):
+                return {"code": 1, "data": None, "message": f"不支持的音频格式: {audio.content_type}"}
+
+        # 检查文件大小
+        audio_bytes = await audio.read()
+        max_size = 10 * 1024 * 1024
+        if len(audio_bytes) > max_size:
+            return {"code": 1, "data": None, "message": f"音频文件过大（{len(audio_bytes)//1024}KB）"}
+        if len(audio_bytes) < 1024:
+            return {"code": 1, "data": None, "message": "音频文件过小，可能没有有效录音内容"}
+
+        is_append = bool(meeting_id)
+        log.info(f"dictation transcribe: mgr={manager_id}, cust={cust_name or '未知'}, "
+                 f"size={len(audio_bytes)//1024}KB, append={is_append}, meeting_id={meeting_id}")
+
+        # 解析 cust_id（追加模式从已有记录获取，首次录音从参数获取）
+        cust_id_int = 0
+        if cust_id:
+            try:
+                cust_id_int = int(cust_id)
+            except ValueError:
+                pass
+        if not cust_id_int and cust_name:
+            c_row = await aq(
+                "SELECT id FROM customers WHERE name=? LIMIT 1", (cust_name,), one=True
+            )
+            if c_row:
+                cust_id_int = c_row["id"]
+
+        ctx = AgentContext(manager_id=manager_id, scope="event")
+
+        # 追加模式：加载已有面谈记录
+        existing_summary = ""
+        existing_pdc = None
+        existing_dictations = []
+        if is_append:
+            row = await aq("SELECT * FROM meeting_records WHERE id=?", (int(meeting_id),), one=True)
+            if not row:
+                return {"code": 404, "data": None, "message": f"面谈记录不存在: {meeting_id}"}
+            existing_summary = row.get("summary", "") or ""
+            existing_pdc = {
+                "plan": row.get("plan_result", "") or "",
+                "do": row.get("deviation_note", "") or "",
+                "check": row.get("customer_feedback", "") or "",
+                "act": row.get("action_items", "") or "",
+            }
+            try:
+                existing_dictations = json.loads(row.get("dictation_raw", "[]") or "[]")
+            except (json.JSONDecodeError, TypeError):
+                existing_dictations = []
+
+        # 查询该客户活跃商机，构建客户级 PDCA 上下文
+        cust_context = ""
+        if cust_id_int:
+            opp_rows = await aq(
+                "SELECT opp_id, opportunity_type, title, estimated_value, priority, status "
+                "FROM opportunities WHERE cust_id=? AND status IN ('待跟进','已生成作战包') "
+                "ORDER BY priority DESC LIMIT 10",
+                (cust_id_int,),
+            )
+            if opp_rows:
+                lines = []
+                for o in opp_rows:
+                    lines.append(
+                        f"- [{o['priority']}] {o['opportunity_type']}: {o['title']} "
+                        f"(价值≈{o.get('estimated_value', 0)}万, opp_id={o['opp_id']})"
+                    )
+                cust_context = "\n".join(lines)
+                log.info(f"dictation customer context: {len(opp_rows)} active opps for cust_id={cust_id_int}")
+
+        try:
+            result = await h.invoke(
+                "content_gen", "transcribe_dictation", ctx,
+                audio_path="",
+                audio_bytes=audio_bytes,
+                existing_summary=existing_summary,
+                existing_pdc=existing_pdc,
+                cust_context=cust_context,
+            )
+
+            if result.get("error"):
+                return {"code": 500, "data": result, "message": result["error"]}
+
+            transcript = result.get("transcript", "")
+            pdc = result.get("pdc", {})
+            summary = result.get("summary", "")
+            profile_changes = result.get("profile_changes", [])
+            todos = result.get("todos", [])
+            now_str = datetime.now().isoformat()
+            today_str = date.today().isoformat()
+
+            # 构建口述记录条目
+            new_dictation = {
+                "seq": len(existing_dictations) + 1,
+                "transcript": transcript,
+                "recorded_at": now_str,
+            }
+            all_dictations = existing_dictations + [new_dictation]
+            dictation_json = json.dumps(all_dictations, ensure_ascii=False)
+
+            if is_append:
+                # 追加模式：更新已有记录
+                await ae(
+                    "UPDATE meeting_records SET "
+                    "plan_result=?, deviation_note=?, customer_feedback=?, action_items=?, "
+                    "dictation_raw=?, summary=?, profile_changes_json=?, todos_json=?, "
+                    "updated_at=? WHERE id=?",
+                    (pdc.get("plan", ""), pdc.get("do", ""), pdc.get("check", ""), pdc.get("act", ""),
+                     dictation_json, summary, json.dumps(profile_changes, ensure_ascii=False),
+                     json.dumps(todos, ensure_ascii=False), now_str, int(meeting_id))
+                )
+                mid = int(meeting_id)
+                log.info(f"Meeting record updated: id={mid}, dictations={len(all_dictations)}")
+            else:
+                # 首次录音：创建新记录
+                db = sqlite3.connect(DB_PATH)
+                cursor = db.cursor()
+                cursor.execute(
+                    "INSERT INTO meeting_records "
+                    "(cust_id, cust_name, bp_id, opp_id, manager_id, meeting_date, "
+                    "plan_result, deviation_note, customer_feedback, action_items, "
+                    "dictation_raw, summary, meeting_status, profile_changes_json, todos_json, "
+                    "generated_at, updated_at) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (cust_id_int, cust_name, bp_id, opp_id, manager_id, today_str,
+                     pdc.get("plan", ""), pdc.get("do", ""), pdc.get("check", ""), pdc.get("act", ""),
+                     dictation_json, summary, "completed",
+                     json.dumps(profile_changes, ensure_ascii=False),
+                     json.dumps(todos, ensure_ascii=False),
+                     now_str, now_str)
+                )
+                mid = cursor.lastrowid
+                db.commit()
+                db.close()
+
+                # 关联商机：如果提供了 opp_id，写入关联表
+                if opp_id:
+                    try:
+                        db2 = sqlite3.connect(DB_PATH)
+                        db2.execute(
+                            "INSERT OR IGNORE INTO opp_meeting_rel (opp_id, meeting_id) VALUES (?,?)",
+                            (opp_id, mid)
+                        )
+                        db2.commit()
+                        db2.close()
+                        log.info(f"Opportunity {opp_id} linked to meeting {mid}")
+                    except Exception as e:
+                        log.warning(f"Failed to link opportunity to meeting: {e}")
+
+                log.info(f"Meeting record created: id={mid}, cust={cust_name}")
+
+            return ok({
+                "meeting_id": mid,
+                "transcript": transcript,
+                "pdc": pdc,
+                "summary": summary,
+                "profile_changes": profile_changes,
+                "todos": todos,
+                "dictation_count": len(all_dictations),
+                "is_append": is_append,
+            })
+        except Exception as e:
+            log.error(f"Dictation transcribe error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"code": 500, "data": None, "message": f"口述转写失败: {str(e)}"}
+
+    # ================================================================
+    # 面谈记录查询 API
+    # ================================================================
+
+    @app.post("/api/meeting/records")
+    async def create_meeting_record(
+        manager_id: str = Form("M001"),
+        cust_name: str = Form(""),
+        cust_id: str = Form(""),
+        bp_id: str = Form(""),
+        opp_id: str = Form(""),
+        opp_ids: str = Form(""),
+    ):
+        """
+        创建待办处理记录（面谈/电话/微信结束时调用）。
+        口述转写可后续通过 dictation/transcribe 追加。
+        opp_ids 支持逗号分隔的多商机关联（opp_meeting_rel）。
+        """
+        cust_id_int = 0
+        if cust_id:
+            try:
+                cust_id_int = int(cust_id)
+            except ValueError:
+                pass
+        if not cust_id_int and cust_name:
+            c_row = await aq(
+                "SELECT id FROM customers WHERE name=? LIMIT 1", (cust_name,), one=True
+            )
+            if c_row:
+                cust_id_int = c_row["id"]
+
+        today_str = date.today().isoformat()
+        now_str = datetime.now().isoformat()
+
+        db = sqlite3.connect(DB_PATH)
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO meeting_records "
+            "(cust_id, cust_name, bp_id, opp_id, manager_id, meeting_date, "
+            "plan_result, deviation_note, customer_feedback, action_items, "
+            "dictation_raw, summary, meeting_status, profile_changes_json, todos_json, "
+            "generated_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (cust_id_int, cust_name, bp_id, opp_id, manager_id, today_str,
+             "", "", "", "",
+             "[]", "", "drafting",
+             "[]", "[]",
+             now_str, now_str)
+        )
+        mid = cursor.lastrowid
+        db.commit()
+        db.close()
+
+        # 关联商机（支持单个 opp_id 和逗号分隔的 opp_ids）
+        all_opp_ids = []
+        if opp_id:
+            all_opp_ids.append(opp_id.strip())
+        if opp_ids:
+            all_opp_ids.extend([oid.strip() for oid in opp_ids.split(",") if oid.strip()])
+        # 去重
+        all_opp_ids = list(dict.fromkeys(all_opp_ids))
+
+        if all_opp_ids:
+            try:
+                db2 = sqlite3.connect(DB_PATH)
+                for oid in all_opp_ids:
+                    db2.execute(
+                        "INSERT OR IGNORE INTO opp_meeting_rel (opp_id, meeting_id) VALUES (?,?)",
+                        (oid, mid)
+                    )
+                db2.commit()
+                db2.close()
+                log.info(f"Meeting {mid} linked to opportunities: {all_opp_ids}")
+            except Exception as e:
+                log.warning(f"Failed to link meeting to opportunities: {e}")
+
+        log.info(f"Processing record created: id={mid}, cust={cust_name}, opps={all_opp_ids}")
+        return ok({"meeting_id": mid, "meeting_status": "drafting", "opp_ids": all_opp_ids})
+
+    @app.get("/api/meeting/records")
+    async def get_meeting_records(
+        manager_id: str = Query(""),
+        cust_name: str = Query(""),
+        cust_id: int = Query(0),
+        status: str = Query(""),
+        page: int = Query(1),
+        page_size: int = Query(20),
+    ):
+        """
+        查询面谈记录列表。
+        可按客户经理、客户姓名/ID、状态筛选。
+        """
+        where = []
+        params = []
+        if manager_id:
+            where.append("manager_id=?")
+            params.append(manager_id)
+        if cust_id:
+            where.append("cust_id=?")
+            params.append(cust_id)
+        if cust_name:
+            where.append("cust_name LIKE ?")
+            params.append(f"%{cust_name}%")
+        if status:
+            where.append("meeting_status=?")
+            params.append(status)
+
+        where_clause = " AND ".join(where) if where else "1=1"
+        offset = (page - 1) * page_size
+
+        rows = await aq(
+            f"SELECT id, cust_name, manager_id, meeting_date, meeting_status, "
+            f"summary, dictation_raw, generated_at "
+            f"FROM meeting_records WHERE {where_clause} "
+            f"ORDER BY generated_at DESC LIMIT ? OFFSET ?",
+            params + [page_size, offset]
+        )
+        total_row = await aq(
+            f"SELECT COUNT(*) as cnt FROM meeting_records WHERE {where_clause}",
+            params, one=True
+        )
+        total = total_row["cnt"] if total_row else 0
+
+        items = []
+        for r in rows:
+            try:
+                d = json.loads(r.get("dictation_raw", "[]") or "[]")
+            except (json.JSONDecodeError, TypeError):
+                d = []
+            items.append({
+                "id": r["id"],
+                "cust_name": r.get("cust_name", ""),
+                "manager_id": r["manager_id"],
+                "meeting_date": r["meeting_date"],
+                "meeting_status": r.get("meeting_status", "drafting"),
+                "summary": r.get("summary", "") or "",
+                "dictation_count": len(d),
+                "generated_at": r["generated_at"],
+            })
+
+        return ok({"items": items, "total": total, "page": page, "page_size": page_size})
+
+    @app.get("/api/meeting/records/{record_id}")
+    async def get_meeting_record_detail(record_id: int):
+        """
+        获取单条面谈记录详情，包含所有口述转写历史。
+        """
+        row = await aq("SELECT * FROM meeting_records WHERE id=?", (record_id,), one=True)
+        if not row:
+            return {"code": 404, "data": None, "message": f"面谈记录不存在: {record_id}"}
+
+        try:
+            dictations = json.loads(row.get("dictation_raw", "[]") or "[]")
+        except (json.JSONDecodeError, TypeError):
+            dictations = []
+        try:
+            profile_changes = json.loads(row.get("profile_changes_json", "[]") or "[]")
+        except (json.JSONDecodeError, TypeError):
+            profile_changes = []
+        try:
+            todos = json.loads(row.get("todos_json", "[]") or "[]")
+        except (json.JSONDecodeError, TypeError):
+            todos = []
+
+        return ok({
+            "id": row["id"],
+            "cust_id": row["cust_id"],
+            "cust_name": row.get("cust_name", ""),
+            "bp_id": row.get("bp_id", ""),
+            "opp_id": row.get("opp_id", ""),
+            "manager_id": row["manager_id"],
+            "meeting_date": row["meeting_date"],
+            "meeting_status": row.get("meeting_status", "drafting"),
+            "pdc": {
+                "plan": row.get("plan_result", "") or "",
+                "do": row.get("deviation_note", "") or "",
+                "check": row.get("customer_feedback", "") or "",
+                "act": row.get("action_items", "") or "",
+            },
+            "summary": row.get("summary", "") or "",
+            "profile_changes": profile_changes,
+            "todos": todos,
+            "dictations": dictations,
+            "generated_at": row["generated_at"],
+            "updated_at": row.get("updated_at", ""),
+        })
+
+    # ================================================================
+    # AI 对话路由 API (RouterAgent) — 统一对话入口
+    # ================================================================
+
+    @app.post("/api/ai/chat")
+    async def ai_chat(body: dict):
+        """
+        AI 对话统一入口：RouterAgent 意图识别 → 分发 → 响应 + 建议
+
+        Request:
+          { "question": "王建国最近怎么样", "manager_id": "M001", "channel": "home" }
+
+        Response:
+          { "code": 0, "data": { "type": "...", "content": {...}, "suggestions": [...], "meta": {...} } }
+        """
+        question = body.get("question", "").strip()
+        if not question:
+            return {"code": 1, "data": None, "message": "请输入您的问题"}
+
+        manager_id = body.get("manager_id", "")
+        channel = body.get("channel", "home")
+        history = body.get("history", [])
+
+        ctx = AgentContext(manager_id=manager_id, scope="on_demand")
+
+        try:
+            result = await h.invoke(
+                "router", "chat", ctx,
+                params={
+                    "question": question,
+                    "manager_id": manager_id,
+                    "channel": channel,
+                    "history": history,
+                }
+            )
+            return ok(result)
+        except Exception as e:
+            log.error(f"RouterAgent error: {e}")
+            return {"code": 500, "data": None, "message": f"对话处理失败: {str(e)}"}
 
     # ================================================================
     # 日程管理 API
@@ -2386,7 +3719,7 @@ def main():
 
         if use_llm:
             ctx = AgentContext(scope="on_demand", manager_id=mid)
-            refined = await scheduler_agent.ai_refine_schedule(ctx, schedule)
+            refined = await h.invoke("scheduler", "ai_refine_schedule", ctx, base_schedule=schedule)
             scheduler_agent.save_schedule(refined, get_db())
             return ok(refined.to_dict())
         else:
@@ -2543,6 +3876,69 @@ def main():
 
         return ok({"message": f"已记录 {cust_name} 的处理方式: {action}"})
 
+    @app.post("/api/schedule/{schedule_date}/confirm-complete")
+    async def schedule_confirm_complete(schedule_date: str, body: dict):
+        """
+        确认完成客户综合待办。
+        检查待办关联客户是否有面谈记录，如有则标记完成。
+
+        Request:
+          { "manager_id": "M001", "task_id": "TK_xxx", "cust_id": 66,
+            "cust_name": "曹辉" }
+
+        Response:
+          { "completed": true/false, "meeting_records": [...], "message": "..." }
+        """
+        mid = body.get("manager_id", "M001")
+        task_id = body.get("task_id", "")
+        cust_id = body.get("cust_id", 0)
+        cust_name = body.get("cust_name", "")
+
+        if not task_id:
+            return {"code": 400, "data": None, "message": "缺少 task_id"}
+
+        # 检查面谈记录
+        db = get_db()
+        cur = db.cursor()
+        mr_rows = cur.execute(
+            "SELECT id, cust_name, meeting_date, meeting_status, summary, dictation_raw, generated_at "
+            "FROM meeting_records WHERE cust_id = ? ORDER BY generated_at DESC",
+            (cust_id,),
+        ).fetchall()
+
+        meeting_records = []
+        for r in mr_rows:
+            try:
+                d = json.loads(r["dictation_raw"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                d = []
+            meeting_records.append({
+                "id": r["id"],
+                "cust_name": r["cust_name"],
+                "meeting_date": r["meeting_date"],
+                "meeting_status": r["meeting_status"],
+                "summary": (r["summary"] or "")[:100],
+                "dictation_count": len(d),
+                "generated_at": r["generated_at"],
+            })
+
+        if not meeting_records:
+            return {"code": 400, "data": {"completed": False, "meeting_records": []},
+                    "message": "该客户暂无面谈记录，无法确认完成。请先进行面谈并记录。"}
+
+        # 标记任务完成
+        schedule = scheduler_agent.load_schedule(mid, schedule_date, get_db())
+        if not schedule:
+            return {"code": 404, "data": None, "message": "未找到当日排程"}
+
+        found = scheduler_agent.mark_task_complete(schedule, task_id)
+        if not found:
+            return {"code": 404, "data": None, "message": f"未找到任务: {task_id}"}
+
+        scheduler_agent.save_schedule(schedule, get_db())
+        return ok({"completed": True, "meeting_records": meeting_records,
+                    "message": f"待办已完成", "schedule": schedule.to_dict()})
+
     @app.post("/api/schedule/{schedule_date}/return-to-pool")
     async def schedule_return_to_pool(schedule_date: str, body: dict):
         """
@@ -2583,33 +3979,62 @@ def main():
     # ================================================================
 
     async def scheduled_data_tick():
-        """定时数据日推进（每日 07:30）— 注入当日交易/行为/沟通数据"""
+        """定时数据日推进（每日 07:30）— 注入当日交易/行为/沟通数据
+        
+        同一天多次触发时自动跳过（幂等保护），避免重复插入数据。"""
         job_id = "daily_data_tick"
         job_name = "数据日推进"
         started_at = datetime.now().isoformat()
         start_ts = datetime.now()
+        today_str = date.today().isoformat()
         print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
         try:
-            result = daily_tick(TODAY.isoformat(), DB_PATH)
+            result = daily_tick(today_str, DB_PATH)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
-            stats = result.get("stats", {}) if isinstance(result, dict) else {}
-            summary = str(stats) if stats else str(result)
-            detail = json.dumps({
-                "date": TODAY.isoformat(),
-                "transactions": stats.get("transactions", 0),
-                "behaviors": stats.get("behaviors", 0),
-                "communications": stats.get("communications", 0),
-                "holding_updates": stats.get("holding_updates", 0),
-                "events": stats.get("events", 0),
-                "product_updates": stats.get("product_updates", 0),
-                "announcements": stats.get("announcements", 0),
-            }, ensure_ascii=False)
-            print(f"[Scheduler] {job_name}完成: {result}")
-            await ae(
-                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
-                "VALUES (?,?,?,?,?,?,?,?,?)",
-                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
-            )
+            tick_status = result.get("status", "error") if isinstance(result, dict) else "error"
+
+            if tick_status == "skipped":
+                reason = result.get("reason", "") if isinstance(result, dict) else ""
+                summary = f"今天已完成数据推进，无需重复执行"
+                detail = json.dumps({
+                    "date": today_str,
+                    "status": "skipped",
+                    "reason": reason,
+                    "hint": "每日 07:30 定时自动执行，手动触发前若当天已执行则跳过",
+                }, ensure_ascii=False)
+                print(f"[Scheduler] {job_name}跳过: {reason}")
+                await ae(
+                    "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    (job_id, job_name, "skipped", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
+                )
+            else:
+                stats = result.get("stats", {}) if isinstance(result, dict) else {}
+                summary = (
+                    f"交易 {stats.get('transactions', 0)} 笔, "
+                    f"行为 {stats.get('behaviors', 0)} 条, "
+                    f"沟通 {stats.get('communications', 0)} 次, "
+                    f"持仓 {stats.get('holding_updates', 0)} 项, "
+                    f"事件 {stats.get('events', 0)} 个, "
+                    f"产品 {stats.get('product_updates', 0)} 项, "
+                    f"公告 {stats.get('announcements', 0)} 条"
+                )
+                detail = json.dumps({
+                    "date": today_str,
+                    "transactions": stats.get("transactions", 0),
+                    "behaviors": stats.get("behaviors", 0),
+                    "communications": stats.get("communications", 0),
+                    "holding_updates": stats.get("holding_updates", 0),
+                    "events": stats.get("events", 0),
+                    "product_updates": stats.get("product_updates", 0),
+                    "announcements": stats.get("announcements", 0),
+                }, ensure_ascii=False)
+                print(f"[Scheduler] {job_name}完成: {summary}")
+                await ae(
+                    "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
+                )
         except Exception as e:
             import traceback
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
@@ -2628,7 +4053,7 @@ def main():
         started_at = datetime.now().isoformat()
         start_ts = datetime.now()
         print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
-        sd = TODAY.isoformat()
+        sd = date.today().isoformat()
         mgr_count = 0
         mgr_details = []  # 记录每位经理的详情
         try:
@@ -2683,19 +4108,20 @@ def main():
         job_name = "金融资讯抓取"
         started_at = datetime.now().isoformat()
         start_ts = datetime.now()
+        today_date = date.today()
         print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
         try:
-            result = fetch_daily_news(TODAY, DB_PATH)
+            result = fetch_daily_news(today_date, DB_PATH)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
             summary = f"抓取 {result['count']} 条资讯 (来源: {result.get('sources', {})})"
             # 查询本次抓取的资讯标题作为详情
             headline_rows = await aq(
                 "SELECT title, source, category FROM daily_news WHERE fetched_at=? ORDER BY id DESC LIMIT 50",
-                (TODAY.isoformat(),)
+                (today_date.isoformat(),)
             )
             headlines = [{"title": r["title"], "source": r["source"], "category": r["category"]} for r in (headline_rows or [])]
             detail = json.dumps({
-                "date": TODAY.isoformat(),
+                "date": today_date.isoformat(),
                 "count": result["count"],
                 "sources": result.get("sources", {}),
                 "headlines": headlines,
@@ -2727,7 +4153,7 @@ def main():
         try:
             ctx = AgentContext(scope="scheduled")
             yesterday = (date.today() - timedelta(days=1)).isoformat()
-            results = await content_agent.batch_gen_review(ctx, target_date=yesterday)
+            results = await h.invoke("content_gen", "batch_gen_review", ctx, target_date=yesterday)
             success_count = sum(1 for r in results if r.get("saved"))
             mgr_list = []
             for r in results:
@@ -2762,23 +4188,41 @@ def main():
             )
 
     async def scheduled_digest_gen():
-        """定时资讯摘要生成（每日 08:35）— 在新闻抓取后提炼要闻"""
+        """定时资讯摘要生成（每日 08:35）— 在新闻抓取后提炼要闻
+        若当天无新闻数据，自动先执行一次新闻抓取，确保手动触发时也能产出结果。"""
         job_id = "daily_digest_gen"
         job_name = "资讯摘要生成"
         started_at = datetime.now().isoformat()
         start_ts = datetime.now()
         print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
         try:
+            target_date = date.today().isoformat()
+
+            # 检查当天是否有新闻数据，没有则先抓取
+            existing = await aq(
+                "SELECT COUNT(*) as cnt FROM daily_news WHERE date(fetched_at) = ?",
+                (target_date,), one=True
+            )
+            news_prefetched = False
+            if not existing or existing.get("cnt", 0) == 0:
+                print(f"[Scheduler] {job_name}: 当天无新闻数据，自动补抓...")
+                fetch_daily_news(date.today(), DB_PATH)
+                news_prefetched = True
+
             ctx = AgentContext(scope="scheduled")
-            result = await content_agent.gen_digest(ctx)
+            result = await h.invoke("content_gen", "gen_digest", ctx, target_date=target_date)
             headlines = result.get("headlines", [])
             headline_count = len(headlines)
+            empty = result.get("empty", False)
             duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
-            summary = f"提炼 {headline_count} 条要闻"
+            summary = f"提炼 {headline_count} 条要闻" + ("(数据为空)" if empty else "")
             detail = json.dumps({
-                "date": TODAY.isoformat(),
+                "date": target_date,
                 "headline_count": headline_count,
                 "headlines": headlines,
+                "briefing": result.get("briefing", ""),
+                "empty": empty,
+                "news_prefetched": news_prefetched,
             }, ensure_ascii=False)
             print(f"[Scheduler] {job_name}完成: {summary}")
             await ae(
@@ -2819,7 +4263,7 @@ def main():
             result_dict = result if isinstance(result, dict) else {}
             summary = f"批量洞察完成" if isinstance(result, dict) else str(result)
             detail = json.dumps({
-                "date": TODAY.isoformat(),
+                "date": date.today().isoformat(),
                 "generated_count": result_dict.get("generated", result_dict.get("count", 0)),
                 "customers": result_dict.get("customers", []),
             }, ensure_ascii=False)
@@ -2840,21 +4284,191 @@ def main():
                 (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
             )
 
+    async def audit_daily_report():
+        """审计日志日报（每日 08:00）— 统计昨日审计日志概要"""
+        job_id = "audit_daily_report"
+        job_name = "审计日志日报"
+        started_at = datetime.now().isoformat()
+        start_ts = datetime.now()
+        yesterday = (date.today() - timedelta(days=1)).isoformat()
+        print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
+        try:
+            conn = get_db()
+            # 昨日总查询次数
+            total_row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM audit_logs WHERE created_at >= ? AND created_at < ?",
+                (yesterday, date.today().isoformat())
+            ).fetchone()
+            total = total_row[0] if total_row else 0
+            # 异常数
+            anomaly_row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM audit_logs WHERE created_at >= ? AND created_at < ? AND detail LIKE '%⚠%'",
+                (yesterday, date.today().isoformat())
+            ).fetchone()
+            anomaly_count = anomaly_row[0] if anomaly_row else 0
+            # 人均查询数
+            avg_row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM audit_logs WHERE created_at >= ? AND created_at < ? AND operator != ''",
+                (yesterday, date.today().isoformat())
+            ).fetchone()
+            total_with_op = avg_row[0] if avg_row else 0
+            op_count_row = conn.execute(
+                "SELECT COUNT(DISTINCT operator) as cnt FROM audit_logs WHERE created_at >= ? AND created_at < ? AND operator != ''",
+                (yesterday, date.today().isoformat())
+            ).fetchone()
+            op_count = op_count_row[0] if op_count_row else 1
+            avg_per_person = round(total_with_op / op_count, 1) if op_count > 0 else 0
+            # 最常被查的 Top 10 客户
+            top_custs = conn.execute(
+                "SELECT customer_id, COUNT(*) as cnt FROM audit_logs WHERE created_at >= ? AND created_at < ? AND customer_id != '' GROUP BY customer_id ORDER BY cnt DESC LIMIT 10",
+                (yesterday, date.today().isoformat())
+            ).fetchall()
+            top_list = [{"customer_id": r[0], "query_count": r[1]} for r in top_custs]
+            conn.close()
+
+            summary = f"昨日查询 {total} 次, 异常 {anomaly_count} 次, 人均 {avg_per_person} 次"
+            detail = json.dumps({
+                "date": yesterday,
+                "total_queries": total,
+                "anomaly_count": anomaly_count,
+                "avg_per_person": avg_per_person,
+                "operator_count": op_count,
+                "top_queried_customers": top_list,
+            }, ensure_ascii=False)
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}完成: {summary}")
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
+            )
+        except Exception as e:
+            import traceback
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}失败: {e}")
+            traceback.print_exc()
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
+            )
+
+    async def audit_weekly_cleanup():
+        """审计日志周清理（每周一 08:00）— 删除6个月前的日志"""
+        job_id = "audit_weekly_cleanup"
+        job_name = "审计日志周清理"
+        started_at = datetime.now().isoformat()
+        start_ts = datetime.now()
+        print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
+        try:
+            conn = get_db()
+            # 检查总行数
+            total_row = conn.execute("SELECT COUNT(*) as cnt FROM audit_logs").fetchone()
+            total_rows = total_row[0] if total_row else 0
+            # 6 个月前的截止日期
+            cutoff_date = (date.today() - timedelta(days=183)).isoformat()
+            # 删除 6 个月前的日志
+            deleted = conn.execute(
+                "DELETE FROM audit_logs WHERE created_at < ?", (cutoff_date,)
+            ).rowcount
+            conn.commit()
+            conn.close()
+
+            alerts = []
+            if total_rows > 1000000:
+                alerts.append(f"⚠ 审计日志表超过 100 万行（当前 {total_rows:,} 行）")
+            summary = f"删除 {deleted} 条6个月前日志, 当前 {total_rows - deleted:,} 行" + (f", {'; '.join(alerts)}" if alerts else "")
+            detail = json.dumps({
+                "cutoff_date": cutoff_date,
+                "total_before": total_rows,
+                "deleted": deleted,
+                "total_after": total_rows - deleted,
+                "alerts": alerts,
+            }, ensure_ascii=False)
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}完成: {summary}")
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
+            )
+        except Exception as e:
+            import traceback
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}失败: {e}")
+            traceback.print_exc()
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
+            )
+
+    async def data_anonymization_task():
+        """数据匿名化任务（每日 03:00）— 到期客户数据自动匿名化"""
+        job_id = "data_anonymization"
+        job_name = "到期数据匿名化"
+        started_at = datetime.now().isoformat()
+        start_ts = datetime.now()
+        today_str = date.today().isoformat()
+        print(f"\n[Scheduler] {job_name}启动 @ {started_at}")
+        try:
+            conn = get_db()
+            # 查找 data_retain_until 已过期的客户
+            expired = conn.execute(
+                "SELECT id, name FROM customers WHERE data_retain_until != '' AND data_retain_until < ?",
+                (today_str,)
+            ).fetchall()
+            count = 0
+            for row in expired:
+                conn.execute(
+                    "UPDATE customers SET name='已注销', phone_masked='', id_card_masked='', data_retain_until='' WHERE id=?",
+                    (row[0],)
+                )
+                count += 1
+            conn.commit()
+            conn.close()
+            summary = f"匿名化 {count} 名到期客户数据"
+            detail = json.dumps({
+                "date": today_str,
+                "anonymized_count": count,
+                "expired_customers": [{"id": r[0], "name": r[1]} for r in expired],
+            }, ensure_ascii=False)
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}完成: {summary}")
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "success", summary, detail, "", started_at, datetime.now().isoformat(), duration_ms)
+            )
+        except Exception as e:
+            import traceback
+            duration_ms = int((datetime.now() - start_ts).total_seconds() * 1000)
+            print(f"[Scheduler] {job_name}失败: {e}")
+            traceback.print_exc()
+            await ae(
+                "INSERT INTO task_execution_history (job_id, job_name, status, result_summary, result_detail, error_msg, started_at, finished_at, duration_ms) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (job_id, job_name, "error", "", json.dumps({"error": str(e)}, ensure_ascii=False), str(e), started_at, datetime.now().isoformat(), duration_ms)
+            )
+
     @app.on_event("startup")
     async def start_scheduler():
         scheduler.add_job(scheduled_data_tick, "cron", hour=7, minute=30, id="daily_data_tick")
         scheduler.add_job(scheduled_schedule_gen, "cron", hour=8, minute=0, id="daily_schedule_gen")
+        scheduler.add_job(audit_daily_report, "cron", hour=8, minute=0, id="audit_daily_report")
         scheduler.add_job(scheduled_news_fetch, "cron", hour=8, minute=30, id="daily_news_fetch")
         scheduler.add_job(scheduled_digest_gen, "cron", hour=8, minute=35, id="daily_digest_gen")
         scheduler.add_job(scheduled_review_gen, "cron", hour=20, minute=0, id="daily_review_gen")
         scheduler.add_job(scheduled_insight_generation, "cron", day_of_week="sun", hour=3, minute=0, id="weekly_insight_gen")
+        scheduler.add_job(audit_weekly_cleanup, "cron", day_of_week="mon", hour=8, minute=0, id="audit_weekly_cleanup")
+        scheduler.add_job(data_anonymization_task, "cron", hour=3, minute=0, id="data_anonymization")
         scheduler.start()
-        print(f"Scheduler started: data tick @ 07:30, schedule gen @ 08:00, news fetch @ 08:30, digest gen @ 08:35, review gen @ 20:00, insight gen @ Sun 03:00")
+        print(f"Scheduler started: data tick @ 07:30, schedule gen @ 08:00, news fetch @ 08:30, digest gen @ 08:35, review gen @ 20:00, insight gen @ Sun 03:00, audit report @ 08:00, audit cleanup @ Mon 08:00, anonymization @ 03:00")
 
     # ---- Admin API 注册 ----
     from admin_api import register_admin_routes
     # h 已在前面设置为 harness 全局单例，DB 回调已设置
-    register_admin_routes(app, scheduler, get_db, aq, ae, h, reload_platform_configs_sync)
+    register_admin_routes(app, scheduler, get_db, aq, ae, h, reload_platform_configs_sync, get_audit_thresholds, reload_audit_thresholds)
 
     uvicorn.run(app, host="0.0.0.0", port=8008, log_level="info")
 

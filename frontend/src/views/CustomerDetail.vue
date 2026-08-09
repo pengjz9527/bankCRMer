@@ -5,46 +5,60 @@ import { api } from '@/api'
 
 const route = useRoute()
 const router = useRouter()
-const customerName = ref((route.params.id as string) || '王建国')
+const customerName = ref((route.params.id as string) || '')
 const loading = ref(false)
 const custApiId = ref('')
 
-// Static profile data (matching workbench.html)
-const profile: Record<string, any> = {
-  '王建国': {
-    base: { name:'王建国', gender:'男', age:45, occupation:'制造业企业主', industry:'制造业', city:'合肥市', education:'本科', level:'财富客户', manager:'李经理', tenure:'2年', risk:'稳健型 R2' },
-    family: { marriage:'已婚', children:'已育', childStage:'高等教育（子女大一）' },
-    business: { entity:'合肥XX机械制造有限公司', duration:'8年', share:'65%', capital:'500万', address:'合肥市经开区', scope:'机械零部件加工制造', active:true },
-    wealth: { totalAssets: 58.7, aum: 58.7, wealthScore: { score: 78, time: '2026年6月', dims: ['资产配置合理','收入稳定','社会资源丰富'] }, cashflow: { yearIn: 186, inDesc: '经营回款占72%，代发工资占18%', yearOut: 142, outDist: '转账52% · 消费28% · 教育12% · 其他8%', retain: '资金留存率约23%，高于同层级均值' }, holdings: { total: 58.7, cumReturn: 3.2, annualYield: '4.1%', peakMonth: '2026年3月（62.4万）', detail: { deposit:25, finance:18, fund:10, metal:0, insurance:5.7 } } },
-    credit: { housingFund: { base: 6800, period: '2026年1月-6月' }, socialSecurity: { base: 8200, period: '2026年1月-6月' }, loans: [] },
-    behavior: { finPrefs: [{ label:'理财偏好', basis:'近3月高频访问理财频道' },{ label:'稳健投资', basis:'历史持仓以中低风险产品为主' }], liquidity: '中期（3-12个月）', risk: { test:'稳健型 R2', browseDist:'近180天浏览：R1 12% · R2 68% · R3 18% · R4+ 2%' }, marketing: { channels: ['面谈','电话'], activityCount: 3, bestTime: '上午9:00-11:00' }, payroll: { monthAmount: 2.8, date:'每月15日', avg6m: 2.6, peak:'3.2万（2026年3月）', level:'中等偏上', retain3d:'72%', retain7d:'45%' }, otherOpp: { loanIntent: false, wealthIntent: true } },
-    interactions: ['7月15日 面谈 · 定存到期承接','7月10日 电话 · 生日祝福','6月20日 微信 · 产品推荐'],
-    holdings: ['XX定期存款 · 25万 · 到期 7月18日','YY悦享理财 · 10万 · 持有中','ZZ混合基金 · 8万 · 持有中'],
-    benefits: { unclaimed: [{ name:'生日权益', detail:'200积分', status:'未领取' }], available: [{ name:'等级权益·金卡', detail:'每月1次免费体检', status:'可用' }], eligible: [{ name:'夏日理财节', detail:'参与抽奖赢好礼', status:'可参与' }] },
-    opps: [
-      { title:'定存到期承接', priority:'red', label:'定存到期承接（待跟进）', detail:'金额：25万 · 到期日：7月18日', bpReady:false },
-      { title:'基金偏好挖掘', priority:'yellow', label:'基金偏好挖掘（已生成作战包）', detail:'客户历史持有基金，近3月浏览基金频道15次', bpReady:true }
-    ]
-  },
-}
-
-const p = ref(profile[customerName.value] || profile['王建国'])
+// 预设安全默认结构，防止模板访问 undefined 属性导致空白
+const defaultProfile = () => ({
+  base: { name: '加载中...', gender: '', age: 0, occupation: '', industry: '', city: '', education: '', level: '', manager: '', tenure: '', risk: '' },
+  family: { marriage: '', children: '', childStage: '' },
+  business: null as any,
+  wealth: { totalAssets: 0, aum: 0, wealthScore: { score: 0, time: '', dims: [] as string[] }, cashflow: { yearIn: '0', inDesc: '', yearOut: '0', outDist: '', retain: '' }, holdings: { total: '0', cumReturn: '0', annualYield: '', peakMonth: '', detail: { deposit: 0, finance: 0, fund: 0, metal: 0, insurance: 0 } } },
+  credit: { loans: [] as any[], housingFund: { base: 0, period: '' }, socialSecurity: { base: 0, period: '' } },
+  behavior: { finPrefs: [] as any[], liquidity: '', risk: { test: '', browseDist: '' }, marketing: { channels: [] as string[], activityCount: 0, bestTime: '' }, payroll: { monthAmount: '0', date: '', avg6m: '0', peak: '0', level: '', retain3d: '', retain7d: '' }, otherOpp: { loanIntent: false, wealthIntent: false } },
+  interactions: [] as string[],
+  holdings: [] as string[],
+  benefits: { unclaimed: [] as any[], available: [] as any[], eligible: [] as any[] },
+})
+const p = ref<Record<string, any>>(defaultProfile())
+const customerOpps = ref<any[]>([])  // 从 API 加载的真实商机列表
+const oppsLoading = ref(false)
 
 /* 从 API 并行加载客户画像 + 子模块数据（参照 workbench.html） */
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await api.getCustomers('', 100)
-    const list = res.data?.customers || res.data || []
     const routeId = route.params.id as string
-    let match = list.find((c: any) => c.name === routeId)
-      || list.find((c: any) => String(c.id) === routeId)
-      || list.find((c: any) => c.cust_no === routeId)
-      || list.find((c: any) => c.name?.includes(routeId) || routeId.includes(c.name))
+    let match: any = null
+    let fastPathCid = ''  // 数字 ID 快路径已获取到的客户 ID
+
+    // 优先：如果 routeId 是纯数字，直接按 ID 查询
+    if (/^\d+$/.test(routeId)) {
+      try {
+        const basicRes = await api.getCustomerBasic(routeId)
+        if (basicRes?.data?.id) {
+          match = basicRes.data
+          customerName.value = match.name || routeId
+          fastPathCid = String(match.id)
+        }
+      } catch { /* 数字 ID 也未匹配，继续列表查找 */ }
+    }
+
+    // 回退：通过客户列表匹配（仅当快路径未命中时）
+    if (!match?.id) {
+      const res = await api.getCustomers('', 100)
+      const list = res.data?.customers || res.data || []
+      match = list.find((c: any) => c.name === routeId)
+        || list.find((c: any) => String(c.id) === routeId)
+        || list.find((c: any) => c.cust_no === routeId)
+        || list.find((c: any) => c.name?.includes(routeId) || routeId.includes(c.name))
+    }
+
     if (match?.id) {
-      const cid = String(match.id)
+      const cid = fastPathCid || String(match.id)
       custApiId.value = cid
-      if (match.name) customerName.value = match.name
+      if (match.name && !customerName.value) customerName.value = match.name
       const safeCall = (fn: () => Promise<any>) => fn().catch(() => null)
       const [profRes, holdsRes, loansRes, prefsRes, flowRes, salaryRes, benefitsRes, activitiesRes] = await Promise.all([
         safeCall(() => api.getCustomerProfile(cid)),
@@ -87,9 +101,9 @@ onMounted(async () => {
         p.value = {
           base: {
             name: b.name || customerName.value, gender: b.gender || '男', age: b.age || 30,
-            occupation: b.occupation || '', industry: b.occupation || '', city: b.city || '',
-            education: '本科', level: (b.tier || '普通') + '客户',
-            manager: '李经理', tenure: '2年',
+            occupation: b.occupation || '', industry: b.industry || '', city: b.city || '',
+            education: b.education || '—', level: (b.tier || '普通') + '客户',
+            manager: b.manager || '—', tenure: '—',
             risk: (bs.risk_result || '稳健型') + ' R2',
           },
           family: {
@@ -141,8 +155,10 @@ onMounted(async () => {
           interactions: ['最近交互记录'],
           holdings: holdingDetails.length > 0 ? holdingDetails : [],
           benefits: { unclaimed: [], available: benefitList.slice(0, 3).map((b: any) => ({ name: b.benefit_name || b.name, detail: b.benefit_value || b.detail, status: b.status || '可用' })), eligible: activityItems.slice(0, 3).map((a: any) => ({ name: a.activity_name || a.name, detail: a.reward || a.detail, status: '可参与' })) },
-          opps: [],
         }
+
+        // 加载该客户的商机列表
+        loadCustomerOpps(cid)
       }
     }
   } catch (e) {
@@ -168,6 +184,55 @@ function goInsight() {
 function goAiChat() {
   router.push({ name: 'ai-chat', query: { from: 'w8detail', customer: customerName.value } })
 }
+function goBattlePackage(bpId: string) {
+  if (bpId) router.push({ name: 'battle-package', query: { id: bpId } })
+}
+
+// 面谈记录
+const meetingRecords = ref<any[]>([])
+const meetingRecordsLoaded = ref(false)
+async function loadMeetingRecords() {
+  try {
+    const res = await api.getMeetingRecords({ cust_name: customerName.value, page_size: 10 })
+    if (res.code === 0) {
+      meetingRecords.value = res.data.items || []
+    }
+  } catch (e) {
+    console.warn('加载面谈记录失败', e)
+  } finally {
+    meetingRecordsLoaded.value = true
+  }
+}
+
+// 商机列表
+async function loadCustomerOpps(custId: string) {
+  oppsLoading.value = true
+  try {
+    const res = await api.aiGetOpportunityList(undefined, Number(custId))
+    const list = res.data?.opportunities || res.data || []
+    if (Array.isArray(list)) {
+      customerOpps.value = list.map((o: any) => ({
+        opp_id: o.opp_id,
+        title: o.title || o.opportunity_type || '',
+        type: o.opportunity_type || o.type || '',
+        priority: o.priority === '高' ? 'red' : 'yellow',
+        label: `${o.opportunity_type || o.type}（${o.status || '待跟进'}）`,
+        detail: o.reasoning || '',
+        estimated_value: o.estimated_value || 0,
+        confidence: o.confidence || 0,
+        status: o.status || '待跟进',
+        bpReady: !!o.bp_id,
+        bp_id: o.bp_id || '',
+      }))
+    }
+  } catch (e) {
+    console.warn('加载商机列表失败', e)
+  } finally {
+    oppsLoading.value = false
+  }
+}
+
+onMounted(() => { loadMeetingRecords() })
 </script>
 
 <template>
@@ -331,18 +396,20 @@ function goAiChat() {
           <span class="ps-arrow" :class="{ open: expanded.opps }">▾</span>
         </div>
         <div class="ps-body" :class="{ open: expanded.opps }">
-          <div v-for="op in p.opps" :key="op.title" class="ps-opp-card">
+          <div v-if="oppsLoading" class="pf-empty">加载中...</div>
+          <div v-for="op in customerOpps" :key="op.opp_id" class="ps-opp-card">
             <div class="ps-opp-priority" :class="{ red: op.priority === 'red', yellow: op.priority === 'yellow' }">
               {{ op.priority === 'red' ? '高优' : '关注' }}
             </div>
             <div class="ps-opp-content">
               <div class="ps-opp-title">{{ op.label }}</div>
               <div class="ps-opp-detail">{{ op.detail }}</div>
-              <button v-if="op.bpReady" class="ps-opp-btn ps-opp-btn--outline">查看作战包</button>
-              <button v-else class="ps-opp-btn ps-opp-btn--primary">生成作战包</button>
+              <button v-if="op.bpReady" class="ps-opp-btn ps-opp-btn--outline" @click="goBattlePackage(op.bp_id)">
+                📋 关联的作战包
+              </button>
             </div>
           </div>
-          <div v-if="p.opps.length === 0" class="pf-empty">暂无关联商机</div>
+          <div v-if="!oppsLoading && customerOpps.length === 0" class="pf-empty">暂无关联商机</div>
         </div>
       </div>
 
@@ -354,6 +421,23 @@ function goAiChat() {
         </div>
         <div class="ps-body" :class="{ open: expanded.interactions }">
           <div v-for="it in p.interactions" :key="it" class="pf-interact-row">{{ it }}</div>
+
+          <!-- 面谈记录入口 -->
+          <div v-if="meetingRecords.length > 0" class="meeting-records-inline">
+            <div class="meeting-records-inline-title">📋 面谈记录</div>
+            <div v-for="mr in meetingRecords" :key="mr.id" class="meeting-records-inline-item">
+              <div class="mri-header">
+                <span class="mri-date">{{ mr.meeting_date }}</span>
+                <span class="mri-status" :class="mr.meeting_status === 'completed' ? 'mri-done' : 'mri-draft'">
+                  {{ mr.meeting_status === 'completed' ? '已完成' : '口述中' }}
+                </span>
+                <span class="mri-count">{{ mr.dictation_count }}次录音</span>
+              </div>
+              <div v-if="mr.summary" class="mri-summary">{{ mr.summary.slice(0, 80) }}{{ mr.summary.length > 80 ? '...' : '' }}</div>
+            </div>
+          </div>
+          <div v-else-if="meetingRecordsLoaded" class="pf-empty" style="font-size:12px;color:#999;">暂无面谈记录</div>
+
           <div class="pf-link-more">查看全部交互记录 &gt;</div>
         </div>
       </div>
@@ -501,4 +585,31 @@ function goAiChat() {
 .cd-action-btn:active { background: #f5f5f5; }
 .cd-action-btn--primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 .cd-action-btn--ai { color: #7C5CE7; border-color: #7C5CE7; font-weight: 600; }
+
+/* ── 面谈记录行内展示 ── */
+.meeting-records-inline {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px dashed #e5e7eb;
+}
+.meeting-records-inline-title {
+  font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 8px;
+}
+.meeting-records-inline-item {
+  padding: 8px 10px; margin-bottom: 6px;
+  background: #f9fafb; border-radius: 8px; border: 1px solid #f3f4f6;
+}
+.mri-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 4px;
+}
+.mri-date { font-size: 12px; color: #374151; font-weight: 500; }
+.mri-status {
+  font-size: 10px; padding: 1px 6px; border-radius: 6px; font-weight: 600;
+}
+.mri-done { background: #d1fae5; color: #065f46; }
+.mri-draft { background: #fef3c7; color: #92400e; }
+.mri-count { font-size: 10px; color: #9ca3af; margin-left: auto; }
+.mri-summary {
+  font-size: 12px; color: #6b7280; line-height: 1.5;
+}
 </style>

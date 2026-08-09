@@ -28,30 +28,25 @@
             class="task-row"
             :class="{ 'task-completed': task.status === 'completed' }"
           >
-            <span class="task-type-tag" :class="getTypeTagClass(task.typeCode)">{{ task.typeName }}</span>
-            <span class="task-text">
-              <template v-if="task.custName">{{ task.custName }} · </template>
-              {{ task.summary }}
-            </span>
-            <!-- 客户待办：开始处理按钮 -->
+            <span class="task-cust-name">{{ task.custName || '-' }}</span>
+            <!-- 子事件标签 -->
+            <span
+              v-for="(si, siIdx) in (task.subItems || []).slice(0, 3)"
+              :key="siIdx"
+              class="task-sub-tag"
+              :class="getTypeTagClass(si.typeCode)"
+            >{{ si.typeName }}</span>
+            <span v-if="(task.subItems || []).length > 3" class="task-sub-more">+{{ task.subItems!.length - 3 }}</span>
+            <span class="task-text">{{ task.summary }}</span>
+            <!-- 客户待办：开始处理 / 已处理按钮 -->
             <button
-              v-if="card.cardType === 'customer' && task.status !== 'completed'"
+              v-if="card.cardType === 'customer'"
               class="btn-process"
+              :class="{ 'btn-process--done': task.status === 'completed' }"
               @click.stop="$emit('process-task', task.taskId)"
-            >开始处理</button>
-            <!-- 商机待办：详情按钮 + 勾选 -->
-            <template v-else-if="card.cardType === 'opportunity'">
-              <button
-                v-if="task.status !== 'completed'"
-                class="btn-detail"
-                @click.stop="$emit('opp-detail', task.taskId)"
-              >详情</button>
-              <span class="task-check" @click.stop="$emit('complete', task.taskId)" v-if="task.status !== 'completed'">
-                <svg viewBox="0 0 24 24" class="ico ico--sm"><use href="#ico-check-circle" /></svg>
-              </span>
-            </template>
+            >{{ task.status === 'completed' ? '已处理' : '开始处理' }}</button>
             <!-- 工作待办：勾选 -->
-            <template v-else>
+            <template v-else-if="card.cardType === 'work'">
               <span class="task-check" @click.stop="$emit('complete', task.taskId)" v-if="task.status !== 'completed'">
                 <svg viewBox="0 0 24 24" class="ico ico--sm"><use href="#ico-check-circle" /></svg>
               </span>
@@ -74,30 +69,25 @@
             class="task-row"
             :class="{ 'task-completed': task.status === 'completed' }"
           >
-            <span class="task-type-tag" :class="getTypeTagClass(task.typeCode)">{{ task.typeName }}</span>
-            <span class="task-text">
-              <template v-if="task.custName">{{ task.custName }} · </template>
-              {{ task.summary }}
-            </span>
-            <!-- 客户待办：开始处理按钮 -->
+            <span class="task-cust-name">{{ task.custName || '-' }}</span>
+            <!-- 子事件标签 -->
+            <span
+              v-for="(si, siIdx) in (task.subItems || []).slice(0, 3)"
+              :key="siIdx"
+              class="task-sub-tag"
+              :class="getTypeTagClass(si.typeCode)"
+            >{{ si.typeName }}</span>
+            <span v-if="(task.subItems || []).length > 3" class="task-sub-more">+{{ task.subItems!.length - 3 }}</span>
+            <span class="task-text">{{ task.summary }}</span>
+            <!-- 客户待办：开始处理 / 已处理按钮 -->
             <button
-              v-if="card.cardType === 'customer' && task.status !== 'completed'"
+              v-if="card.cardType === 'customer'"
               class="btn-process"
+              :class="{ 'btn-process--done': task.status === 'completed' }"
               @click.stop="$emit('process-task', task.taskId)"
-            >开始处理</button>
-            <!-- 商机待办：详情按钮 + 勾选 -->
-            <template v-else-if="card.cardType === 'opportunity'">
-              <button
-                v-if="task.status !== 'completed'"
-                class="btn-detail"
-                @click.stop="$emit('opp-detail', task.taskId)"
-              >详情</button>
-              <span class="task-check" @click.stop="$emit('complete', task.taskId)" v-if="task.status !== 'completed'">
-                <svg viewBox="0 0 24 24" class="ico ico--sm"><use href="#ico-check-circle" /></svg>
-              </span>
-            </template>
+            >{{ task.status === 'completed' ? '已处理' : '开始处理' }}</button>
             <!-- 工作待办：勾选 -->
-            <template v-else>
+            <template v-else-if="card.cardType === 'work'">
               <span class="task-check" @click.stop="$emit('complete', task.taskId)" v-if="task.status !== 'completed'">
                 <svg viewBox="0 0 24 24" class="ico ico--sm"><use href="#ico-check-circle" /></svg>
               </span>
@@ -134,12 +124,10 @@ defineEmits<{
   complete: [taskId: string]
   'add-task': [cardType: string]
   'process-task': [taskId: string]
-  'opp-detail': [taskId: string]
 }>()
 
 const cardIcons: Record<string, string> = {
   customer: '#ico-users',
-  opportunity: '#ico-lightbulb',
   work: '#ico-clipboard',
 }
 
@@ -147,16 +135,21 @@ const cardIcon = computed(() => cardIcons[props.card.cardType] || '#ico-clipboar
 
 const cardClass = computed(() => ({
   'card--customer': props.card.cardType === 'customer',
-  'card--opportunity': props.card.cardType === 'opportunity',
   'card--work': props.card.cardType === 'work',
 }))
 
 function getTypeTagClass(typeCode: string): string {
   const m: Record<string, string> = {
+    customer_synthesis: 'tag-primary',
     due: 'tag-danger',
     big_move: 'tag-warning',
     overdue: 'tag-warning',
     opp: 'tag-opportunity',
+    opp_due: 'tag-opportunity',
+    opp_salary: 'tag-opportunity',
+    opp_fund: 'tag-opportunity',
+    opp_decline: 'tag-opportunity',
+    opp_big_aum: 'tag-opportunity',
     birthday: 'tag-success',
     contact_lapse: 'tag-muted',
     credit_card: 'tag-muted',
@@ -323,6 +316,13 @@ function getTypeTagClass(typeCode: string): string {
 .btn-process:active {
   opacity: 0.8;
 }
+.btn-process--done {
+  background: #888;
+  color: #fff;
+}
+.btn-process--done:active {
+  opacity: 0.8;
+}
 
 .btn-detail {
   height: 26px;
@@ -372,4 +372,33 @@ function getTypeTagClass(typeCode: string): string {
 .tag-opportunity { background: #F0E8FF; color: #6C5CE7; }
 .tag-info { background: #E8F4FD; color: #2980B9; }
 .tag-primary { background: #E8F0FE; color: #3366FF; }
+
+/* 客户名样式 */
+.task-cust-name {
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 子事件标签（小号） */
+.task-sub-tag {
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.task-sub-more {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
 </style>

@@ -2,6 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../api'
 
+export interface SubItem {
+  typeCode: string
+  typeName: string
+  summary: string
+  priorityWeight: number
+}
+
 export interface TaskItem {
   taskId: string
   typeCode: string
@@ -14,10 +21,14 @@ export interface TaskItem {
   priorityWeight: number
   customerIds: number[]
   customerNames: string[]
+  oppId?: string
+  subItems?: SubItem[]
+  oppIds?: string[]
+  completedAt?: string  // ISO 时间戳，任务完成时记录
 }
 
 export interface ScheduleCardData {
-  cardType: 'customer' | 'opportunity' | 'work'
+  cardType: 'customer' | 'work'
   cardName: string
   morning: TaskItem[]
   afternoon: TaskItem[]
@@ -29,26 +40,18 @@ export interface PendingTask extends TaskItem {
   // 与 TaskItem 相同结构
 }
 
-// 静态回落数据（三卡片结构）
+// 静态回落数据（二卡片结构，客户级聚合格式）
 const staticCards: ScheduleCardData[] = [
   {
     cardType: 'customer', cardName: '客户待办',
     morning: [
-      { taskId:'c1', typeCode:'due', typeName:'产品到期', custName:'王建国', summary:'2笔产品到期, 合计30万', custCount:2, status:'pending', assignedSlot:'morning', priorityWeight:100, customerIds:[1], customerNames:['王建国'] },
-      { taskId:'c2', typeCode:'big_move', typeName:'大额异动', custName:'张丽华', summary:'昨日转出30万', custCount:1, status:'pending', assignedSlot:'morning', priorityWeight:80, customerIds:[2], customerNames:['张丽华'] },
+      { taskId:'c1', typeCode:'customer_synthesis', typeName:'客户综合待办', custName:'王建国', summary:'2笔产品到期, 合计30万，大额异动30万 等2项', custCount:1, status:'pending', assignedSlot:'morning', priorityWeight:80, customerIds:[1], customerNames:['王建国'], subItems:[{typeCode:'due',typeName:'产品到期',summary:'2笔产品到期, 合计30万',priorityWeight:100},{typeCode:'big_move',typeName:'大额异动',summary:'昨日转出30万',priorityWeight:80}] },
+      { taskId:'c2', typeCode:'customer_synthesis', typeName:'客户综合待办', custName:'张丽华', summary:'产品到期续存', custCount:1, status:'pending', assignedSlot:'morning', priorityWeight:75, customerIds:[2], customerNames:['张丽华'], oppIds:['OPP001'], subItems:[{typeCode:'opp',typeName:'AI挖掘',summary:'定存到期承接',priorityWeight:75}] },
     ],
     afternoon: [
-      { taskId:'c3', typeCode:'contact_lapse', typeName:'联络超期', custName:'刘大明', summary:'超期16天未联络', custCount:1, status:'pending', assignedSlot:'afternoon', priorityWeight:50, customerIds:[3], customerNames:['刘大明'] },
+      { taskId:'c3', typeCode:'customer_synthesis', typeName:'客户综合待办', custName:'刘大明', summary:'超期16天未联络', custCount:1, status:'pending', assignedSlot:'afternoon', priorityWeight:50, customerIds:[3], customerNames:['刘大明'], subItems:[{typeCode:'contact_lapse',typeName:'联络超期',summary:'超期16天未联络',priorityWeight:50}] },
     ],
-    totalCount: 3, maxCapacity: 10,
-  },
-  {
-    cardType: 'opportunity', cardName: '商机待办',
-    morning: [
-      { taskId:'o1', typeCode:'opp', typeName:'商机待办', custName:'赵明辉', summary:'定存到期承接', custCount:1, status:'pending', assignedSlot:'morning', priorityWeight:75, customerIds:[4], customerNames:['赵明辉'] },
-    ],
-    afternoon: [],
-    totalCount: 1, maxCapacity: 4,
+    totalCount: 3, maxCapacity: 7,
   },
   {
     cardType: 'work', cardName: '工作待办',
@@ -86,16 +89,21 @@ export const useScheduleStore = defineStore('schedule', () => {
       const res = await api.getScheduleDay(mgrId, today)
       console.log(`[schedule] 响应: code=${res.code} cards=${res.data?.cards?.length ?? '?'}`)
       const data = res.data
-      if (data?.cards && Array.isArray(data.cards) && data.cards.length > 0) {
+      // code=0 表示成功，即使 cards 为空也要更新（如经理无待办时展示空状态）
+      if (res.code === 0 && data && Array.isArray(data.cards)) {
         cards.value = data.cards.map(mapRawCard)
         console.log(`[schedule] 已加载 ${cards.value.length} 张卡片`)
       } else {
-        console.warn('[schedule] API 返回空卡片，保留静态数据')
+        // 响应异常或格式不对，清空避免残留旧经理数据
+        console.warn('[schedule] API 返回异常，清空卡片')
+        cards.value = []
       }
       // 同时加载未安排待办
       await loadPending(mgrId)
     } catch (e) {
-      console.warn('[schedule] 加载日程失败，使用静态数据', e)
+      console.warn('[schedule] 加载日程失败，清空数据', e)
+      cards.value = []
+      pendingTasks.value = []
     } finally {
       loading.value = false
     }
@@ -108,9 +116,13 @@ export const useScheduleStore = defineStore('schedule', () => {
       const data = res.data
       if (data?.pending && Array.isArray(data.pending)) {
         pendingTasks.value = data.pending.map(mapRawTask)
+      } else {
+        // 无 pending 数据时清空，避免残留旧客户经理的未安排待办
+        pendingTasks.value = []
       }
     } catch (e) {
       console.warn('加载未安排待办失败', e)
+      pendingTasks.value = []
     }
   }
 
@@ -163,6 +175,35 @@ export const useScheduleStore = defineStore('schedule', () => {
     }
   }
 
+  async function confirmCompleteTask(
+    mgrId: string,
+    taskId: string,
+    custId: number,
+    custName: string,
+  ): Promise<{ completed: boolean; meetingRecords: any[]; message: string; schedule?: any }> {
+    const today = todayStr()
+    try {
+      const res = await api.confirmCompleteScheduleTask(today, {
+        manager_id: mgrId,
+        task_id: taskId,
+        cust_id: custId,
+        cust_name: custName,
+      })
+      const data = res.data || res
+      if (data?.completed && data?.schedule) {
+        cards.value = data.schedule.cards.map(mapRawCard)
+      }
+      return {
+        completed: data?.completed || false,
+        meetingRecords: data?.meeting_records || [],
+        message: data?.message || (res as any)?.message || '',
+      }
+    } catch (e: any) {
+      console.warn('确认完成失败', e)
+      return { completed: false, meetingRecords: [], message: e?.message || '确认完成失败' }
+    }
+  }
+
   async function returnTaskToPool(mgrId: string, taskId: string) {
     const today = todayStr()
     try {
@@ -204,7 +245,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     cards, pendingTasks, loading, weekPlan,
     visibleCards, pendingCount,
     loadTasks, loadPending, loadWeekSchedule,
-    completeTask, addTaskFromPending, processCustomerTask, returnTaskToPool,
+    completeTask, addTaskFromPending, processCustomerTask, confirmCompleteTask, returnTaskToPool,
   }
 })
 
@@ -216,7 +257,7 @@ function mapRawCard(raw: any): ScheduleCardData {
     morning: (raw.morning || []).map(mapRawTask),
     afternoon: (raw.afternoon || []).map(mapRawTask),
     totalCount: raw.total_count ?? 0,
-    maxCapacity: raw.max_capacity ?? 10,
+    maxCapacity: raw.max_capacity ?? 7,
   }
 }
 
@@ -234,5 +275,9 @@ function mapRawTask(raw: any): TaskItem {
     priorityWeight: raw.priority_weight ?? 30,
     customerIds: raw.customer_ids || [],
     customerNames: raw.customer_names || [],
+    oppId: raw.opp_id || '',
+    subItems: raw.sub_items || [],
+    oppIds: raw.opp_ids || [],
+    completedAt: raw.completed_at || '',
   }
 }
